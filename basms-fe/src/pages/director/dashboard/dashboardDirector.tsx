@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useAuth } from '../../../hooks/useAuth';
 import UserInfoModal from "../../../components/userInfoModal/userInfoModal.tsx";
 import './dashboardDirector.css';
@@ -11,7 +11,8 @@ const DashboardDirector = () => {
     const [isLoggingOut, setIsLoggingOut] = useState(false);
     const [showLogoutModal, setShowLogoutModal] = useState(false);
     const [showUserInfoModal, setShowUserInfoModal] = useState(false);
-    const [dropdownOpen, setDropdownOpen] = useState(false);
+
+    const profileRef = useRef<HTMLDivElement>(null);
 
     useEffect(() => {
         const timer = setInterval(() => {
@@ -20,6 +21,23 @@ const DashboardDirector = () => {
 
         return () => clearInterval(timer);
     }, []);
+
+    // Close dropdown when clicking outside
+    useEffect(() => {
+        const handleClickOutside = (event: MouseEvent) => {
+            if (profileRef.current && !profileRef.current.contains(event.target as Node)) {
+                setIsProfileDropdownOpen(false);
+            }
+        };
+
+        if (isProfileDropdownOpen) {
+            document.addEventListener('mousedown', handleClickOutside);
+        }
+
+        return () => {
+            document.removeEventListener('mousedown', handleClickOutside);
+        };
+    }, [isProfileDropdownOpen]);
 
     const toggleMenu = () => {
         setIsMenuOpen(!isMenuOpen);
@@ -31,6 +49,7 @@ const DashboardDirector = () => {
 
     const handleLogout = async () => {
         setShowLogoutModal(true);
+        setIsProfileDropdownOpen(false);
     };
 
     const confirmLogout = async () => {
@@ -66,7 +85,7 @@ const DashboardDirector = () => {
     const handleOpenUserInfo = (e: React.MouseEvent) => {
         e.stopPropagation();
         setShowUserInfoModal(true);
-        setDropdownOpen(false); // Đóng dropdown khi mở modal
+        setIsProfileDropdownOpen(false);
     };
 
     return (
@@ -122,7 +141,11 @@ const DashboardDirector = () => {
                             <span className="director-notification-badge">2</span>
                         </button>
 
-                        <div className="director-user-profile" onClick={toggleProfileDropdown}>
+                        <div
+                            ref={profileRef}
+                            className="director-user-profile"
+                            onClick={toggleProfileDropdown}
+                        >
                             <div className="director-user-avatar">
                                 <span>{user?.fullName?.charAt(0).toUpperCase() || user?.email?.charAt(0).toUpperCase() || 'D'}</span>
                             </div>
@@ -225,7 +248,7 @@ const DashboardDirector = () => {
 
             {showLogoutModal && (
                 <div className="director-modal-overlay" onClick={cancelLogout}>
-                    <div className="director-modal-content" onClick={handleOpenUserInfo}>
+                    <div className="director-modal-content" onClick={(e) => e.stopPropagation()}>
                         <div className="director-modal-header">
                             <h3>Xác nhận đăng xuất</h3>
                         </div>
@@ -244,19 +267,10 @@ const DashboardDirector = () => {
                 </div>
             )}
 
-            {/* USER INFO MODAL */}
             <UserInfoModal
                 isOpen={showUserInfoModal}
                 onClose={() => setShowUserInfoModal(false)}
             />
-
-            {/* Click outside để đóng dropdown */}
-            {dropdownOpen && (
-                <div
-                    className="dropdown-backdrop"
-                    onClick={() => setDropdownOpen(false)}
-                />
-            )}
         </div>
     );
 };
