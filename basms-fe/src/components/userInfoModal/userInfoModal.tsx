@@ -1,7 +1,7 @@
 import React from 'react';
 import { useAuth } from '../../hooks/useAuth';
 import { getRoleName } from '../../constants/roles';
-import './UserInfoModal.css';
+import './userInfoModal.css';
 
 interface UserInfoModalProps {
     isOpen: boolean;
