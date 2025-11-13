@@ -24,6 +24,20 @@ class AuthService {
         return response.data;
     }
 
+// Login - thêm method này vào AuthService
+    async login(email: string, password: string): Promise<LoginResponse> {
+        const response = await axios.post(`${API_URL}/login`, {
+            email,
+            password
+        });
+
+        // Lưu tokens sau khi login thành công
+        this.saveTokens(response.data);
+
+        return response.data;
+    }
+
+
     // Logout
     async logout(): Promise<void> {
         const refreshToken = localStorage.getItem('refreshToken');
