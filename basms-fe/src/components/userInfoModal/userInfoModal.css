@@ -35,7 +35,6 @@
     max-width: 800px;
     max-height: 85vh;
     overflow: hidden;
-    animation: slideIn 0.3s ease-out;
     font-family: 'Inter', sans-serif;
 }
 
