@@ -22,6 +22,22 @@ const DashboardManager = () => {
         return () => clearInterval(timer);
     }, []);
 
+    useEffect(() => {
+        const handleClickOutside = (event: MouseEvent) => {
+            if (profileRef.current && !profileRef.current.contains(event.target as Node)) {
+                setIsProfileDropdownOpen(false);
+            }
+        };
+
+        if (isProfileDropdownOpen) {
+            document.addEventListener('mousedown', handleClickOutside);
+        }
+
+        return () => {
+            document.removeEventListener('mousedown', handleClickOutside);
+        };
+    }, [isProfileDropdownOpen]);
+
     const toggleMenu = () => {
         setIsMenuOpen(!isMenuOpen);
     };
@@ -32,6 +48,7 @@ const DashboardManager = () => {
 
     const handleLogout = async () => {
         setShowLogoutModal(true);
+        setIsProfileDropdownOpen(false);
     };
 
     const confirmLogout = async () => {
