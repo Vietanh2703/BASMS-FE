@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import {useState, useEffect, useRef} from 'react';
 import { useAuth } from '../../../hooks/useAuth';
 import UserInfoModal from "../../../components/userInfoModal/userInfoModal.tsx";
 import './dashboardManager.css';
@@ -11,7 +11,8 @@ const DashboardManager = () => {
     const [isLoggingOut, setIsLoggingOut] = useState(false);
     const [showLogoutModal, setShowLogoutModal] = useState(false);
     const [showUserInfoModal, setShowUserInfoModal] = useState(false);
-    const [dropdownOpen, setDropdownOpen] = useState(false);
+
+    const profileRef = useRef<HTMLDivElement>(null);
 
     useEffect(() => {
         const timer = setInterval(() => {
@@ -66,7 +67,7 @@ const DashboardManager = () => {
     const handleOpenUserInfo = (e: React.MouseEvent) => {
         e.stopPropagation();
         setShowUserInfoModal(true);
-        setDropdownOpen(false); // Đóng dropdown khi mở modal
+        setIsProfileDropdownOpen(false);
     };
 
     return (
@@ -130,7 +131,11 @@ const DashboardManager = () => {
                             <span className="manager-notification-badge">5</span>
                         </button>
 
-                        <div className="manager-user-profile" onClick={toggleProfileDropdown}>
+                        <div
+                            ref={profileRef}
+                            className="manager-user-profile"
+                            onClick={toggleProfileDropdown}
+                        >
                             <div className="manager-user-avatar">
                                 <span>{user?.fullName?.charAt(0).toUpperCase() || user?.email?.charAt(0).toUpperCase() || 'M'}</span>
                             </div>
@@ -257,14 +262,6 @@ const DashboardManager = () => {
                 isOpen={showUserInfoModal}
                 onClose={() => setShowUserInfoModal(false)}
             />
-
-            {/* Click outside để đóng dropdown */}
-            {dropdownOpen && (
-                <div
-                    className="dropdown-backdrop"
-                    onClick={() => setDropdownOpen(false)}
-                />
-            )}
         </div>
     );
 };

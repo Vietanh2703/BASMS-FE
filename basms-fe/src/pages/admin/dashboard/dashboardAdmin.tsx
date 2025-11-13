@@ -1,5 +1,4 @@
-// src/pages/admin/dashboard/dashboardAdmin.tsx
-import { useState, useEffect } from 'react';
+import {useState, useEffect, useRef} from 'react';
 import { useAuth } from '../../../hooks/useAuth';
 import UserInfoModal from "../../../components/userInfoModal/userInfoModal.tsx";
 import './dashboardAdmin.css';
@@ -12,8 +11,8 @@ const DashboardAdmin = () => {
     const [isLoggingOut, setIsLoggingOut] = useState(false);
     const [showLogoutModal, setShowLogoutModal] = useState(false);
     const [showUserInfoModal, setShowUserInfoModal] = useState(false);
-    const [dropdownOpen, setDropdownOpen] = useState(false);
 
+    const profileRef = useRef<HTMLDivElement>(null);
 
     // Update time every second
     useEffect(() => {
@@ -70,7 +69,7 @@ const DashboardAdmin = () => {
     const handleOpenUserInfo = (e: React.MouseEvent) => {
         e.stopPropagation();
         setShowUserInfoModal(true);
-        setDropdownOpen(false); // Đóng dropdown khi mở modal
+        setIsProfileDropdownOpen(false);
     };
 
     return (
@@ -161,7 +160,11 @@ const DashboardAdmin = () => {
                             <span className="notification-badge">3</span>
                         </button>
 
-                        <div className="user-profile" onClick={toggleProfileDropdown}>
+                        <div
+                            ref={profileRef}
+                            className="user-profile"
+                            onClick={toggleProfileDropdown}
+                        >
                             <div className="user-avatar">
                                 <span>{user?.fullName?.charAt(0).toUpperCase() || user?.email?.charAt(0).toUpperCase() || 'U'}</span>
                             </div>
@@ -289,13 +292,6 @@ const DashboardAdmin = () => {
                 onClose={() => setShowUserInfoModal(false)}
             />
 
-            {/* Click outside để đóng dropdown */}
-            {dropdownOpen && (
-                <div
-                    className="dropdown-backdrop"
-                    onClick={() => setDropdownOpen(false)}
-                />
-            )}
         </div>
     );
 };
