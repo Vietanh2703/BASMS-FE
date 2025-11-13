@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useAuth } from '../../../hooks/useAuth';
+import UserInfoModal from "../../../components/userInfoModal/userInfoModal.tsx";
 import './dashboardManager.css';
 
 const DashboardManager = () => {
@@ -9,6 +10,8 @@ const DashboardManager = () => {
     const { user, logout } = useAuth();
     const [isLoggingOut, setIsLoggingOut] = useState(false);
     const [showLogoutModal, setShowLogoutModal] = useState(false);
+    const [showUserInfoModal, setShowUserInfoModal] = useState(false);
+    const [dropdownOpen, setDropdownOpen] = useState(false);
 
     useEffect(() => {
         const timer = setInterval(() => {
@@ -58,6 +61,12 @@ const DashboardManager = () => {
         const seconds = date.getSeconds().toString().padStart(2, '0');
 
         return `${dayName}, ${day}/${month}/${year} ${hours}:${minutes}:${seconds}`;
+    };
+
+    const handleOpenUserInfo = (e: React.MouseEvent) => {
+        e.stopPropagation();
+        setShowUserInfoModal(true);
+        setDropdownOpen(false); // Đóng dropdown khi mở modal
     };
 
     return (
@@ -224,7 +233,7 @@ const DashboardManager = () => {
 
             {showLogoutModal && (
                 <div className="manager-modal-overlay" onClick={cancelLogout}>
-                    <div className="manager-modal-content" onClick={(e) => e.stopPropagation()}>
+                    <div className="manager-modal-content" onClick={handleOpenUserInfo}>
                         <div className="manager-modal-header">
                             <h3>Xác nhận đăng xuất</h3>
                         </div>
@@ -241,6 +250,20 @@ const DashboardManager = () => {
                         </div>
                     </div>
                 </div>
+            )}
+
+            {/* USER INFO MODAL */}
+            <UserInfoModal
+                isOpen={showUserInfoModal}
+                onClose={() => setShowUserInfoModal(false)}
+            />
+
+            {/* Click outside để đóng dropdown */}
+            {dropdownOpen && (
+                <div
+                    className="dropdown-backdrop"
+                    onClick={() => setDropdownOpen(false)}
+                />
             )}
         </div>
     );

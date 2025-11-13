@@ -14,7 +14,7 @@ export const API_ENDPOINTS = {
         REGISTER: '/users/register',
     },
     USERS: {
-        PROFILE: '/users/profile',
+        PROFILE: '/users/{id:guid}',
         UPDATE: '/users/update',
     },
     // Thêm các endpoints khác của bạn ở đây

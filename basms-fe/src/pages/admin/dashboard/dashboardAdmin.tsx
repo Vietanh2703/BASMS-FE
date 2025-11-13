@@ -1,6 +1,7 @@
 // src/pages/admin/dashboard/dashboardAdmin.tsx
 import { useState, useEffect } from 'react';
 import { useAuth } from '../../../hooks/useAuth';
+import UserInfoModal from "../../../components/userInfoModal/userInfoModal.tsx";
 import './dashboardAdmin.css';
 
 const DashboardAdmin = () => {
@@ -10,6 +11,8 @@ const DashboardAdmin = () => {
     const { user, logout } = useAuth();
     const [isLoggingOut, setIsLoggingOut] = useState(false);
     const [showLogoutModal, setShowLogoutModal] = useState(false);
+    const [showUserInfoModal, setShowUserInfoModal] = useState(false);
+    const [dropdownOpen, setDropdownOpen] = useState(false);
 
 
     // Update time every second
@@ -62,6 +65,12 @@ const DashboardAdmin = () => {
         const seconds = date.getSeconds().toString().padStart(2, '0');
 
         return `${dayName}, ${day}/${month}/${year} ${hours}:${minutes}:${seconds}`;
+    };
+
+    const handleOpenUserInfo = (e: React.MouseEvent) => {
+        e.stopPropagation();
+        setShowUserInfoModal(true);
+        setDropdownOpen(false); // Đóng dropdown khi mở modal
     };
 
     return (
@@ -165,10 +174,7 @@ const DashboardAdmin = () => {
 
                             {isProfileDropdownOpen && (
                                 <div className="profile-dropdown">
-                                    <div className="dropdown-item" onClick={(e) => {
-                                        e.stopPropagation();
-                                        // Navigate to profile page
-                                    }}>
+                                    <div className="dropdown-item" onClick={handleOpenUserInfo}>
                                         <svg className="dropdown-icon" viewBox="0 0 24 24" fill="currentColor">
                                             <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 3c1.66 0 3 1.34 3 3s-1.34 3-3 3-3-1.34-3-3 1.34-3 3-3zm0 14.2c-2.5 0-4.71-1.28-6-3.22.03-1.99 4-3.08 6-3.08 1.99 0 5.97 1.09 6 3.08-1.29 1.94-3.5 3.22-6 3.22z"/>
                                         </svg>
@@ -277,6 +283,19 @@ const DashboardAdmin = () => {
                 </div>
             )}
 
+            {/* USER INFO MODAL */}
+            <UserInfoModal
+                isOpen={showUserInfoModal}
+                onClose={() => setShowUserInfoModal(false)}
+            />
+
+            {/* Click outside để đóng dropdown */}
+            {dropdownOpen && (
+                <div
+                    className="dropdown-backdrop"
+                    onClick={() => setDropdownOpen(false)}
+                />
+            )}
         </div>
     );
 };
