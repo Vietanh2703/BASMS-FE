@@ -2,6 +2,7 @@ import React, { createContext, useState, useEffect, type ReactNode } from 'react
 import { useNavigate, useLocation } from 'react-router-dom';
 import authService from '../services/authService';
 import tokenManager from '../services/tokenManager';
+import { getDashboardByRole } from '../constants/roles';
 
 export interface UserInfo {
     fullName: string;
@@ -159,7 +160,9 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
             sessionStorage.removeItem('redirectAfterLogin');
             navigate(redirectPath, { replace: true });
         } else {
-            navigate('/admin/dashboard', { replace: true });
+            // Redirect dựa trên roleId
+            const dashboardPath = getDashboardByRole(userInfo.roleId);
+            navigate(dashboardPath, { replace: true });
         }
     };
 

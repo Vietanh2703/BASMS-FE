@@ -48,6 +48,7 @@ export interface RefreshTokenResponse {
     refreshToken: string;
     accessTokenExpiry: string;
     refreshTokenExpiry: string;
+    sessionExpiry: string;
 }
 
 // Create axios instance

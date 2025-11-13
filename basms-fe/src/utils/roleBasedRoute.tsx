@@ -3,11 +3,12 @@ import { Navigate } from 'react-router-dom';
 import { useAuth } from '../hooks/useAuth';
 import { getDashboardByRole } from '../constants/roles';
 
-interface PublicRouteProps {
+interface RoleBasedRouteProps {
     children: React.ReactNode;
+    allowedRoles: string[]; // Array of roleIds that can access this route
 }
 
-export const PublicRoute: React.FC<PublicRouteProps> = ({ children }) => {
+export const RoleBasedRoute: React.FC<RoleBasedRouteProps> = ({ children, allowedRoles }) => {
     const { user, isAuthenticated, loading } = useAuth();
 
     // Hiển thị loading khi đang kiểm tra authentication
@@ -26,18 +27,17 @@ export const PublicRoute: React.FC<PublicRouteProps> = ({ children }) => {
         );
     }
 
-    // Nếu đã đăng nhập, redirect về dashboard theo role
-    if (isAuthenticated && user) {
-        // Kiểm tra có trang cần redirect sau login không
-        const redirectPath = sessionStorage.getItem('redirectAfterLogin');
-        if (redirectPath) {
-            sessionStorage.removeItem('redirectAfterLogin');
-            return <Navigate to={redirectPath} replace />;
-        }
+    // Nếu chưa đăng nhập, redirect to login
+    if (!isAuthenticated || !user) {
+        sessionStorage.setItem('redirectAfterLogin', window.location.pathname);
+        return <Navigate to="/login" replace />;
+    }
 
-        // Redirect dựa trên roleId của user
-        const dashboardPath = getDashboardByRole(user.roleId);
-        return <Navigate to={dashboardPath} replace />;
+    // Kiểm tra role có được phép truy cập không
+    if (!allowedRoles.includes(user.roleId)) {
+        // Redirect về dashboard của role đó
+        const userDashboard = getDashboardByRole(user.roleId);
+        return <Navigate to={userDashboard} replace />;
     }
 
     return <>{children}</>;
