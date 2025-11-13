@@ -1,0 +1,53 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+
+.homepage-container {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  background-color: white;
+  padding-top: 70px;
+}
+
+.homepage-main {
+  flex: 1;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 2rem;
+}
+
+.welcome-text {
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', sans-serif;
+  font-size: 3rem;
+  font-weight: 700;
+  color: #2563eb;
+  text-align: center;
+  margin: 0;
+  line-height: 1.4;
+}
+
+.homepage-footer {
+  text-align: center;
+  padding: 2rem;
+  background-color: white;
+  border-top: 1px solid #e5e7eb;
+}
+
+.homepage-footer p {
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', sans-serif;
+  margin: 0;
+  color: #2563eb;
+  font-size: 1rem;
+  font-weight: 500;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .welcome-text {
+    font-size: 2rem;
+  }
+
+  .homepage-footer p {
+    font-size: 0.9rem;
+  }
+}
