@@ -18,11 +18,17 @@ const Login = () => {
     const [showSnackbarFailed, setShowSnackbarFailed] = useState(false);
     const [snackbarMessage, setSnackbarMessage] = useState('');
     const [isLoading, setIsLoading] = useState(false);
+    const [failedAttempts, setFailedAttempts] = useState(0);
+    const [isRateLimited, setIsRateLimited] = useState(false);
+
+    const [showPasswordResetModal, setShowPasswordResetModal] = useState(false);
+
     useNavigate();
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
+
 
         // Validate inputs
         if (!username && !password) {
@@ -88,10 +94,58 @@ const Login = () => {
             setShowSnackbarSuccess(true);
 
         } catch (error: unknown) {
-            const errorMessage = error instanceof Error ? error.message : 'Unknown error';
-            console.error('Error details:', errorMessage);
+            let errorMessage = 'Đăng nhập thất bại';
 
-            setSnackbarMessage('Tài khoản không tồn tại');
+            if (error && typeof error === 'object' && 'response' in error) {
+                const axiosError = error as {
+                    response?: {
+                        data?: string | { message?: string; error?: string; errors?: string[] };
+                        status?: number
+                    }
+                };
+
+                if (axiosError.response?.data) {
+                    const responseData = axiosError.response.data;
+
+                    if (typeof responseData === 'string') {
+                        if (responseData.includes('Invalid password')) {
+                            const newAttempts = failedAttempts + 1;
+                            setFailedAttempts(newAttempts);
+
+                            if (newAttempts >= 5) {
+                                setShowPasswordResetModal(true);
+                                setFailedAttempts(0);
+                            } else {
+                                errorMessage = 'Mật khẩu bạn nhập hiện không đúng';
+                            }
+
+                            // Disable nút login 3 giây
+                            setIsRateLimited(true);
+                            setTimeout(() => {
+                                setIsRateLimited(false);
+                            }, 3000);
+                        } else if (responseData.includes('User not found') || responseData.includes('Invalid email')) {
+                            errorMessage = 'Tài khoản không tồn tại';
+                        }
+                    }
+                    else if (typeof responseData === 'object') {
+                        const { message, error: errorField, errors } = responseData;
+
+                        if (message) {
+                            errorMessage = message;
+                        } else if (errorField) {
+                            errorMessage = errorField;
+                        } else if (errors && Array.isArray(errors) && errors.length > 0) {
+                            errorMessage = errors.join(', ');
+                        }
+                    }
+                }
+            } else if (error instanceof Error) {
+                errorMessage = error.message;
+            }
+
+            console.error('Login error:', error);
+            setSnackbarMessage(errorMessage);
             setShowSnackbarFailed(true);
         } finally {
             setIsLoading(false);
@@ -135,9 +189,17 @@ const Login = () => {
                             />
                         </div>
 
-                        <button type="submit" className="login-btn" disabled={isLoading}>
-                            {isLoading ? 'Đang đăng nhập...' : 'Đăng nhập'}
+
+                        <button
+                            type="submit"
+                            className="login-btn"
+                            disabled={isLoading || isRateLimited}
+                        >
+                            {isLoading ? 'Đang đăng nhập...' :
+                                isRateLimited ? 'Vui lòng đợi 3 giây...' :
+                                    'Đăng nhập'}
                         </button>
+
                     </form>
                 </div>
             </div>
@@ -168,6 +230,33 @@ const Login = () => {
                     duration={3000}
                 />
             )}
+
+            {showPasswordResetModal && (
+                <div className="password-fail-overlay" onClick={() => setShowPasswordResetModal(false)}>
+                    <div className="password-fail-content" onClick={(e) => e.stopPropagation()}>
+                        <h2>Cảnh báo</h2>
+                        <p>Bạn đã nhập sai mật khẩu quá 5 lần. Bạn có muốn đổi mật khẩu không?</p>
+                        <div className="password-fail-actions">
+                            <button
+                                className="btn-primary"
+                                onClick={() => {
+                                    setShowPasswordResetModal(false);
+                                    window.location.href = '/forgotPassword';
+                                }}
+                            >
+                                Đổi mật khẩu
+                            </button>
+                            <button
+                                className="btn-secondary"
+                                onClick={() => setShowPasswordResetModal(false)}
+                            >
+                                Hủy
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
+
         </div>
     );
 };

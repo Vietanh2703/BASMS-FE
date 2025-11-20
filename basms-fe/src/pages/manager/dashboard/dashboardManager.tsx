@@ -1,6 +1,6 @@
 import {useState, useEffect, useRef} from 'react';
 import { useAuth } from '../../../hooks/useAuth';
-import UserInfoModal from "../../../components/userInfoModal/userInfoModal.tsx";
+import ManagerInfoModal from "../../../components/managerInfoModal/managerInfoModal.tsx";
 import './dashboardManager.css';
 
 const DashboardManager = () => {
@@ -10,7 +10,7 @@ const DashboardManager = () => {
     const { user, logout } = useAuth();
     const [isLoggingOut, setIsLoggingOut] = useState(false);
     const [showLogoutModal, setShowLogoutModal] = useState(false);
-    const [showUserInfoModal, setShowUserInfoModal] = useState(false);
+    const [showManagerInfoModal, setShowManagerInfoModal] = useState(false);
 
     const profileRef = useRef<HTMLDivElement>(null);
 
@@ -83,7 +83,7 @@ const DashboardManager = () => {
 
     const handleOpenUserInfo = (e: React.MouseEvent) => {
         e.stopPropagation();
-        setShowUserInfoModal(true);
+        setShowManagerInfoModal(true);
         setIsProfileDropdownOpen(false);
     };
 
@@ -275,9 +275,10 @@ const DashboardManager = () => {
             )}
 
             {/* USER INFO MODAL */}
-            <UserInfoModal
-                isOpen={showUserInfoModal}
-                onClose={() => setShowUserInfoModal(false)}
+            <ManagerInfoModal
+                isOpen={showManagerInfoModal}
+                onClose={() => setShowManagerInfoModal(false)}
+                managerId={user?.userId || ''}
             />
         </div>
     );
