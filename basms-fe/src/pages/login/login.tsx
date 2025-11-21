@@ -108,7 +108,7 @@ const Login = () => {
                     const responseData = axiosError.response.data;
 
                     if (typeof responseData === 'string') {
-                        if (responseData.includes('Invalid password')) {
+                        if (responseData.includes('Invalid password. Please check your password and try again.')) {
                             const newAttempts = failedAttempts + 1;
                             setFailedAttempts(newAttempts);
 
