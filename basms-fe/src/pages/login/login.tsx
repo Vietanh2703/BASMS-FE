@@ -99,45 +99,49 @@ const Login = () => {
             if (error && typeof error === 'object' && 'response' in error) {
                 const axiosError = error as {
                     response?: {
-                        data?: string | { message?: string; error?: string; errors?: string[] };
-                        status?: number
+                        data?: {
+                            errorCode?: string;
+                            message?: string;
+                            details?: string;
+                            validationErrors?: string[];
+                        };
+                        status?: number;
                     }
                 };
 
                 if (axiosError.response?.data) {
                     const responseData = axiosError.response.data;
 
-                    if (typeof responseData === 'string') {
-                        if (responseData.includes('Invalid password. Please check your password and try again.')) {
-                            const newAttempts = failedAttempts + 1;
-                            setFailedAttempts(newAttempts);
+                    // Xử lý theo errorCode
+                    if (responseData.errorCode === 'AUTH_INVALID_PASSWORD') {
+                        const newAttempts = failedAttempts + 1;
+                        setFailedAttempts(newAttempts);
 
-                            if (newAttempts >= 5) {
-                                setShowPasswordResetModal(true);
-                                setFailedAttempts(0);
-                            } else {
-                                errorMessage = 'Mật khẩu bạn nhập hiện không đúng';
-                            }
-
-                            // Disable nút login 3 giây
-                            setIsRateLimited(true);
-                            setTimeout(() => {
-                                setIsRateLimited(false);
-                            }, 3000);
-                        } else if (responseData.includes('User not found') || responseData.includes('Invalid email')) {
-                            errorMessage = 'Tài khoản không tồn tại';
+                        if (newAttempts >= 5) {
+                            setShowPasswordResetModal(true);
+                            setFailedAttempts(0);
+                        } else {
+                            errorMessage = 'Mật khẩu bạn nhập hiện không đúng';
                         }
+
+                        // Disable nút login 3 giây
+                        setIsRateLimited(true);
+                        setTimeout(() => {
+                            setIsRateLimited(false);
+                        }, 3000);
                     }
-                    else if (typeof responseData === 'object') {
-                        const { message, error: errorField, errors } = responseData;
-
-                        if (message) {
-                            errorMessage = message;
-                        } else if (errorField) {
-                            errorMessage = errorField;
-                        } else if (errors && Array.isArray(errors) && errors.length > 0) {
-                            errorMessage = errors.join(', ');
-                        }
+                    else if (responseData.errorCode === 'AUTH_USER_NOT_FOUND' ||
+                             responseData.errorCode === 'AUTH_INVALID_EMAIL') {
+                        errorMessage = 'Tài khoản không tồn tại';
+                    }
+                    else if (responseData.validationErrors && responseData.validationErrors.length > 0) {
+                        errorMessage = responseData.validationErrors.join(', ');
+                    }
+                    else if (responseData.message) {
+                        errorMessage = responseData.message;
+                    }
+                    else if (responseData.details) {
+                        errorMessage = responseData.details;
                     }
                 }
             } else if (error instanceof Error) {
