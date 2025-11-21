@@ -112,11 +112,16 @@ apiClient.interceptors.response.use(
 
         // Nếu lỗi 401 và chưa retry
         if (error.response?.status === 401 && !originalRequest._retry) {
-            // Nếu là endpoint refresh-token bị 401, logout
-            if (originalRequest.url?.includes(API_ENDPOINTS.AUTH.REFRESH_TOKEN)) {
-                authService.clearTokens();
-                tokenManager.stopAutoRefresh();
-                window.location.href = '/login';
+            // Nếu là endpoint login hoặc refresh-token bị 401, không xử lý auto-refresh
+            if (originalRequest.url?.includes(API_ENDPOINTS.AUTH.LOGIN) ||
+                originalRequest.url?.includes(API_ENDPOINTS.AUTH.REFRESH_TOKEN)) {
+                // Nếu là refresh-token thất bại, logout
+                if (originalRequest.url?.includes(API_ENDPOINTS.AUTH.REFRESH_TOKEN)) {
+                    authService.clearTokens();
+                    tokenManager.stopAutoRefresh();
+                    window.location.href = '/login';
+                }
+                // Với endpoint login, chỉ trả về lỗi để component xử lý
                 return Promise.reject(error);
             }
 
