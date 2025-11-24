@@ -5,9 +5,6 @@ on:
     branches:
       - main
       - feature
-  pull_request:
-    branches:
-      - main
 
 env:
   VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
@@ -30,44 +27,40 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
-      - name: Install Vercel CLI
-        run: npm install --global vercel@latest
-
-      - name: Pull Vercel Environment Information
-        run: vercel pull --yes --environment=${{ github.ref == 'refs/heads/main' && 'production' || 'preview' }} --token=${{ secrets.VERCEL_TOKEN }}
-
-      - name: Build Project Artifacts
+      - name: Build project
         run: npm run build
+        env:
+          CI: true
 
-      - name: Deploy Project Artifacts to Vercel
-        id: deploy
-        run: |
-          if [ "${{ github.ref }}" == "refs/heads/main" ]; then
-            echo "Deploying to production..."
-            vercel deploy --prod --token=${{ secrets.VERCEL_TOKEN }} > deployment-url.txt
-          else
-            echo "Deploying to preview..."
-            vercel deploy --token=${{ secrets.VERCEL_TOKEN }} > deployment-url.txt
-          fi
-          echo "url=$(cat deployment-url.txt)" >> $GITHUB_OUTPUT
-
-      - name: Comment Deployment URL on PR
-        if: github.event_name == 'pull_request'
-        uses: actions/github-script@v7
+      - name: Deploy to Vercel (Production)
+        if: github.ref == 'refs/heads/main'
+        uses: amondnet/vercel-action@v25
+        id: deploy-production
         with:
-          script: |
-            const deploymentUrl = '${{ steps.deploy.outputs.url }}';
-            github.rest.issues.createComment({
-              issue_number: context.issue.number,
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              body: `✅ Deployment successful!\n\n🔗 Preview URL: ${deploymentUrl}`
-            });
+          vercel-token: ${{ secrets.VERCEL_TOKEN }}
+          vercel-org-id: ${{ secrets.VERCEL_ORG_ID }}
+          vercel-project-id: ${{ secrets.VERCEL_PROJECT_ID }}
+          vercel-args: '--prod'
+          working-directory: ./
+
+      - name: Deploy to Vercel (Preview)
+        if: github.ref != 'refs/heads/main'
+        uses: amondnet/vercel-action@v25
+        id: deploy-preview
+        with:
+          vercel-token: ${{ secrets.VERCEL_TOKEN }}
+          vercel-org-id: ${{ secrets.VERCEL_ORG_ID }}
+          vercel-project-id: ${{ secrets.VERCEL_PROJECT_ID }}
+          working-directory: ./
 
       - name: Deployment Summary
         run: |
           echo "### 🚀 Deployment Complete!" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
-          echo "**Deployment URL:** ${{ steps.deploy.outputs.url }}" >> $GITHUB_STEP_SUMMARY
           echo "**Branch:** ${{ github.ref_name }}" >> $GITHUB_STEP_SUMMARY
           echo "**Environment:** ${{ github.ref == 'refs/heads/main' && 'Production' || 'Preview' }}" >> $GITHUB_STEP_SUMMARY
+          if [ "${{ github.ref }}" == "refs/heads/main" ]; then
+            echo "**Deployment URL:** ${{ steps.deploy-production.outputs.preview-url }}" >> $GITHUB_STEP_SUMMARY
+          else
+            echo "**Deployment URL:** ${{ steps.deploy-preview.outputs.preview-url }}" >> $GITHUB_STEP_SUMMARY
+          fi
