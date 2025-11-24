@@ -13,6 +13,12 @@ export const API_ENDPOINTS = {
         REFRESH_TOKEN: '/users/refresh-token',
         REGISTER: '/users/register',
     },
+    RESET_PASSWORD: {
+        REQUEST_OTP: '/users/reset-password/request-otp',
+        VERIFY_OTP: '/users/verify-otp',
+        REFRESH_OTP: '/users/refresh-otp',
+        RESET_PASSWORD: '/users/reset-password',
+    },
     USERS: {
         PROFILE: '/users/{id:guid}',
         UPDATE: '/users/update',
@@ -69,7 +75,11 @@ apiClient.interceptors.request.use(
         const publicEndpoints = [
             API_ENDPOINTS.AUTH.LOGIN,
             API_ENDPOINTS.AUTH.REGISTER,
-            API_ENDPOINTS.AUTH.REFRESH_TOKEN
+            API_ENDPOINTS.AUTH.REFRESH_TOKEN,
+            API_ENDPOINTS.RESET_PASSWORD.REQUEST_OTP,
+            API_ENDPOINTS.RESET_PASSWORD.VERIFY_OTP,
+            API_ENDPOINTS.RESET_PASSWORD.REFRESH_OTP,
+            API_ENDPOINTS.RESET_PASSWORD.RESET_PASSWORD
         ];
 
         const isPublicEndpoint = publicEndpoints.some(endpoint =>

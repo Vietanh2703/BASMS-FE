@@ -138,7 +138,12 @@ const Login = () => {
                         errorMessage = responseData.validationErrors.join(', ');
                     }
                     else if (responseData.message) {
-                        errorMessage = responseData.message;
+                        // Kiểm tra nếu tài khoản bị khóa
+                        if (responseData.message === 'Account is inactive. Please contact support.') {
+                            errorMessage = 'Tài khoản đã bị khóa. Vui lòng liên hệ quản trị viên.';
+                        } else {
+                            errorMessage = responseData.message;
+                        }
                     }
                     else if (responseData.details) {
                         errorMessage = responseData.details;
@@ -193,6 +198,15 @@ const Login = () => {
                             />
                         </div>
 
+                        <div className="forgot-password-link-container">
+                            <button
+                                type="button"
+                                className="forgot-password-link"
+                                onClick={() => window.location.href = '/verify-email'}
+                            >
+                                Quên mật khẩu?
+                            </button>
+                        </div>
 
                         <button
                             type="submit"

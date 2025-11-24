@@ -5,6 +5,9 @@ import { RoleBasedRoute } from './utils/roleBasedRoute.tsx';
 {/* Public Route */}
 import HomePage from './pages/home/homepage';
 import Login from './pages/login/login';
+import VerifyEmail from './pages/reset-password/verifyEmail';
+import VerifyOtpPassword from './pages/reset-password/verifyOtpPassword';
+import ForgotPassword from './pages/reset-password/forgotPassword';
 {/* Admin Routes */}
 import DashboardAdmin from './pages/admin/dashboard/dashboardAdmin';
 {/* Director Routes */}
@@ -29,6 +32,24 @@ function App() {
                     <Route path="/login" element={
                         <PublicRoute>
                             <Login/>
+                        </PublicRoute>
+                    }/>
+
+                    <Route path="/verify-email" element={
+                        <PublicRoute>
+                            <VerifyEmail/>
+                        </PublicRoute>
+                    }/>
+
+                    <Route path="/verify-otp-password" element={
+                        <PublicRoute>
+                            <VerifyOtpPassword/>
+                        </PublicRoute>
+                    }/>
+
+                    <Route path="/forgot-password" element={
+                        <PublicRoute>
+                            <ForgotPassword/>
                         </PublicRoute>
                     }/>
 
