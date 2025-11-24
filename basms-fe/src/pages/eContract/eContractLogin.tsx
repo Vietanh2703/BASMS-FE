@@ -1,16 +1,27 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import Navbar from '../../components/navbar/navbar';
 import SnackbarChecked from '../../components/snackbar/snackbarChecked';
 import SnackbarWarning from '../../components/snackbar/snackbarWarning';
 import SnackbarFailed from '../../components/snackbar/snackbarFailed';
-import { apiClient, API_ENDPOINTS, type LoginRequest, type LoginResponse } from '../../clients/apiClients';
-import { useAuth } from '../../hooks/useAuth';
-import './login.css';
-import type { UserInfo } from "../../contexts/authContext";
+import { apiClient, API_ENDPOINTS } from '../../clients/apiClients';
+import './eContractLogin.css';
 
-const Login = () => {
-    const { login } = useAuth();
+const ALLOWED_ROLE_ID = 'ddbd5fad-ba6e-11f0-bcac-00155dca8f48';
+
+interface EContractLoginResponse {
+    userId: string;
+    email: string;
+    fullName: string;
+    roleId: string;
+    accessToken: string;
+    refreshToken: string;
+    accessTokenExpiry: string;
+    refreshTokenExpiry: string;
+    sessionExpiry: string;
+}
+
+const EContractLogin = () => {
+    const navigate = useNavigate();
     const [username, setUsername] = useState('');
     const [password, setPassword] = useState('');
     const [showSnackbarSuccess, setShowSnackbarSuccess] = useState(false);
@@ -21,14 +32,10 @@ const Login = () => {
     const [failedAttempts, setFailedAttempts] = useState(0);
     const [isRateLimited, setIsRateLimited] = useState(false);
 
-    const [showPasswordResetModal, setShowPasswordResetModal] = useState(false);
-
-    useNavigate();
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
-
 
         // Validate inputs
         if (!username && !password) {
@@ -58,37 +65,33 @@ const Login = () => {
         setIsLoading(true);
 
         try {
-            const loginData: LoginRequest = {
-                Email: username,
-                Password: password,
-            };
-
-            const response = await apiClient.post<LoginResponse>(
+            const response = await apiClient.post<EContractLoginResponse>(
                 API_ENDPOINTS.AUTH.LOGIN,
-                loginData
+                {
+                    Email: username,
+                    Password: password,
+                }
             );
 
-            const { accessToken: _accessToken, refreshToken: _refreshToken, fullName, email, userId, roleId, accessTokenExpiry, refreshTokenExpiry } = response.data;
+            const { roleId, accessToken, refreshToken, fullName, email, userId, accessTokenExpiry, refreshTokenExpiry } = response.data;
 
+            // Check roleId
+            if (roleId !== ALLOWED_ROLE_ID) {
+                setSnackbarMessage('Tài khoản không có quyền hạn thực hiện chức năng này.');
+                setShowSnackbarFailed(true);
+                setIsLoading(false);
+                return;
+            }
 
-            // Tạo userInfo object
-            const userInfo: UserInfo = {
-                fullName,
-                email,
-                userId,
-                roleId,
-                sub: userId
-            };
-
-            // Lưu expiry dates vào response data để authContext có thể sử dụng
-            const updatedResponse = {
-                ...response.data,
-                accessTokenExpiry: accessTokenExpiry || new Date(Date.now() + 30 * 60 * 1000).toISOString(),
-                refreshTokenExpiry: refreshTokenExpiry || new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString()
-            };
-
-            // Login qua context - sẽ tự động lưu tokens và redirect
-            login(updatedResponse.accessToken, updatedResponse.refreshToken, userInfo);
+            // Save tokens and user info
+            localStorage.setItem('eContractAccessToken', accessToken);
+            localStorage.setItem('eContractRefreshToken', refreshToken);
+            localStorage.setItem('eContractAccessTokenExpiry', accessTokenExpiry);
+            localStorage.setItem('eContractRefreshTokenExpiry', refreshTokenExpiry);
+            localStorage.setItem('eContractUserId', userId);
+            localStorage.setItem('eContractEmail', email);
+            localStorage.setItem('eContractFullName', fullName);
+            localStorage.setItem('eContractRoleId', roleId);
 
             setSnackbarMessage('Đăng nhập thành công!');
             setShowSnackbarSuccess(true);
@@ -112,19 +115,12 @@ const Login = () => {
                 if (axiosError.response?.data) {
                     const responseData = axiosError.response.data;
 
-                    // Xử lý theo errorCode
                     if (responseData.errorCode === 'AUTH_INVALID_PASSWORD') {
                         const newAttempts = failedAttempts + 1;
                         setFailedAttempts(newAttempts);
 
-                        if (newAttempts >= 5) {
-                            setShowPasswordResetModal(true);
-                            setFailedAttempts(0);
-                        } else {
-                            errorMessage = 'Mật khẩu bạn nhập hiện không đúng';
-                        }
+                        errorMessage = 'Mật khẩu bạn nhập hiện không đúng';
 
-                        // Disable nút login 3 giây
                         setIsRateLimited(true);
                         setTimeout(() => {
                             setIsRateLimited(false);
@@ -138,7 +134,6 @@ const Login = () => {
                         errorMessage = responseData.validationErrors.join(', ');
                     }
                     else if (responseData.message) {
-                        // Kiểm tra nếu tài khoản bị khóa
                         if (responseData.message === 'Account is inactive. Please contact support.') {
                             errorMessage = 'Tài khoản đã bị khóa. Vui lòng liên hệ quản trị viên.';
                         } else {
@@ -153,7 +148,7 @@ const Login = () => {
                 errorMessage = error.message;
             }
 
-            console.error('Login error:', error);
+            console.error('eContract Login error:', error);
             setSnackbarMessage(errorMessage);
             setShowSnackbarFailed(true);
         } finally {
@@ -161,56 +156,44 @@ const Login = () => {
         }
     };
 
-    // Function để handle khi snackbar success đóng
     const handleSuccessSnackbarClose = () => {
         setShowSnackbarSuccess(false);
-        // Navigate được xử lý tự động trong authContext.login()
+        // Navigate to dashboard (PublicRoute will prevent going back to login)
+        navigate('/e-contracts/dashboard', { replace: true });
     };
 
     return (
-        <div className="login-page">
-            <Navbar />
+        <div className="econtract-login-page">
+            <div className="econtract-login-container">
+                <div className="econtract-login-box">
+                    <h1 className="econtract-login-title">Đăng nhập eContract</h1>
 
-            <div className="login-container">
-                <div className="login-box">
-                    <h1 className="login-title">Đăng nhập</h1>
-
-                    <form onSubmit={handleSubmit} className="login-form">
-                        <div className="form-group">
+                    <form onSubmit={handleSubmit} className="econtract-login-form">
+                        <div className="econtract-form-group">
                             <input
                                 type="text"
                                 placeholder="tên tài khoản"
                                 value={username}
                                 onChange={(e) => setUsername(e.target.value)}
-                                className="form-input"
+                                className="econtract-form-input"
                                 disabled={isLoading}
                             />
                         </div>
 
-                        <div className="form-group">
+                        <div className="econtract-form-group">
                             <input
                                 type="password"
                                 placeholder="mật khẩu"
                                 value={password}
                                 onChange={(e) => setPassword(e.target.value)}
-                                className="form-input"
+                                className="econtract-form-input"
                                 disabled={isLoading}
                             />
                         </div>
 
-                        <div className="forgot-password-link-container">
-                            <button
-                                type="button"
-                                className="forgot-password-link"
-                                onClick={() => window.location.href = '/verify-email'}
-                            >
-                                Quên mật khẩu?
-                            </button>
-                        </div>
-
                         <button
                             type="submit"
-                            className="login-btn"
+                            className="econtract-login-btn"
                             disabled={isLoading || isRateLimited}
                         >
                             {isLoading ? 'Đang đăng nhập...' :
@@ -220,13 +203,13 @@ const Login = () => {
 
                     </form>
 
-                    <div className="econtract-login-link-container">
+                    <div className="econtract-back-login-link-container">
                         <button
                             type="button"
-                            className="econtract-login-link"
-                            onClick={() => window.location.href = '/e-contract/login'}
+                            className="econtract-back-login-link"
+                            onClick={() => window.location.href = '/login'}
                         >
-                            Đăng nhập eContract
+                            Quay lại hệ thống quản lý bảo vệ
                         </button>
                     </div>
                 </div>
@@ -258,35 +241,8 @@ const Login = () => {
                     duration={3000}
                 />
             )}
-
-            {showPasswordResetModal && (
-                <div className="password-fail-overlay" onClick={() => setShowPasswordResetModal(false)}>
-                    <div className="password-fail-content" onClick={(e) => e.stopPropagation()}>
-                        <h2>Cảnh báo</h2>
-                        <p>Bạn đã nhập sai mật khẩu quá 5 lần. Bạn có muốn đổi mật khẩu không?</p>
-                        <div className="password-fail-actions">
-                            <button
-                                className="btn-primary"
-                                onClick={() => {
-                                    setShowPasswordResetModal(false);
-                                    window.location.href = '/forgotPassword';
-                                }}
-                            >
-                                Đổi mật khẩu
-                            </button>
-                            <button
-                                className="btn-secondary"
-                                onClick={() => setShowPasswordResetModal(false)}
-                            >
-                                Hủy
-                            </button>
-                        </div>
-                    </div>
-                </div>
-            )}
-
         </div>
     );
 };
 
-export default Login;
+export default EContractLogin;

@@ -2,6 +2,7 @@ import { BrowserRouter as Router, Navigate, Route, Routes } from 'react-router-d
 import { AuthProvider } from "./contexts/authContext";
 import { PublicRoute } from './utils/publicRoute';
 import { RoleBasedRoute } from './utils/roleBasedRoute.tsx';
+import { EContractRoute } from './utils/eContractRoute';
 {/* Public Route */}
 import HomePage from './pages/home/homepage';
 import Login from './pages/login/login';
@@ -12,6 +13,8 @@ import ForgotPassword from './pages/reset-password/forgotPassword';
 import DashboardAdmin from './pages/admin/dashboard/dashboardAdmin';
 {/* Director Routes */}
 import DashboardDirector from "./pages/director/dashboard/dashboardDirector.tsx";
+import EContractLogin from './pages/eContract/eContractLogin';
+import EContractDashboard from './pages/eContract/eContractDashboard';
 {/* Manager Routes */}
 import DashboardManager from "./pages/manager/dashboard/dashboardManager.tsx";
 import { ROLES } from './constants/roles';
@@ -51,6 +54,18 @@ function App() {
                         <PublicRoute>
                             <ForgotPassword/>
                         </PublicRoute>
+                    }/>
+
+                    <Route path="/e-contract/login" element={
+                        <PublicRoute>
+                            <EContractLogin/>
+                        </PublicRoute>
+                    }/>
+
+                    <Route path="/e-contracts/dashboard" element={
+                        <EContractRoute>
+                            <EContractDashboard/>
+                        </EContractRoute>
                     }/>
 
                     {/* Admin role */}
