@@ -129,10 +129,16 @@ const ContractReview = () => {
         setIsSubmitting(true);
 
         try {
-            // Prepare API payload
-            const payload: { [key: string]: string } = {};
+            // Prepare API payload with formatting information
+            const payload: { [key: string]: any } = {};
             Object.keys(contractData.formData).forEach(key => {
-                payload[key] = contractData.formData[key].value;
+                const field = contractData.formData[key];
+                payload[key] = {
+                    value: field.value,
+                    bold: field.formatting.bold,
+                    italic: field.formatting.italic,
+                    underline: field.formatting.underline
+                };
             });
 
             const apiUrl = import.meta.env.VITE_API_CONTRACT_URL;
@@ -143,7 +149,7 @@ const ContractReview = () => {
                 return;
             }
 
-            const response = await fetch(`${apiUrl}/contracts/create-from-template`, {
+            const response = await fetch(`${apiUrl}/api/contracts/template/fill-from-s3`, {
                 method: 'POST',
                 headers: {
                     'Authorization': `Bearer ${token}`,
