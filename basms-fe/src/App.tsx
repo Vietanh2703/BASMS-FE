@@ -15,6 +15,10 @@ import DashboardAdmin from './pages/admin/dashboard/dashboardAdmin';
 import DashboardDirector from "./pages/director/dashboard/dashboardDirector.tsx";
 import EContractLogin from './pages/eContract/eContractLogin';
 import EContractDashboard from './pages/eContract/eContractDashboard';
+import EContractList from "./pages/eContract/eContractList.tsx";
+import EContractCreateNew from "./pages/eContract/eContractCreateNew.tsx";
+import TemplateEditor from "./pages/eContract/TemplateEditor.tsx";
+import ContractReview from "./pages/eContract/ContractReview.tsx";
 {/* Manager Routes */}
 import DashboardManager from "./pages/manager/dashboard/dashboardManager.tsx";
 import { ROLES } from './constants/roles';
@@ -61,10 +65,34 @@ function App() {
                             <EContractLogin/>
                         </PublicRoute>
                     }/>
-
+                    {/* EContract pages */}
                     <Route path="/e-contracts/dashboard" element={
                         <EContractRoute>
                             <EContractDashboard/>
+                        </EContractRoute>
+                    }/>
+
+                    <Route path="/e-contracts/list" element={
+                        <EContractRoute>
+                            <EContractList/>
+                        </EContractRoute>
+                    }/>
+
+                    <Route path="/e-contracts/create-new-contract" element={
+                        <EContractRoute>
+                            <EContractCreateNew/>
+                        </EContractRoute>
+                    }/>
+
+                    <Route path="/e-contracts/template-editor" element={
+                        <EContractRoute>
+                            <TemplateEditor/>
+                        </EContractRoute>
+                    }/>
+
+                    <Route path="/e-contracts/review" element={
+                        <EContractRoute>
+                            <ContractReview/>
                         </EContractRoute>
                     }/>
 
