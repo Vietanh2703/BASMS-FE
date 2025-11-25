@@ -156,7 +156,7 @@ const ContractReview = () => {
                     'Content-Type': 'application/json',
                 },
                 body: JSON.stringify({
-                    templateId: contractData.templateId,
+                    templateDocumentId: contractData.templateId,
                     data: payload
                 }),
             });
