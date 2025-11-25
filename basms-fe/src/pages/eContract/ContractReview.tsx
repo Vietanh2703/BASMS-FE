@@ -149,7 +149,7 @@ const ContractReview = () => {
                 return;
             }
 
-            const response = await fetch(`${apiUrl}/api/contracts/template/fill-from-s3`, {
+            const response = await fetch(`${apiUrl}/contracts/template/fill-from-s3`, {
                 method: 'POST',
                 headers: {
                     'Authorization': `Bearer ${token}`,
