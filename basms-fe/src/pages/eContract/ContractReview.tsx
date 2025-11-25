@@ -2,6 +2,8 @@ import { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../hooks/useAuth';
 import './ContractReview.css';
+import SnackbarChecked from "../../components/snackbar/snackbarChecked.tsx";
+import SnackbarFailed from "../../components/snackbar/snackbarFailed.tsx";
 
 interface FieldFormatting {
     bold: boolean;
@@ -36,6 +38,8 @@ const ContractReview = () => {
     const profileRef = useRef<HTMLDivElement>(null);
 
     const [contractData, setContractData] = useState<ContractData | null>(null);
+    const [showSnackbarSuccess, setShowSnackbarSuccess] = useState(false);
+    const [showSnackbarFailed, setShowSnackbarFailed] = useState(false);
 
     useEffect(() => {
         // Load contract data from localStorage
@@ -164,15 +168,12 @@ const ContractReview = () => {
             if (!response.ok) {
                 throw new Error('Failed to create contract');
             }
-
-            // Clear localStorage
             localStorage.removeItem('contractReviewData');
-
-            alert('Hợp đồng đã được tạo thành công!');
-            navigate('/e-contracts/list');
+            setShowSnackbarSuccess(true);
+            setTimeout(() => navigate('/e-contracts/list'), 1200);
         } catch (error) {
             console.error('Error creating contract:', error);
-            alert('Không thể tạo hợp đồng. Vui lòng thử lại sau.');
+            setShowSnackbarFailed(true);
         } finally {
             setIsSubmitting(false);
         }
@@ -437,6 +438,20 @@ const ContractReview = () => {
                     </div>
                 </div>
             )}
+
+            <SnackbarChecked
+                message="Hợp đồng đã điền thông tin thành công và gửi đến email bên kí xác nhận"
+                isOpen={showSnackbarSuccess}
+                duration={4000}
+                onClose={() => setShowSnackbarSuccess(false)}
+            />
+
+            <SnackbarFailed
+                message="Điền thông tin thất bại. Hãy thử lại"
+                isOpen={showSnackbarFailed}
+                duration={4000}
+                onClose={() => setShowSnackbarFailed(false)}
+            />
         </div>
     );
 };
