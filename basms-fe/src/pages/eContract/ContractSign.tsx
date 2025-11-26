@@ -5,11 +5,17 @@ import SnackbarChecked from "../../components/snackbar/snackbarChecked.tsx";
 import SnackbarFailed from "../../components/snackbar/snackbarFailed.tsx";
 
 interface ContractDocument {
-    id: string;
-    documentName: string;
-    documentType: string;
     fileUrl: string;
-    createdAt: string;
+    fileName: string;
+    contentType: string;
+    fileSize: number;
+    documentId: string;
+    urlExpiresAt: string;
+}
+
+interface ContractResponse {
+    success: boolean;
+    data: ContractDocument;
 }
 
 const ContractSign = () => {
@@ -51,10 +57,14 @@ const ContractSign = () => {
                     throw new Error('Không thể tải thông tin hợp đồng');
                 }
 
-                const document: ContractDocument = await response.json();
+                const result: ContractResponse = await response.json();
 
-                setContractData(document);
-                setPdfUrl(document.fileUrl);
+                if (!result.success || !result.data) {
+                    throw new Error('Dữ liệu hợp đồng không hợp lệ');
+                }
+
+                setContractData(result.data);
+                setPdfUrl(result.data.fileUrl);
             } catch (err) {
                 setError(err instanceof Error ? err.message : 'Có lỗi xảy ra khi tải hợp đồng');
             } finally {
@@ -159,16 +169,26 @@ const ContractSign = () => {
             <main className="cs-main">
                 <div className="cs-info-section">
                     <div className="cs-info-card">
-                        <h2 className="cs-info-title">{contractData.documentName}</h2>
-                        <div className="cs-info-detail">
-                            <span className="cs-info-label">Ngày tạo:</span>
-                            <span className="cs-info-value">
-                                {new Date(contractData.createdAt).toLocaleDateString('vi-VN', {
-                                    year: 'numeric',
-                                    month: 'long',
-                                    day: 'numeric'
-                                })}
-                            </span>
+                        <h2 className="cs-info-title">{contractData.fileName}</h2>
+                        <div className="cs-info-details">
+                            <div className="cs-info-detail">
+                                <span className="cs-info-label">Loại file:</span>
+                                <span className="cs-info-value">
+                                    {contractData.contentType.includes('pdf') ? 'PDF' : 'Word Document'}
+                                </span>
+                            </div>
+                            <div className="cs-info-detail">
+                                <span className="cs-info-label">Link hết hạn lúc:</span>
+                                <span className="cs-info-value">
+                                    {new Date(contractData.urlExpiresAt).toLocaleString('vi-VN', {
+                                        year: 'numeric',
+                                        month: 'numeric',
+                                        day: 'numeric',
+                                        hour: '2-digit',
+                                        minute: '2-digit'
+                                    })}
+                                </span>
+                            </div>
                         </div>
                         <div className="cs-info-notice">
                             <svg className="cs-notice-icon" viewBox="0 0 24 24" fill="currentColor">
@@ -181,9 +201,13 @@ const ContractSign = () => {
 
                 <div className="cs-document-section">
                     <div className="cs-document-container">
-                        {pdfUrl ? (
+                        {pdfUrl && contractData ? (
                             <iframe
-                                src={pdfUrl}
+                                src={
+                                    contractData.contentType.includes('pdf')
+                                        ? pdfUrl
+                                        : `https://docs.google.com/viewer?url=${encodeURIComponent(pdfUrl)}&embedded=true`
+                                }
                                 className="cs-pdf-viewer"
                                 title="Contract Document"
                             />
