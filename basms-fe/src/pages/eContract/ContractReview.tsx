@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { useAuth } from '../../hooks/useAuth';
+import { useEContractAuth } from '../../hooks/useEContractAuth';
 import './ContractReview.css';
 import SnackbarChecked from "../../components/snackbar/snackbarChecked.tsx";
 import SnackbarFailed from "../../components/snackbar/snackbarFailed.tsx";
@@ -28,7 +28,7 @@ interface ContractData {
 
 const ContractReview = () => {
     const navigate = useNavigate();
-    const { user, logout } = useAuth();
+    const { user, logout } = useEContractAuth();
     const [isMenuOpen, setIsMenuOpen] = useState(false);
     const [currentTime, setCurrentTime] = useState(new Date());
     const [isProfileDropdownOpen, setIsProfileDropdownOpen] = useState(false);

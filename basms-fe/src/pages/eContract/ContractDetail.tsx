@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { useAuth } from '../../hooks/useAuth';
+import { useEContractAuth } from '../../hooks/useEContractAuth';
 import './ContractDetail.css';
 
 interface ContractDocument {
@@ -20,7 +20,7 @@ interface ContractResponse {
 const ContractDetail = () => {
     const { documentId } = useParams<{ documentId: string }>();
     const navigate = useNavigate();
-    const { user, logout } = useAuth();
+    const { user, logout } = useEContractAuth();
     const [isMenuOpen, setIsMenuOpen] = useState(false);
     const [currentTime, setCurrentTime] = useState(new Date());
     const [isProfileDropdownOpen, setIsProfileDropdownOpen] = useState(false);

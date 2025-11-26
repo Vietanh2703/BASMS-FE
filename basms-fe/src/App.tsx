@@ -1,5 +1,6 @@
 import { BrowserRouter as Router, Navigate, Route, Routes } from 'react-router-dom';
 import { AuthProvider } from "./contexts/authContext";
+import { EContractAuthProvider } from "./contexts/eContractAuthContext";
 import { PublicRoute } from './utils/publicRoute';
 import { RoleBasedRoute } from './utils/roleBasedRoute.tsx';
 import { EContractRoute } from './utils/eContractRoute';
@@ -30,7 +31,8 @@ function App() {
     return (
         <Router>
             <AuthProvider>
-                <Routes>
+                <EContractAuthProvider>
+                    <Routes>
                     {/* Public Routes */}
                     <Route path="/" element={
                         <PublicRoute>
@@ -135,6 +137,7 @@ function App() {
                     {/* Fallback */}
                     <Route path="*" element={<Navigate to="/" replace/>}/>
                 </Routes>
+                </EContractAuthProvider>
             </AuthProvider>
         </Router>
     );

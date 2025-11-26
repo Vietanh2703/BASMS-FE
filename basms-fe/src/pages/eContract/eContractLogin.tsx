@@ -1,9 +1,9 @@
 import { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
 import SnackbarChecked from '../../components/snackbar/snackbarChecked';
 import SnackbarWarning from '../../components/snackbar/snackbarWarning';
 import SnackbarFailed from '../../components/snackbar/snackbarFailed';
 import { apiClient, API_ENDPOINTS } from '../../clients/apiClients';
+import { useEContractAuth } from '../../hooks/useEContractAuth';
 import './eContractLogin.css';
 
 const ALLOWED_ROLE_ID = 'ddbd5fad-ba6e-11f0-bcac-00155dca8f48';
@@ -21,7 +21,7 @@ interface EContractLoginResponse {
 }
 
 const EContractLogin = () => {
-    const navigate = useNavigate();
+    const { login } = useEContractAuth();
     const [username, setUsername] = useState('');
     const [password, setPassword] = useState('');
     const [showSnackbarSuccess, setShowSnackbarSuccess] = useState(false);
@@ -83,15 +83,13 @@ const EContractLogin = () => {
                 return;
             }
 
-            // Save tokens and user info
-            localStorage.setItem('eContractAccessToken', accessToken);
-            localStorage.setItem('eContractRefreshToken', refreshToken);
-            localStorage.setItem('eContractAccessTokenExpiry', accessTokenExpiry);
-            localStorage.setItem('eContractRefreshTokenExpiry', refreshTokenExpiry);
-            localStorage.setItem('eContractUserId', userId);
-            localStorage.setItem('eContractEmail', email);
-            localStorage.setItem('eContractFullName', fullName);
-            localStorage.setItem('eContractRoleId', roleId);
+            // Use context login function to save tokens and start auto-refresh
+            login(accessToken, refreshToken, {
+                userId,
+                email,
+                fullName,
+                roleId
+            }, accessTokenExpiry, refreshTokenExpiry);
 
             setSnackbarMessage('Đăng nhập thành công!');
             setShowSnackbarSuccess(true);
@@ -158,8 +156,7 @@ const EContractLogin = () => {
 
     const handleSuccessSnackbarClose = () => {
         setShowSnackbarSuccess(false);
-        // Navigate to dashboard (PublicRoute will prevent going back to login)
-        navigate('/e-contracts/dashboard', { replace: true });
+        // Context login function already handles navigation
     };
 
     return (

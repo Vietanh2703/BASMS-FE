@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { useAuth } from '../../hooks/useAuth';
+import { useEContractAuth } from '../../hooks/useEContractAuth';
 import './eContractList.css';
 
 interface Document {
@@ -29,7 +29,7 @@ interface Contract {
 
 const EContractList = () => {
     const navigate = useNavigate();
-    const { user, logout } = useAuth();
+    const { user, logout } = useEContractAuth();
     const [isMenuOpen, setIsMenuOpen] = useState(false);
     const [currentTime, setCurrentTime] = useState(new Date());
     const [isProfileDropdownOpen, setIsProfileDropdownOpen] = useState(false);
@@ -68,9 +68,9 @@ const EContractList = () => {
 
     const contractStatuses = [
         { value: 'all', label: 'Tất cả trạng thái' },
-        { value: 'active', label: 'Đang hoạt động' },
-        { value: 'pending', label: 'Chờ xử lý' },
-        { value: 'expired', label: 'Hết hạn' },
+        { value: 'approved', label: 'Đã xử lí' },
+        { value: 'awaiting_signature', label: 'Chờ kí duyệt' },
+        { value: 'awaiting_approval', label: 'Chờ xét duyệt' },
         { value: 'cancelled', label: 'Đã hủy' },
     ];
 
@@ -617,7 +617,7 @@ const EContractList = () => {
                                         className="ec-contracts-action-btn ec-contracts-btn-view"
                                         onClick={() => handleViewContract(contract.id)}
                                     >
-                                        Xem chi tiết
+                                        Xem hợp đồng
                                     </button>
                                     {contract.status === 'expired' && (
                                         <button

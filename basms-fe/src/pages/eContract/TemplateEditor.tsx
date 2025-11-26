@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
-import { useAuth } from '../../hooks/useAuth';
+import { useEContractAuth } from '../../hooks/useEContractAuth';
 import './TemplateEditor.css';
 
 interface FieldFormatting {
@@ -21,7 +21,7 @@ interface FormData {
 
 const TemplateEditor = () => {
     const navigate = useNavigate();
-    const { user, logout } = useAuth();
+    const { user, logout } = useEContractAuth();
     const [searchParams] = useSearchParams();
     const templateId = searchParams.get('template');
 

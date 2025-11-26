@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { useAuth } from '../../hooks/useAuth';
+import { useEContractAuth } from '../../hooks/useEContractAuth';
 import './eContractCreateNew.css';
 
 interface ContractTemplate {
@@ -29,7 +29,7 @@ interface ContractResponse {
 
 const EContractCreateNew = () => {
     const navigate = useNavigate();
-    const { user, logout } = useAuth();
+    const { user, logout } = useEContractAuth();
     const [isMenuOpen, setIsMenuOpen] = useState(false);
     const [currentTime, setCurrentTime] = useState(new Date());
     const [isProfileDropdownOpen, setIsProfileDropdownOpen] = useState(false);
@@ -40,17 +40,6 @@ const EContractCreateNew = () => {
     // Search and filter states
     const [searchTerm, setSearchTerm] = useState('');
     const [selectedType, setSelectedType] = useState('all');
-
-    // Upload modal states
-    const [showUploadModal, setShowUploadModal] = useState(false);
-    const [selectedFile, setSelectedFile] = useState<File | null>(null);
-    const [fileError, setFileError] = useState<string | null>(null);
-    const [isUploading, setIsUploading] = useState(false);
-    const [showSnackbar, setShowSnackbar] = useState(false);
-    const [snackbarMessage, setSnackbarMessage] = useState('');
-    const [snackbarType, setSnackbarType] = useState<'success' | 'error'>('success');
-    const [templateName, setTemplateName] = useState('');
-    const [templateType, setTemplateType] = useState('labor');
 
     // Templates from API
     const [allTemplates, setAllTemplates] = useState<ContractTemplate[]>([]);
@@ -218,142 +207,6 @@ const EContractCreateNew = () => {
         navigate(`/e-contracts/template-editor?template=${templateId}`);
     };
 
-
-    // Upload modal handlers
-    const handleOpenUploadModal = () => {
-        setShowUploadModal(true);
-        setSelectedFile(null);
-        setFileError(null);
-        setTemplateName('');
-        setTemplateType('labor');
-    };
-
-    const handleCloseUploadModal = () => {
-        setShowUploadModal(false);
-        setSelectedFile(null);
-        setFileError(null);
-        setTemplateName('');
-        setTemplateType('labor');
-    };
-
-    const handleFileSelect = (event: React.ChangeEvent<HTMLInputElement>) => {
-        const file = event.target.files?.[0];
-        if (!file) return;
-
-        // Reset error
-        setFileError(null);
-
-        // Validate file size (max 10MB)
-        const maxSize = 10 * 1024 * 1024; // 10MB in bytes
-        if (file.size > maxSize) {
-            setFileError('Kích thước file vượt quá 10MB. Vui lòng chọn file nhỏ hơn.');
-            setSelectedFile(null);
-            return;
-        }
-
-        // Validate file type (PDF or Word)
-        const allowedTypes = [
-            'application/pdf',
-            'application/msword',
-            'application/vnd.openxmlformats-officedocument.wordprocessingml.document'
-        ];
-        if (!allowedTypes.includes(file.type)) {
-            setFileError('Định dạng file không hợp lệ. Chỉ chấp nhận file PDF hoặc Word.');
-            setSelectedFile(null);
-            return;
-        }
-
-        // File is valid
-        setSelectedFile(file);
-    };
-
-    const handleUploadComplete = async () => {
-        if (!selectedFile) return;
-
-        // Validate template name
-        if (!templateName.trim()) {
-            setFileError('Vui lòng nhập tên hợp đồng mẫu');
-            return;
-        }
-
-        setIsUploading(true);
-
-        try {
-            const apiUrl = import.meta.env.VITE_API_CONTRACT_URL;
-            const token = localStorage.getItem('eContractAccessToken');
-
-            if (!token) {
-                navigate('/e-contract/login');
-                return;
-            }
-
-            const formData = new FormData();
-            formData.append('file', selectedFile);
-            formData.append('name', templateName.trim());
-            formData.append('type', templateType);
-
-            const response = await fetch(`${apiUrl}/contracts/templates/upload`, {
-                method: 'POST',
-                headers: {
-                    'Authorization': `Bearer ${token}`,
-                },
-                body: formData,
-            });
-
-            if (!response.ok) {
-                throw new Error('Upload failed');
-            }
-
-            // Success
-            setShowUploadModal(false);
-            setSelectedFile(null);
-            setFileError(null);
-            setTemplateName('');
-            setTemplateType('labor');
-            setSnackbarMessage('Hợp đồng mẫu đã tải lên hệ thống thành công');
-            setSnackbarType('success');
-            setShowSnackbar(true);
-
-            // Reload templates list
-            window.location.reload();
-
-            // Hide snackbar after 3 seconds
-            setTimeout(() => {
-                setShowSnackbar(false);
-            }, 3000);
-        } catch (error) {
-            console.error('Upload error:', error);
-            setSnackbarMessage('Không thể tải lên hợp đồng mẫu. Vui lòng thử lại sau.');
-            setSnackbarType('error');
-            setShowSnackbar(true);
-
-            // Hide snackbar after 3 seconds
-            setTimeout(() => {
-                setShowSnackbar(false);
-            }, 3000);
-        } finally {
-            setIsUploading(false);
-        }
-    };
-
-    const handleDrop = (event: React.DragEvent<HTMLDivElement>) => {
-        event.preventDefault();
-        const file = event.dataTransfer.files?.[0];
-        if (file) {
-            // Simulate file input change
-            const fileInput = document.createElement('input');
-            fileInput.type = 'file';
-            const dataTransfer = new DataTransfer();
-            dataTransfer.items.add(file);
-            fileInput.files = dataTransfer.files;
-            handleFileSelect({ target: fileInput } as any);
-        }
-    };
-
-    const handleDragOver = (event: React.DragEvent<HTMLDivElement>) => {
-        event.preventDefault();
-    };
-
     return (
         <div className="ec-create-container">
             <aside className={`ec-create-sidebar ${isMenuOpen ? 'ec-create-sidebar-open' : 'ec-create-sidebar-closed'}`}>
@@ -463,9 +316,6 @@ const EContractCreateNew = () => {
                             <p className="ec-create-page-subtitle">Chọn mẫu hợp đồng để bắt đầu tạo</p>
                         </div>
                         <div className="ec-create-header-actions">
-                            <button className="ec-create-upload-btn" onClick={handleOpenUploadModal}>
-                                Tải lên hợp đồng mẫu
-                            </button>
                             <button className="ec-create-back-btn" onClick={() => navigate('/e-contracts/list')}>
                                 Quay lại danh sách
                             </button>
@@ -581,136 +431,6 @@ const EContractCreateNew = () => {
                             </button>
                         </div>
                     </div>
-                </div>
-            )}
-
-            {/* Upload Modal */}
-            {showUploadModal && (
-                <div className="ec-create-upload-overlay" onClick={handleCloseUploadModal}>
-                    <div className="ec-create-upload-modal" onClick={(e) => e.stopPropagation()}>
-                        <div className="ec-create-upload-header">
-                            <h3>Tải lên hợp đồng mẫu</h3>
-                            <button className="ec-create-close-btn" onClick={handleCloseUploadModal}>
-                                <svg viewBox="0 0 24 24" fill="currentColor">
-                                    <path d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/>
-                                </svg>
-                            </button>
-                        </div>
-                        <div className="ec-create-upload-body">
-                            <div className="ec-create-upload-notice">
-                                <h4>Lưu ý trước khi tải lên:</h4>
-                                <ul>
-                                    <li>Chỉ chấp nhận file định dạng PDF hoặc Word (.doc, .docx)</li>
-                                    <li>Kích thước file tối đa: 10MB</li>
-                                    <li>File hợp đồng mẫu sẽ được lưu vào hệ thống để sử dụng sau này</li>
-                                </ul>
-                            </div>
-
-                            <div className="ec-create-template-form">
-                                <div className="ec-create-form-group">
-                                    <label htmlFor="template-name" className="ec-create-form-label">
-                                        Tên hợp đồng mẫu <span className="ec-create-required">*</span>
-                                    </label>
-                                    <input
-                                        type="text"
-                                        id="template-name"
-                                        className="ec-create-form-input"
-                                        placeholder="Nhập tên hợp đồng mẫu..."
-                                        value={templateName}
-                                        onChange={(e) => setTemplateName(e.target.value)}
-                                    />
-                                </div>
-
-                                <div className="ec-create-form-group">
-                                    <label htmlFor="template-type" className="ec-create-form-label">
-                                        Loại hợp đồng <span className="ec-create-required">*</span>
-                                    </label>
-                                    <select
-                                        id="template-type"
-                                        className="ec-create-form-select"
-                                        value={templateType}
-                                        onChange={(e) => setTemplateType(e.target.value)}
-                                    >
-                                        <option value="labor">Hợp đồng lao động</option>
-                                        <option value="service">Hợp đồng dịch vụ</option>
-                                        <option value="training">Hợp đồng đào tạo</option>
-                                    </select>
-                                </div>
-                            </div>
-
-                            <input
-                                type="file"
-                                id="file-upload"
-                                accept=".pdf,.doc,.docx,application/pdf,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document"
-                                onChange={handleFileSelect}
-                                style={{ display: 'none' }}
-                            />
-
-                            <div
-                                className={`ec-create-upload-container ${fileError ? 'ec-create-upload-error' : ''} ${selectedFile ? 'ec-create-upload-success' : ''}`}
-                                onClick={() => document.getElementById('file-upload')?.click()}
-                                onDrop={handleDrop}
-                                onDragOver={handleDragOver}
-                            >
-                                {!selectedFile && !fileError && (
-                                    <>
-                                        <svg className="ec-create-upload-icon" viewBox="0 0 24 24" fill="currentColor">
-                                            <path d="M9 16h6v-6h4l-7-7-7 7h4zm-4 2h14v2H5z"/>
-                                        </svg>
-                                        <p className="ec-create-upload-text">Bấm vào đây để chọn file</p>
-                                        <p className="ec-create-upload-subtext">hoặc kéo thả file vào đây</p>
-                                    </>
-                                )}
-
-                                {selectedFile && !fileError && (
-                                    <div className="ec-create-file-info">
-                                        <svg className="ec-create-file-icon" viewBox="0 0 24 24" fill="currentColor">
-                                            <path d="M14 2H6c-1.1 0-2 .9-2 2v16c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V8l-6-6zM6 20V4h7v5h5v11H6z"/>
-                                        </svg>
-                                        <div className="ec-create-file-details">
-                                            <p className="ec-create-file-name">{selectedFile.name}</p>
-                                            <p className="ec-create-file-size">{(selectedFile.size / 1024 / 1024).toFixed(2)} MB</p>
-                                        </div>
-                                    </div>
-                                )}
-
-                                {fileError && (
-                                    <div className="ec-create-error-info">
-                                        <svg className="ec-create-error-icon" viewBox="0 0 24 24" fill="currentColor">
-                                            <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-2h2v2zm0-4h-2V7h2v6z"/>
-                                        </svg>
-                                        <p className="ec-create-error-text">{fileError}</p>
-                                    </div>
-                                )}
-                            </div>
-                        </div>
-
-                        {selectedFile && !fileError && (
-                            <div className="ec-create-upload-footer">
-                                <button
-                                    className="ec-create-btn-upload-complete"
-                                    onClick={handleUploadComplete}
-                                    disabled={isUploading}
-                                >
-                                    {isUploading ? 'Đang tải lên...' : 'Hoàn tất'}
-                                </button>
-                            </div>
-                        )}
-                    </div>
-                </div>
-            )}
-
-            {/* Snackbar */}
-            {showSnackbar && (
-                <div className={`ec-create-snackbar ${snackbarType === 'success' ? 'ec-create-snackbar-success' : 'ec-create-snackbar-error'}`}>
-                    <svg className="ec-create-snackbar-icon" viewBox="0 0 24 24" fill="currentColor">
-                        {snackbarType === 'success' ? (
-                            <path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/>
-                        ) : (
-                            <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-2h2v2zm0-4h-2V7h2v6z"/>
-                        )}
-                    </svg>
-                    <span className="ec-create-snackbar-message">{snackbarMessage}</span>
                 </div>
             )}
         </div>
