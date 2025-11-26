@@ -626,12 +626,11 @@ const EContractList = () => {
                                 currentContracts.map(contract => (
                             <div key={contract.id} className="ec-contracts-item">
                                 <div className="ec-contracts-item-header">
-                                    <div></div>
+                                    <div className="ec-contracts-item-name">{contract.name}</div>
                                     <div className={`ec-contracts-item-status ec-contracts-status-${contract.status}`}>
                                         {getStatusLabel(contract.status)}
                                     </div>
                                 </div>
-                                <div className="ec-contracts-item-name">{contract.name}</div>
                                 <div className="ec-contracts-item-details">
                                     <div className="ec-contracts-item-detail">
                                         <span className="ec-contracts-detail-label">Loại:</span>
