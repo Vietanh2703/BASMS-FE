@@ -488,6 +488,21 @@
     color: #6b7280;
 }
 
+.ec-contracts-status-awaiting_signature {
+    background-color: #fef3c7;
+    color: #d97706;
+}
+
+.ec-contracts-status-awaiting_approval {
+    background-color: #fef3c7;
+    color: #d97706;
+}
+
+.ec-contracts-status-approved {
+    background-color: #d1fae5;
+    color: #047857;
+}
+
 .ec-contracts-item-name {
     font-size: 18px;
     font-weight: 600;

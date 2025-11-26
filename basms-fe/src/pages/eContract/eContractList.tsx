@@ -22,7 +22,7 @@ interface Contract {
     id: string;
     name: string;
     type: string;
-    status: 'active' | 'expired' | 'pending' | 'cancelled';
+    status: 'active' | 'expired' | 'pending' | 'cancelled' | 'awaiting_signature' | 'awaiting_approval' | 'approved';
     createdAt: string;
     expiresAt: string;
 }
@@ -144,9 +144,13 @@ const EContractList = () => {
                     expiresDate.setFullYear(expiresDate.getFullYear() + 1); // Default 1 year expiration
 
                     // Map documentType to status
-                    let status: 'active' | 'expired' | 'pending' | 'cancelled' = 'active';
-                    if (doc.documentType === 'completed_contract') {
-                        status = 'active';
+                    let status: 'active' | 'expired' | 'pending' | 'cancelled' | 'awaiting_signature' | 'awaiting_approval' | 'approved' = 'active';
+                    if (doc.documentType === 'filled_contract') {
+                        status = 'awaiting_signature';
+                    } else if (doc.documentType === 'signed_contract') {
+                        status = 'awaiting_approval';
+                    } else if (doc.documentType === 'completed_contract') {
+                        status = 'approved';
                     } else if (doc.documentType === 'unsign_contract') {
                         status = 'pending';
                     } else if (doc.documentType === 'expired_contract') {
@@ -237,6 +241,9 @@ const EContractList = () => {
             pending: 'Chờ xử lý',
             expired: 'Hết hạn',
             cancelled: 'Đã hủy',
+            awaiting_signature: 'Chờ kí duyệt',
+            awaiting_approval: 'Chờ xét duyệt',
+            approved: 'Đã xét duyệt',
         };
         return statusMap[status] || status;
     };

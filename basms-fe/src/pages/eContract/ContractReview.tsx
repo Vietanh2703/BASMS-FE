@@ -170,7 +170,7 @@ const ContractReview = () => {
             }
             localStorage.removeItem('contractReviewData');
             setShowSnackbarSuccess(true);
-            setTimeout(() => navigate('/e-contracts/list'), 1200);
+            setTimeout(() => navigate('/e-contracts/list'), 6000);
         } catch (error) {
             setShowSnackbarFailed(true);
         } finally {
