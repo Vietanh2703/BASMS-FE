@@ -19,6 +19,7 @@ import EContractList from "./pages/eContract/eContractList.tsx";
 import EContractCreateNew from "./pages/eContract/eContractCreateNew.tsx";
 import TemplateEditor from "./pages/eContract/TemplateEditor.tsx";
 import ContractReview from "./pages/eContract/ContractReview.tsx";
+import ContractSign from "./pages/eContract/ContractSign.tsx";
 {/* Manager Routes */}
 import DashboardManager from "./pages/manager/dashboard/dashboardManager.tsx";
 import { ROLES } from './constants/roles';
@@ -65,6 +66,13 @@ function App() {
                             <EContractLogin/>
                         </PublicRoute>
                     }/>
+
+                    <Route path="/:documentId/sign" element={
+                        <PublicRoute>
+                            <ContractSign/>
+                        </PublicRoute>
+                    }/>
+
                     {/* EContract pages */}
                     <Route path="/e-contracts/dashboard" element={
                         <EContractRoute>
