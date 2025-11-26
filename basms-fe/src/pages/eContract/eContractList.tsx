@@ -626,7 +626,6 @@ const EContractList = () => {
                                 currentContracts.map(contract => (
                             <div key={contract.id} className="ec-contracts-item">
                                 <div className="ec-contracts-item-header">
-                                    <div className="ec-contracts-item-id">{contract.id}</div>
                                     <div className={`ec-contracts-item-status ec-contracts-status-${contract.status}`}>
                                         {getStatusLabel(contract.status)}
                                     </div>
