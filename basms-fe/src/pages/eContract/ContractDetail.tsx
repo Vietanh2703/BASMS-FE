@@ -308,7 +308,11 @@ const ContractDetail = () => {
                                     <div className="cd-info-item">
                                         <span className="cd-info-label">Ngày khởi tạo:</span>
                                         <span className="cd-info-value">
-                                            {contractData.createdAt}
+                                            {
+                                                new Date(contractData.createdAt).toLocaleString("vi-VN", {
+                                                    timeZone: "Asia/Ho_Chi_Minh"
+                                                })
+                                            }
                                         </span>
                                     </div>
                                 </div>
