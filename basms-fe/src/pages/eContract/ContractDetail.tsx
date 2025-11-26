@@ -9,7 +9,7 @@ interface ContractDocument {
     contentType: string;
     fileSize: number;
     documentId: string;
-    urlExpiresAt: string;
+    createdAt: string;
 }
 
 interface ContractResponse {
@@ -306,9 +306,9 @@ const ContractDetail = () => {
                                         </span>
                                     </div>
                                     <div className="cd-info-item">
-                                        <span className="cd-info-label">Link hết hạn lúc:</span>
+                                        <span className="cd-info-label">Ngày khởi tạo:</span>
                                         <span className="cd-info-value">
-                                            {new Date(contractData.urlExpiresAt).toLocaleString('vi-VN', {
+                                            {new Date(contractData.createdAt).toLocaleString('vi-VN', {
                                                 year: 'numeric',
                                                 month: 'numeric',
                                                 day: 'numeric',
