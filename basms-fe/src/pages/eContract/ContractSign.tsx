@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useParams, useSearchParams, useNavigate } from 'react-router-dom';
 import './ContractSign.css';
 import SnackbarChecked from "../../components/snackbar/snackbarChecked.tsx";
@@ -31,6 +31,10 @@ const ContractSign = () => {
     const [showSnackbarSuccess, setShowSnackbarSuccess] = useState(false);
     const [showSnackbarFailed, setShowSnackbarFailed] = useState(false);
     const [pdfUrl, setPdfUrl] = useState<string | null>(null);
+    const [showSignatureModal, setShowSignatureModal] = useState(false);
+    const [signatureData, setSignatureData] = useState<string | null>(null);
+    const [isDrawing, setIsDrawing] = useState(false);
+    const canvasRef = useRef<HTMLCanvasElement>(null);
 
     useEffect(() => {
         const fetchContractData = async () => {
@@ -115,6 +119,75 @@ const ContractSign = () => {
         if (confirmed) {
             window.close();
         }
+    };
+
+    const handleOpenSignatureModal = () => {
+        setShowSignatureModal(true);
+    };
+
+    const handleCloseSignatureModal = () => {
+        setShowSignatureModal(false);
+    };
+
+    const startDrawing = (e: React.MouseEvent<HTMLCanvasElement> | React.TouchEvent<HTMLCanvasElement>) => {
+        const canvas = canvasRef.current;
+        if (!canvas) return;
+
+        const ctx = canvas.getContext('2d');
+        if (!ctx) return;
+
+        setIsDrawing(true);
+
+        const rect = canvas.getBoundingClientRect();
+        const x = 'touches' in e ? e.touches[0].clientX - rect.left : e.clientX - rect.left;
+        const y = 'touches' in e ? e.touches[0].clientY - rect.top : e.clientY - rect.top;
+
+        ctx.beginPath();
+        ctx.moveTo(x, y);
+    };
+
+    const draw = (e: React.MouseEvent<HTMLCanvasElement> | React.TouchEvent<HTMLCanvasElement>) => {
+        if (!isDrawing) return;
+
+        const canvas = canvasRef.current;
+        if (!canvas) return;
+
+        const ctx = canvas.getContext('2d');
+        if (!ctx) return;
+
+        const rect = canvas.getBoundingClientRect();
+        const x = 'touches' in e ? e.touches[0].clientX - rect.left : e.clientX - rect.left;
+        const y = 'touches' in e ? e.touches[0].clientY - rect.top : e.clientY - rect.top;
+
+        ctx.lineTo(x, y);
+        ctx.strokeStyle = '#000000';
+        ctx.lineWidth = 2;
+        ctx.lineCap = 'round';
+        ctx.lineJoin = 'round';
+        ctx.stroke();
+    };
+
+    const stopDrawing = () => {
+        setIsDrawing(false);
+    };
+
+    const clearSignature = () => {
+        const canvas = canvasRef.current;
+        if (!canvas) return;
+
+        const ctx = canvas.getContext('2d');
+        if (!ctx) return;
+
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+    };
+
+    const saveSignature = () => {
+        const canvas = canvasRef.current;
+        if (!canvas) return;
+
+        const dataUrl = canvas.toDataURL('image/png');
+        setSignatureData(dataUrl);
+        setShowSignatureModal(false);
     };
 
     if (isLoading) {
@@ -202,15 +275,29 @@ const ContractSign = () => {
                 <div className="cs-document-section">
                     <div className="cs-document-container">
                         {pdfUrl && contractData ? (
-                            <iframe
-                                src={
-                                    contractData.contentType.includes('pdf')
-                                        ? pdfUrl
-                                        : `https://docs.google.com/viewer?url=${encodeURIComponent(pdfUrl)}&embedded=true`
-                                }
-                                className="cs-pdf-viewer"
-                                title="Contract Document"
-                            />
+                            <>
+                                <iframe
+                                    src={
+                                        contractData.contentType === 'application/pdf'
+                                            ? pdfUrl
+                                            : `https://view.officeapps.live.com/op/embed.aspx?src=${encodeURIComponent(pdfUrl)}`
+                                    }
+                                    className="cs-pdf-viewer"
+                                    title="Contract Document"
+                                />
+                                <div className="cs-signature-box" onClick={handleOpenSignatureModal}>
+                                    {signatureData ? (
+                                        <img src={signatureData} alt="Chữ ký" className="cs-signature-preview" />
+                                    ) : (
+                                        <div className="cs-signature-placeholder">
+                                            <svg className="cs-signature-icon" viewBox="0 0 24 24" fill="currentColor">
+                                                <path d="M3 17.25V21h3.75L17.81 9.94l-3.75-3.75L3 17.25zM20.71 7.04c.39-.39.39-1.02 0-1.41l-2.34-2.34c-.39-.39-1.02-.39-1.41 0l-1.83 1.83 3.75 3.75 1.83-1.83z"/>
+                                            </svg>
+                                            <p>Bấm vào đây để ký</p>
+                                        </div>
+                                    )}
+                                </div>
+                            </>
                         ) : (
                             <div className="cs-no-document">
                                 <p>Không thể hiển thị nội dung hợp đồng</p>
@@ -238,6 +325,45 @@ const ContractSign = () => {
                     </div>
                 </div>
             </main>
+
+            {showSignatureModal && (
+                <div className="cs-signature-modal-overlay" onClick={handleCloseSignatureModal}>
+                    <div className="cs-signature-modal" onClick={(e) => e.stopPropagation()}>
+                        <div className="cs-signature-modal-header">
+                            <h3>Vẽ chữ ký của bạn</h3>
+                            <button className="cs-close-btn" onClick={handleCloseSignatureModal}>
+                                <svg viewBox="0 0 24 24" fill="currentColor">
+                                    <path d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/>
+                                </svg>
+                            </button>
+                        </div>
+                        <div className="cs-signature-modal-body">
+                            <canvas
+                                ref={canvasRef}
+                                width={600}
+                                height={300}
+                                className="cs-signature-canvas"
+                                onMouseDown={startDrawing}
+                                onMouseMove={draw}
+                                onMouseUp={stopDrawing}
+                                onMouseLeave={stopDrawing}
+                                onTouchStart={startDrawing}
+                                onTouchMove={draw}
+                                onTouchEnd={stopDrawing}
+                            />
+                            <p className="cs-signature-hint">Vẽ chữ ký của bạn trong khung trên</p>
+                        </div>
+                        <div className="cs-signature-modal-footer">
+                            <button className="cs-btn-secondary" onClick={clearSignature}>
+                                Xóa
+                            </button>
+                            <button className="cs-btn-primary" onClick={saveSignature}>
+                                Lưu chữ ký
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
 
             <SnackbarChecked
                 message="Hợp đồng đã được ký thành công"
