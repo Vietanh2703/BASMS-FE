@@ -308,13 +308,7 @@ const ContractDetail = () => {
                                     <div className="cd-info-item">
                                         <span className="cd-info-label">Ngày khởi tạo:</span>
                                         <span className="cd-info-value">
-                                            {new Date(contractData.createdAt).toLocaleString('vi-VN', {
-                                                year: 'numeric',
-                                                month: 'numeric',
-                                                day: 'numeric',
-                                                hour: '2-digit',
-                                                minute: '2-digit'
-                                            })}
+                                            {contractData.createdAt}
                                         </span>
                                     </div>
                                 </div>
