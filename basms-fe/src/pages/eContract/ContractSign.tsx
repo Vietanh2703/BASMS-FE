@@ -96,19 +96,23 @@ const ContractSign = () => {
         try {
             const apiUrl = import.meta.env.VITE_API_CONTRACT_URL;
 
-            // Prepare signature image (convert base64 to blob if needed)
-            // signatureData is already base64 string like: "data:image/png;base64,iVBORw0KG..."
+            // Convert base64 to Blob (PNG file)
+            const base64Response = await fetch(signatureData);
+            const blob = await base64Response.blob();
 
+            // Create FormData
+            const formData = new FormData();
+            formData.append('documentId', documentId);
+            formData.append('image', blob, 'signature.png');  // PNG file with name
+
+            // Send FormData with image file
             const response = await fetch(`${apiUrl}/contracts/sign-document`, {
                 method: 'POST',
                 headers: {
                     'Authorization': `Bearer ${securityToken}`,
-                    'Content-Type': 'application/json',
+                    // Don't set Content-Type - browser will set it automatically with boundary
                 },
-                body: JSON.stringify({
-                    documentId: documentId,
-                    signatureImage: signatureData  // base64 string
-                })
+                body: formData
             });
 
             if (!response.ok) {
@@ -198,6 +202,7 @@ const ContractSign = () => {
         const canvas = canvasRef.current;
         if (!canvas) return;
 
+        // Save as PNG (hoặc 'image/jpeg', 0.95 cho JPEG với quality 95%)
         const dataUrl = canvas.toDataURL('image/png');
         setSignatureData(dataUrl);
         setShowSignatureModal(false);
