@@ -20,6 +20,7 @@ import EContractCreateNew from "./pages/eContract/eContractCreateNew.tsx";
 import TemplateEditor from "./pages/eContract/TemplateEditor.tsx";
 import ContractReview from "./pages/eContract/ContractReview.tsx";
 import ContractSign from "./pages/eContract/ContractSign.tsx";
+import ContractDetail from "./pages/eContract/ContractDetail.tsx";
 {/* Manager Routes */}
 import DashboardManager from "./pages/manager/dashboard/dashboardManager.tsx";
 import { ROLES } from './constants/roles';
@@ -101,6 +102,12 @@ function App() {
                     <Route path="/e-contracts/review" element={
                         <EContractRoute>
                             <ContractReview/>
+                        </EContractRoute>
+                    }/>
+
+                    <Route path="/e-contracts/item/:documentId" element={
+                        <EContractRoute>
+                            <ContractDetail/>
                         </EContractRoute>
                     }/>
 

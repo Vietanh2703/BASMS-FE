@@ -302,42 +302,9 @@ const EContractList = () => {
         navigate('/e-contracts/create-new-contract');
     };
 
-    const handleViewContract = async (contractId: string) => {
-        try {
-            const apiUrl = import.meta.env.VITE_API_CONTRACT_URL;
-            const token = localStorage.getItem('eContractAccessToken');
-
-            if (!token) {
-                navigate('/e-contract/login');
-                return;
-            }
-
-            // Fetch document details to get file URL
-            const response = await fetch(`${apiUrl}/contracts/documents`, {
-                method: 'GET',
-                headers: {
-                    'Authorization': `Bearer ${token}`,
-                    'Content-Type': 'application/json',
-                },
-            });
-
-            if (!response.ok) {
-                throw new Error('Failed to fetch contract details');
-            }
-
-            const data: ContractResponse = await response.json();
-            const document = data.documents.find(doc => doc.id === contractId);
-
-            if (document && document.fileUrl) {
-                // Open contract file in new tab
-                window.open(document.fileUrl, '_blank');
-            } else {
-                alert('Không tìm thấy file hợp đồng.');
-            }
-        } catch (error) {
-            console.error('Error viewing contract:', error);
-            alert('Không thể xem hợp đồng. Vui lòng thử lại sau.');
-        }
+    const handleViewContract = (contractId: string) => {
+        // Navigate to contract detail page
+        navigate(`/e-contracts/item/${contractId}`);
     };
 
     const handleCancelContract = async (contractId: string) => {
