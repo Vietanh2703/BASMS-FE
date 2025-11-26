@@ -12,13 +12,6 @@ interface ContractDocument {
     createdAt: string;
 }
 
-interface ContractResponse {
-    success: boolean;
-    errorMessage: string | null;
-    documents: ContractDocument[];
-    totalCount: number;
-}
-
 const ContractSign = () => {
     const { documentId } = useParams<{ documentId: string }>();
     const [searchParams] = useSearchParams();
@@ -47,10 +40,9 @@ const ContractSign = () => {
             try {
                 const apiUrl = import.meta.env.VITE_API_CONTRACT_URL;
 
-                const response = await fetch(`${apiUrl}/contracts/documents`, {
+                const response = await fetch(`${apiUrl}/contracts/documents/${documentId}/view?token=${securityToken}`, {
                     method: 'GET',
                     headers: {
-                        'Authorization': `Bearer ${securityToken}`,
                         'Content-Type': 'application/json',
                     },
                 });
@@ -59,14 +51,7 @@ const ContractSign = () => {
                     throw new Error('Không thể tải thông tin hợp đồng');
                 }
 
-                const data: ContractResponse = await response.json();
-
-                // Find the specific document
-                const document = data.documents.find(doc => doc.id === documentId);
-
-                if (!document) {
-                    throw new Error('Không tìm thấy hợp đồng');
-                }
+                const document: ContractDocument = await response.json();
 
                 setContractData(document);
                 setPdfUrl(document.fileUrl);
