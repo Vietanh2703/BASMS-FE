@@ -244,8 +244,76 @@
     max-width: 1200px;
     margin: 0 auto;
     display: flex;
-    gap: 16px;
+    gap: 24px;
     justify-content: flex-end;
+    align-items: center;
+}
+
+/* Confirm Checkbox */
+.cs-confirm-checkbox-wrapper {
+    flex: 1;
+    display: flex;
+    align-items: center;
+}
+
+.cs-confirm-checkbox {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    cursor: pointer;
+    user-select: none;
+}
+
+.cs-checkbox-input {
+    position: absolute;
+    opacity: 0;
+    cursor: pointer;
+    height: 0;
+    width: 0;
+}
+
+.cs-checkbox-checkmark {
+    position: relative;
+    height: 24px;
+    width: 24px;
+    background-color: #ffffff;
+    border: 2px solid #d1d5db;
+    border-radius: 6px;
+    transition: all 0.2s ease;
+    flex-shrink: 0;
+}
+
+.cs-checkbox-input:checked ~ .cs-checkbox-checkmark {
+    background-color: #059669;
+    border-color: #059669;
+}
+
+.cs-checkbox-checkmark::after {
+    content: "";
+    position: absolute;
+    display: none;
+    left: 7px;
+    top: 3px;
+    width: 6px;
+    height: 11px;
+    border: solid white;
+    border-width: 0 2px 2px 0;
+    transform: rotate(45deg);
+}
+
+.cs-checkbox-input:checked ~ .cs-checkbox-checkmark::after {
+    display: block;
+}
+
+.cs-confirm-checkbox:hover .cs-checkbox-checkmark {
+    border-color: #059669;
+}
+
+.cs-checkbox-label {
+    font-size: 14px;
+    font-weight: 500;
+    color: #1f2937;
+    line-height: 1.5;
 }
 
 .cs-btn {
@@ -539,7 +607,12 @@
     }
 
     .cs-actions-container {
-        flex-direction: column-reverse;
+        flex-direction: column;
+        gap: 16px;
+    }
+
+    .cs-confirm-checkbox-wrapper {
+        width: 100%;
     }
 
     .cs-btn {

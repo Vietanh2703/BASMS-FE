@@ -34,6 +34,7 @@ const ContractSign = () => {
     const [showSignatureModal, setShowSignatureModal] = useState(false);
     const [signatureData, setSignatureData] = useState<string | null>(null);
     const [isDrawing, setIsDrawing] = useState(false);
+    const [isConfirmed, setIsConfirmed] = useState(false);
     const canvasRef = useRef<HTMLCanvasElement>(null);
 
     useEffect(() => {
@@ -131,12 +132,6 @@ const ContractSign = () => {
         }
     };
 
-    const handleReject = () => {
-        const confirmed = window.confirm('Bạn có chắc chắn muốn từ chối ký hợp đồng này?');
-        if (confirmed) {
-            window.close();
-        }
-    };
 
     const handleOpenSignatureModal = () => {
         setShowSignatureModal(true);
@@ -326,17 +321,24 @@ const ContractSign = () => {
 
                 <div className="cs-actions-section">
                     <div className="cs-actions-container">
-                        <button
-                            className="cs-btn cs-btn-reject"
-                            onClick={handleReject}
-                            disabled={isSigning}
-                        >
-                            Từ chối
-                        </button>
+                        <div className="cs-confirm-checkbox-wrapper">
+                            <label className="cs-confirm-checkbox">
+                                <input
+                                    type="checkbox"
+                                    checked={isConfirmed}
+                                    onChange={(e) => setIsConfirmed(e.target.checked)}
+                                    className="cs-checkbox-input"
+                                />
+                                <span className="cs-checkbox-checkmark"></span>
+                                <span className="cs-checkbox-label">
+                                    Tôi đã đọc kỹ hợp đồng trên và xác nhận thông tin trên hợp đồng là đúng
+                                </span>
+                            </label>
+                        </div>
                         <button
                             className="cs-btn cs-btn-sign"
                             onClick={handleSign}
-                            disabled={isSigning}
+                            disabled={isSigning || !signatureData || !isConfirmed}
                         >
                             {isSigning ? 'Đang xử lý...' : 'Ký xác nhận'}
                         </button>
