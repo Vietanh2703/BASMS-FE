@@ -253,11 +253,13 @@ const ContractSign = () => {
             </header>
 
             <main className="cs-main">
-                <div className="cs-info-notice">
-                    <svg className="cs-notice-icon" viewBox="0 0 24 24" fill="currentColor">
-                        <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-6h2v6zm0-8h-2V7h2v2z"/>
-                    </svg>
-                    <p>Vui lòng đọc kỹ nội dung hợp đồng bên dưới trước khi ký xác nhận</p>
+                <div className="cs-info-section">
+                    <div className="cs-info-notice">
+                        <svg className="cs-notice-icon" viewBox="0 0 24 24" fill="currentColor">
+                            <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-6h2v6zm0-8h-2V7h2v2z"/>
+                        </svg>
+                        <p>Vui lòng đọc kỹ nội dung hợp đồng bên dưới trước khi ký xác nhận</p>
+                    </div>
                 </div>
 
                 <div className="cs-document-section">
