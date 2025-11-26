@@ -85,28 +85,41 @@ const ContractSign = () => {
             return;
         }
 
+        // Check if signature exists
+        if (!signatureData) {
+            alert('Vui lòng ký vào hợp đồng trước khi xác nhận');
+            return;
+        }
+
         setIsSigning(true);
 
         try {
             const apiUrl = import.meta.env.VITE_API_CONTRACT_URL;
 
-            const response = await fetch(`${apiUrl}/contracts/documents/${documentId}/sign`, {
+            // Prepare signature image (convert base64 to blob if needed)
+            // signatureData is already base64 string like: "data:image/png;base64,iVBORw0KG..."
+
+            const response = await fetch(`${apiUrl}/contracts/sign-document`, {
                 method: 'POST',
                 headers: {
                     'Authorization': `Bearer ${securityToken}`,
                     'Content-Type': 'application/json',
                 },
+                body: JSON.stringify({
+                    documentId: documentId,
+                    signatureImage: signatureData  // base64 string
+                })
             });
 
             if (!response.ok) {
                 throw new Error('Không thể ký hợp đồng');
             }
-
+            await response.json();
             setShowSnackbarSuccess(true);
             setTimeout(() => {
                 // Redirect to success page or close window
                 window.close();
-            }, 3000);
+            }, 6000);
         } catch (error) {
             setShowSnackbarFailed(true);
         } finally {
