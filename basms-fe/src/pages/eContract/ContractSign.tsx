@@ -253,36 +253,11 @@ const ContractSign = () => {
             </header>
 
             <main className="cs-main">
-                <div className="cs-info-section">
-                    <div className="cs-info-card">
-                        <h2 className="cs-info-title">{contractData.fileName}</h2>
-                        <div className="cs-info-details">
-                            <div className="cs-info-detail">
-                                <span className="cs-info-label">Loại file:</span>
-                                <span className="cs-info-value">
-                                    {contractData.contentType.includes('pdf') ? 'PDF' : 'Word Document'}
-                                </span>
-                            </div>
-                            <div className="cs-info-detail">
-                                <span className="cs-info-label">Link hết hạn lúc:</span>
-                                <span className="cs-info-value">
-                                    {new Date(contractData.urlExpiresAt).toLocaleString('vi-VN', {
-                                        year: 'numeric',
-                                        month: 'numeric',
-                                        day: 'numeric',
-                                        hour: '2-digit',
-                                        minute: '2-digit'
-                                    })}
-                                </span>
-                            </div>
-                        </div>
-                        <div className="cs-info-notice">
-                            <svg className="cs-notice-icon" viewBox="0 0 24 24" fill="currentColor">
-                                <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-6h2v6zm0-8h-2V7h2v2z"/>
-                            </svg>
-                            <p>Vui lòng đọc kỹ nội dung hợp đồng bên dưới trước khi ký xác nhận</p>
-                        </div>
-                    </div>
+                <div className="cs-info-notice">
+                    <svg className="cs-notice-icon" viewBox="0 0 24 24" fill="currentColor">
+                        <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-6h2v6zm0-8h-2V7h2v2z"/>
+                    </svg>
+                    <p>Vui lòng đọc kỹ nội dung hợp đồng bên dưới trước khi ký xác nhận</p>
                 </div>
 
                 <div className="cs-document-section">
