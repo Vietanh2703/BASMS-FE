@@ -30,9 +30,8 @@ export const EContractAuthProvider: React.FC<EContractAuthProviderProps> = ({ ch
     const [user, setUser] = useState<EContractUserInfo | null>(null);
     const [loading, setLoading] = useState(true);
     const navigate = useNavigate();
-    const location = useLocation();
-
-    // Khôi phục user từ localStorage khi load trang
+    useLocation();
+// Khôi phục user từ localStorage khi load trang
     useEffect(() => {
         const initAuth = async () => {
             try {
