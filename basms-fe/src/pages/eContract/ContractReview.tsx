@@ -172,7 +172,6 @@ const ContractReview = () => {
             setShowSnackbarSuccess(true);
             setTimeout(() => navigate('/e-contracts/list'), 1200);
         } catch (error) {
-            console.error('Error creating contract:', error);
             setShowSnackbarFailed(true);
         } finally {
             setIsSubmitting(false);
