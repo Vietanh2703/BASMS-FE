@@ -26,49 +26,41 @@ export const PublicRoute: React.FC<PublicRouteProps> = ({ children }) => {
     const { isAuthenticated: isEContractAuthenticated, loading: eContractLoading } = useEContractAuth();
     const location = useLocation();
 
-    // Determine which system we're in based on path
-    // Contract signing page pattern: /:documentId/sign
+    // Contract signing page is special - always allow access with token
     const isSigningPage = /^\/[^/]+\/sign$/.test(location.pathname);
-    const isEContractPath = location.pathname.startsWith('/e-contract') ||
-                           location.pathname.startsWith('/e-contracts') ||
-                           isSigningPage;
-
-    // ========== eContract System Logic ==========
-    if (isEContractPath || location.pathname === '/e-contract/login') {
-        // Show loading for eContract auth
-        if (eContractLoading) {
-            return <LoadingScreen />;
-        }
-
-        // If already authenticated with eContract, redirect to eContract dashboard
-        if (isEContractAuthenticated) {
-            return <Navigate to="/e-contracts/dashboard" replace />;
-        }
-
-        // Not authenticated with eContract, allow access to eContract login page
+    if (isSigningPage) {
         return <>{children}</>;
     }
 
-    // ========== BASMS System Logic ==========
-    // Show loading for BASMS auth
-    if (loading) {
+    // Show loading if either system is still checking auth
+    if (loading || eContractLoading) {
         return <LoadingScreen />;
     }
 
-    // If already authenticated with BASMS, redirect to BASMS dashboard
+    // ========== Priority Check: Redirect authenticated users to their dashboard ==========
+    // This prevents accessing any login page when already logged in
+
+    // Priority 1: Check BASMS authentication
     if (isAuthenticated && user) {
-        // Check if there's a redirect path saved
+        // Check if there's a redirect path saved (from protected route)
         const redirectPath = sessionStorage.getItem('redirectAfterLogin');
         if (redirectPath) {
             sessionStorage.removeItem('redirectAfterLogin');
             return <Navigate to={redirectPath} replace />;
         }
 
-        // Redirect to dashboard based on role
+        // Already logged in BASMS, redirect to BASMS dashboard
         const dashboardPath = getDashboardByRole(user.roleId);
         return <Navigate to={dashboardPath} replace />;
     }
 
-    // Not authenticated with BASMS, allow access to BASMS login page
+    // Priority 2: Check eContract authentication
+    if (isEContractAuthenticated) {
+        // Already logged in eContract, redirect to eContract dashboard
+        return <Navigate to="/e-contracts/dashboard" replace />;
+    }
+
+    // ========== Not logged in to either system ==========
+    // Allow access to login pages and other public pages
     return <>{children}</>;
 };
