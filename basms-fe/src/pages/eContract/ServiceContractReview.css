@@ -494,6 +494,16 @@
     min-width: 120px;
 }
 
+.scr-multiline-field {
+    margin: 8px 0;
+    padding-left: 20px;
+}
+
+.scr-multiline-field p {
+    margin: 6px 0;
+    text-align: justify;
+}
+
 /* Document Footer */
 .scr-doc-footer {
     margin-top: 50px;

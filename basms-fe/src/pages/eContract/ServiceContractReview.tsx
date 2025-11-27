@@ -362,132 +362,235 @@ const ServiceContractReview = () => {
                                     <p>Độc lập – Tự do – Hạnh phúc</p>
                                 </div>
 
-                                <h2 className="scr-doc-title">HỢP ĐỒNG LAO ĐỘNG</h2>
+                                <h2 className="scr-doc-title">HỢP ĐỒNG DỊCH VỤ BẢO VỆ</h2>
                                 <p className="scr-doc-subtitle">
-                                    Số: {renderFieldValue('ContractNumber')}/HĐLĐ
+                                    Số: {renderFieldValue('ContractNumber')}/HDDVBV
                                 </p>
 
                                 <div className="scr-doc-body">
-                                    <p>- Căn cứ Bộ luật dân sự 2015 và Bộ luật lao động 2019;</p>
-                                    <p>- Căn cứ vào nhu cầu và khả năng của hai bên.</p>
+                                    <p><strong>Căn cứ:</strong></p>
+                                    <p>– Bộ luật Dân sự 2015;</p>
+                                    <p>– Luật Thương mại 2005;</p>
+                                    <p>– Nghị định 96/2016/NĐ-CP (được sửa đổi, bổ sung bởi Nghị định 56/2023/NĐ-CP) về điều kiện an ninh, trật tự đối với ngành, nghề đầu tư kinh doanh có điều kiện;</p>
+                                    <p>– Nhu cầu và thỏa thuận của các bên.</p>
                                     <p>
-                                        Hôm nay, ngày {renderFieldValue('SignDay') || "............"} tháng {renderFieldValue('SignMonth')} năm {renderFieldValue('SignYear')} tại {renderFieldValue('SignLocation')}
+                                        Hôm nay, ngày {renderFieldValue('SignDay')} tháng {renderFieldValue('SignMonth')} năm {renderFieldValue('SignYear')} tại {renderFieldValue('SignLocation')}, chúng tôi gồm có:
                                     </p>
-                                    <p>Chúng tôi gồm có:</p>
 
-                                    <p className="scr-section-title">Bên A (Người sử dụng lao động):</p>
-                                    <p>– Tên công ty: Công ty THHH An ninh Con Hổ</p>
-                                    <p>– Địa chỉ trụ sở chính: Quận Phú Nhuận, TPHCM</p>
-                                    <p>– Đại diện là: Ông/Bà C &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Chức vụ: Giám đốc</p>
-                                    <p>– Số CCCD: 082204156723 &nbsp;&nbsp; ngày cấp 26/05/2018 &nbsp;&nbsp; nơi cấp: Công an Quận 2</p>
-                                    <p>– Mã số thuế / Giấy phép kinh doanh: 0123456789</p>
-                                    <p>– Điện thoại: 0346666577 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Email: anh.aty2732004@gmail.com</p>
+                                    <p className="scr-section-title">BÊN A: CÔNG TY TNHH AN NINH CON HỔ</p>
+                                    <p>Địa chỉ: Quận Phú Nhuận, TPHCM</p>
+                                    <p>Điện thoại: 0346666577</p>
+                                    <p>Email: anh.aty2732004@gmail.com</p>
+                                    <p>Mã số thuế: 0123456789</p>
+                                    <p>Đại diện: Ông Nguyễn Văn Bảnh – Giám đốc</p>
+                                    <p>Số CCCD: 082204156723</p>
 
-                                    <p className="scr-section-title">Bên B (Người lao động):</p>
-                                    <p>– Họ và tên: {renderFieldValue('EmployeeName')}</p>
-                                    <p>
-                                        – Sinh ngày: {renderFieldValue('EmployeeDateOfBirth')} &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; tại: {renderFieldValue('EmployeeBirthPlace')}
-                                    </p>
-                                    <p>
-                                        – Số CCCD: {renderFieldValue('EmployeeIdentityNumber')} &nbsp; ngày cấp: {renderFieldValue('EmployeeIdentityIssueDate')} &nbsp; nơi cấp: {renderFieldValue('EmployeeIdentityIssuePlace')}
-                                    </p>
-                                    <p>– Hộ khẩu thường trú: {renderFieldValue('EmployeeAddress')}</p>
-                                    <p>– Chỗ ở hiện tại (nếu khác): {renderFieldValue('EmployeeCurrentAddress')}</p>
-                                    <p>– Điện thoại: {renderFieldValue('EmployeePhone')}</p>
-                                    <p>– Email: {renderFieldValue('EmployeeEmail')}</p>
+                                    <p className="scr-section-title">BÊN B: {renderFieldValue('CompanyName')}</p>
+                                    <p>Địa chỉ: {renderFieldValue('Address')}</p>
+                                    <p>Điện thoại: {renderFieldValue('Phone')}</p>
+                                    <p>Email: {renderFieldValue('CompanyEmail')}</p>
+                                    <p>Mã số thuế: {renderFieldValue('TaxCode')}</p>
+                                    <p>Đại diện: {renderFieldValue('Gender')} {renderFieldValue('Name')} – Giám đốc điều hành</p>
+                                    <p>Số CCCD: {renderFieldValue('EmployeeIdentityNumber')}</p>
 
-                                    <p>Hai bên thống nhất ký kết hợp đồng lao động với các điều khoản sau:</p>
+                                    <p>Hai bên thống nhất ký kết hợp đồng với các điều khoản sau:</p>
 
-                                    <p className="scr-section-title">Điều 1. Loại hợp đồng & thời hạn</p>
-                                    <p>
-                                        Hợp đồng này là Hợp đồng lao động xác định thời hạn / Hợp đồng lao động không xác định thời hạn (xem chọn 1).
-                                    </p>
-                                    <p>
-                                        Nếu là xác định thời hạn: thời hạn từ ngày {renderFieldValue('ContractStartDate')} đến ngày {renderFieldValue('ContractEndDate')} (không quá 36 tháng nếu theo quy định).
-                                    </p>
+                                    <p className="scr-section-title">ĐIỀU 1: ĐỐI TƯỢNG VÀ PHẠM VI HỢP ĐỒNG</p>
+                                    <p>Bên A cung cấp dịch vụ bảo vệ chuyên nghiệp cho Bên B tại địa điểm:</p>
+                                    <p>– Tên địa điểm: {renderFieldValue('CompanyName')}</p>
+                                    <p>– Địa chỉ: {renderFieldValue('Address')}</p>
+                                    <p>– Số lượng: {renderFieldValue('GuardQuantity')}</p>
                                 </div>
                             </div>
 
                             {/* Page 2 */}
                             <div className="scr-a4-page">
                                 <div className="scr-doc-body">
-                                    <p>
-                                        Mọi thay đổi về vị trí, địa điểm, ca trực hoặc phần mềm quản lý sẽ được lập Phụ lục hợp đồng.
-                                    </p>
+                                    <p className="scr-section-title">ĐIỀU 2: THỜI HẠN HỢP ĐỒNG</p>
+                                    <p>Thời hạn hợp đồng: {renderFieldValue('TaskPeriod')}</p>
+                                    <p>– Ngày bắt đầu: {renderFieldValue('ContractStartDate')}</p>
+                                    <p>– Ngày kết thúc: {renderFieldValue('ContractEndDate')}</p>
+                                    <p>Hợp đồng có thể được gia hạn hoặc chấm dứt theo thỏa thuận của hai bên hoặc theo quy định của pháp luật.</p>
 
-                                    <p className="scr-section-title">Điều 2. Công việc, chức vụ & địa điểm làm việc</p>
-                                    <p>Bên B giữ chức vụ: Quản lý trên phần mềm – chịu sự quản lý của Bên A.</p>
-                                    <p>Nhiệm vụ chính gồm:</p>
-                                    <p>– Quản lý và giám sát đội ngũ bảo vệ tại các mục tiêu, đảm bảo công việc diễn ra theo quy trình của Bên A.</p>
-                                    <p>– Sử dụng hệ thống phần mềm quản lý (Biometric & Shift Management System) để theo dõi, phân công ca trực, và báo cáo theo yêu cầu.</p>
-                                    <p>– Đảm bảo việc quản lý phần mềm và chấm công của các nhân viên bảo vệ dưới quyền đúng theo quy định của công ty.</p>
-                                    <p>– Cập nhật và xử lý dữ liệu trong phần mềm theo thời gian thực.</p>
-                                    <p>– Phối hợp với các bộ phận khác và báo cáo tình hình công việc cho cấp trên.</p>
-                                    <p>Địa điểm làm việc chính: ………………………………………………………………</p>
-                                    <p>Trong tương lai, Bên A có quyền điều chuyển địa điểm làm việc trong khu vực ……………… và thông báo trước … ngày.</p>
+                                    <p className="scr-section-title">ĐIỀU 3: LỊCH LÀM VIỆC, CA TRỰC, NGÀY NGHỈ VÀ TĂNG CA</p>
+                                    <p><strong>3.1. Lịch làm việc và ca trực:</strong></p>
+                                    <p>Bên A cung cấp nhân viên bảo vệ làm việc theo lịch trình như sau:</p>
+                                    <p>– Số ca làm việc mỗi ngày: {renderFieldValue('ShiftQuantityPerDay')} ca</p>
+                                    <p>– Lịch ca trực cụ thể:</p>
+                                    <div className="scr-multiline-field">
+                                        {renderMultilineText('TaskSchedules')}
+                                    </div>
 
-                                    <p className="scr-section-title">Điều 3. Thời giờ làm việc & ca trực</p>
-                                    <p>Thời gian làm việc theo ca và yêu cầu quản lý đội ngũ bảo vệ:</p>
-                                    <p>– Ca A: … giờ … phút đến … giờ … phút</p>
-                                    <p>– Ca B: … giờ … phút đến … giờ … phút</p>
-                                    <p>Quản lý trên phần mềm phải đảm bảo chấm công đúng thời gian quy định và xử lý các báo cáo kịp thời.</p>
-                                    <p>Làm thêm giờ, ca đêm, nghỉ theo Luật Lao động và quy định của Bên A.</p>
+                                    <p><strong>3.2. Ngày nghỉ cuối tuần:</strong></p>
+                                    <div className="scr-multiline-field">
+                                        {renderMultilineText('WeekendPolicy')}
+                                    </div>
 
-                                    <p className="scr-section-title">Điều 4. Tiền lương, phụ cấp & thanh toán</p>
-                                    <p>Mức lương cơ bản: …………… VNĐ/tháng.</p>
-                                    <p>Phụ cấp:</p>
-                                    <p>– Phụ cấp quản lý phần mềm: …………… VNĐ/tháng</p>
-                                    <p>– Phụ cấp ca đêm (nếu có): …………… VNĐ/ca</p>
-                                    <p>– Phụ cấp trách nhiệm quản lý hệ thống phần mềm: …………… VNĐ/tháng</p>
-                                    <p>Điều kiện nhận lương: hoàn thành công việc quản lý phần mềm, báo cáo, và quản lý ca trực đúng quy định.</p>
-                                    <p>Bên A đóng BHXH, BHYT, BHTN theo luật.</p>
-                                    <p>Ngày nhận lương: …… hàng tháng.</p>
+                                    <p><strong>3.3. Ngày nghỉ lễ, Tết:</strong></p>
+                                    <div className="scr-multiline-field">
+                                        {renderMultilineText('HolidayPolicy')}
+                                    </div>
+
+                                    <p><strong>3.4. Tăng ca:</strong></p>
+                                    <p>Nếu Bên B yêu cầu tăng ca (ngoài lịch trình đã thỏa thuận), hai bên sẽ thỏa thuận về mức phí tăng ca và thanh toán riêng theo từng tháng.</p>
                                 </div>
                             </div>
 
                             {/* Page 3 */}
                             <div className="scr-a4-page">
                                 <div className="scr-doc-body">
-                                    <p className="scr-section-title">Điều 5. Quyền lợi & nghĩa vụ</p>
-                                    <p><strong>5.1 Nghĩa vụ Bên B:</strong></p>
-                                    <p>– Quản lý và giám sát việc sử dụng phần mềm quản lý và chấm công của các nhân viên.</p>
-                                    <p>– Đảm bảo các báo cáo được hoàn thành và gửi đúng hạn.</p>
-                                    <p>– Tuân thủ nội quy, quy trình bảo mật thông tin và an toàn lao động.</p>
+                                    <p className="scr-section-title">ĐIỀU 4: GIÁ TRỊ VÀ PHƯƠNG THỨC THANH TOÁN</p>
+                                    <p><strong>4.1. Giá trị hợp đồng:</strong></p>
+                                    <p>Giá trị hợp đồng được xác định dựa trên:</p>
+                                    <p>– Số lượng nhân viên bảo vệ: {renderFieldValue('GuardQuantity')}</p>
+                                    <p>– Thời gian thực hiện dịch vụ</p>
+                                    <p>– Các yêu cầu cụ thể về ca trực và địa điểm</p>
+                                    <p>Chi phí cụ thể sẽ được thỏa thuận và ghi chi tiết trong Phụ lục hợp đồng hoặc bảng báo giá đính kèm.</p>
 
-                                    <p><strong>5.2 Nghĩa vụ Bên A:</strong></p>
-                                    <p>– Cung cấp đầy đủ thiết bị và tài khoản phần mềm để Bên B thực hiện công việc.</p>
-                                    <p>– Thanh toán lương, phụ cấp đúng hạn và đảm bảo các quyền lợi bảo hiểm.</p>
+                                    <p><strong>4.2. Phương thức thanh toán:</strong></p>
+                                    <p>– Bên B thanh toán cho Bên A theo chu kỳ: hàng tháng/quý (tùy thỏa thuận).</p>
+                                    <p>– Hình thức thanh toán: chuyển khoản ngân hàng hoặc tiền mặt.</p>
+                                    <p>– Thời hạn thanh toán: trong vòng … ngày kể từ ngày nhận hóa đơn hợp lệ từ Bên A.</p>
+                                    <p>– Bên A sẽ cung cấp hóa đơn giá trị gia tăng (VAT) đầy đủ theo quy định.</p>
 
-                                    <p><strong>5.3 Quyền lợi Bên B:</strong></p>
-                                    <p>– Hưởng lương, phụ cấp, bảo hiểm theo luật và chính sách công ty.</p>
-                                    <p>– Được đào tạo, hỗ trợ trong việc sử dụng phần mềm quản lý và chấm công.</p>
+                                    <p><strong>4.3. Điều chỉnh giá:</strong></p>
+                                    <p>Trường hợp có sự thay đổi về chính sách lương tối thiểu, bảo hiểm xã hội hoặc các quy định pháp luật liên quan, hai bên sẽ thương lượng điều chỉnh giá hợp đồng phù hợp.</p>
 
-                                    <p className="scr-section-title">Điều 6. Thay đổi – Chấm dứt hợp đồng</p>
-                                    <p>Hợp đồng chấm dứt theo quy định của pháp luật hoặc thỏa thuận giữa hai bên.</p>
-                                    <p>Vi phạm hợp đồng có thể dẫn đến kỷ luật, chấm dứt hợp đồng hoặc yêu cầu bồi thường thiệt hại.</p>
+                                    <p className="scr-section-title">ĐIỀU 5: QUYỀN VÀ NGHĨA VỤ CỦA BÊN A</p>
+                                    <p><strong>5.1. Quyền của Bên A:</strong></p>
+                                    <p>– Được thanh toán đầy đủ, đúng hạn theo thỏa thuận.</p>
+                                    <p>– Được quyền điều chỉnh nhân sự bảo vệ khi cần thiết để đảm bảo chất lượng dịch vụ.</p>
+                                    <p>– Được từ chối thực hiện các yêu cầu vượt quá phạm vi hợp đồng hoặc không hợp pháp.</p>
 
-                                    <p className="scr-section-title">Điều 7. Giải quyết tranh chấp</p>
-                                    <p>Hai bên cam kết giải quyết các tranh chấp phát sinh từ hợp đồng này bằng thương lượng.</p>
-                                    <p>Nếu không thương lượng được, tranh chấp sẽ được giải quyết tại:</p>
-                                    <p>– Hội đồng hòa giải lao động hoặc</p>
-                                    <p>– Tòa án nhân dân có thẩm quyền theo pháp luật Việt Nam.</p>
-                                    <p>Áp dụng pháp luật Việt Nam để điều chỉnh hợp đồng và giải quyết tranh chấp.</p>
+                                    <p><strong>5.2. Nghĩa vụ của Bên A:</strong></p>
+                                    <p>– Cung cấp đủ số lượng nhân viên bảo vệ có trình độ chuyên môn, sức khỏe phù hợp.</p>
+                                    <p>– Trang bị đồng phục, thiết bị bảo vệ cần thiết cho nhân viên.</p>
+                                    <p>– Đào tạo, hướng dẫn nhân viên bảo vệ tuân thủ quy trình làm việc tại địa điểm của Bên B.</p>
+                                    <p>– Quản lý, giám sát và chịu trách nhiệm về hành vi của nhân viên bảo vệ trong quá trình thực hiện nhiệm vụ.</p>
+                                    <p>– Thay thế nhân viên khi có yêu cầu hợp lý từ Bên B hoặc khi nhân viên không đáp ứng yêu cầu công việc.</p>
+                                    <p>– Mua bảo hiểm trách nhiệm nghề nghiệp và các loại bảo hiểm bắt buộc khác cho nhân viên theo quy định.</p>
+                                </div>
+                            </div>
 
-                                    <p className="scr-section-title">Điều 8. Hiệu lực hợp đồng</p>
+                            {/* Page 4 */}
+                            <div className="scr-a4-page">
+                                <div className="scr-doc-body">
+                                    <p className="scr-section-title">ĐIỀU 6: QUYỀN VÀ NGHĨA VỤ CỦA BÊN B</p>
+                                    <p><strong>6.1. Quyền của Bên B:</strong></p>
+                                    <p>– Yêu cầu Bên A cung cấp dịch vụ đúng tiêu chuẩn, đúng số lượng và đúng thời hạn đã thỏa thuận.</p>
+                                    <p>– Được quyền yêu cầu thay đổi nhân viên bảo vệ nếu có lý do chính đáng (vi phạm kỷ luật, không đáp ứng yêu cầu công việc).</p>
+                                    <p>– Được quyền tạm dừng hoặc chấm dứt hợp đồng nếu Bên A vi phạm nghiêm trọng các điều khoản đã cam kết.</p>
+                                    <p>– Được giám sát, đánh giá chất lượng dịch vụ của Bên A.</p>
+
+                                    <p><strong>6.2. Nghĩa vụ của Bên B:</strong></p>
+                                    <p>– Thanh toán đầy đủ, đúng hạn theo thỏa thuận.</p>
+                                    <p>– Cung cấp điều kiện làm việc cần thiết cho nhân viên bảo vệ (nơi trực, điện nước, vệ sinh...).</p>
+                                    <p>– Cung cấp thông tin về quy trình, nội quy làm việc tại địa điểm cần bảo vệ.</p>
+                                    <p>– Phối hợp với Bên A trong việc quản lý, giám sát nhân viên bảo vệ.</p>
+                                    <p>– Thông báo kịp thời cho Bên A khi có thay đổi về yêu cầu dịch vụ hoặc phát sinh vấn đề.</p>
+
+                                    <p className="scr-section-title">ĐIỀU 7: TRÁCH NHIỆM BỒI THƯỜNG</p>
+                                    <p><strong>7.1. Trách nhiệm của Bên A:</strong></p>
+                                    <p>Bên A chịu trách nhiệm bồi thường thiệt hại cho Bên B trong các trường hợp sau:</p>
+                                    <p>– Nhân viên bảo vệ vi phạm quy định, gây thiệt hại về tài sản hoặc uy tín của Bên B.</p>
+                                    <p>– Không cung cấp đủ số lượng nhân viên theo thỏa thuận mà không có lý do chính đáng.</p>
+                                    <p>– Vi phạm các cam kết về bảo mật thông tin.</p>
+                                    <p>Mức bồi thường sẽ được xác định căn cứ vào mức độ thiệt hại thực tế và theo quy định của pháp luật.</p>
+
+                                    <p><strong>7.2. Trách nhiệm của Bên B:</strong></p>
+                                    <p>Bên B chịu trách nhiệm bồi thường thiệt hại cho Bên A trong các trường hợp sau:</p>
+                                    <p>– Chậm thanh toán hoặc không thanh toán đầy đủ chi phí dịch vụ theo thỏa thuận.</p>
+                                    <p>– Không cung cấp điều kiện làm việc cần thiết, ảnh hưởng đến sức khỏe, an toàn của nhân viên bảo vệ.</p>
+                                    <p>– Chấm dứt hợp đồng trước thời hạn mà không có lý do chính đáng hoặc không thông báo trước theo quy định.</p>
+
+                                    <p><strong>7.3. Giới hạn trách nhiệm:</strong></p>
+                                    <p>Trong trường hợp bất khả kháng (thiên tai, hỏa hoạn, dịch bệnh, chiến tranh...), hai bên được miễn trừ trách nhiệm bồi thường. Bên gặp sự kiện bất khả kháng phải thông báo cho bên kia trong vòng 24 giờ và có biện pháp khắc phục kịp thời.</p>
+                                </div>
+                            </div>
+
+                            {/* Page 5 */}
+                            <div className="scr-a4-page">
+                                <div className="scr-doc-body">
+                                    <p className="scr-section-title">ĐIỀU 8: BẢO MẬT THÔNG TIN</p>
+                                    <p><strong>8.1. Cam kết bảo mật:</strong></p>
+                                    <p>Hai bên cam kết bảo mật mọi thông tin liên quan đến hợp đồng này và hoạt động kinh doanh của nhau, trừ khi được sự đồng ý bằng văn bản hoặc theo yêu cầu của pháp luật.</p>
+
+                                    <p><strong>8.2. Định nghĩa thông tin bảo mật:</strong></p>
+                                    <p>Thông tin bảo mật bao gồm nhưng không giới hạn:</p>
+                                    <p>– Thông tin kinh doanh, kế hoạch, chiến lược, báo cáo tài chính;</p>
+                                    <p>– Thông tin về khách hàng, đối tác, nhà cung cấp;</p>
+                                    <p>– Thông tin về hệ thống an ninh, quy trình bảo vệ;</p>
+                                    <p>– Các tài liệu, dữ liệu kỹ thuật và thông tin nội bộ khác.</p>
+
+                                    <p><strong>8.3. Nghĩa vụ bảo mật của Bên A:</strong></p>
+                                    <p>– Hướng dẫn và yêu cầu nhân viên bảo vệ ký cam kết bảo mật thông tin.</p>
+                                    <p>– Không tiết lộ thông tin về hoạt động, tài sản, nhân sự của Bên B cho bất kỳ bên thứ ba nào.</p>
+                                    <p>– Chỉ sử dụng thông tin của Bên B cho mục đích thực hiện hợp đồng này.</p>
+
+                                    <p><strong>8.4. Nghĩa vụ bảo mật của Bên B:</strong></p>
+                                    <p>– Không tiết lộ thông tin về nhân sự, quy trình làm việc, mức giá dịch vụ của Bên A cho các đối thủ cạnh tranh.</p>
+                                    <p>– Bảo vệ thông tin cá nhân của nhân viên bảo vệ theo quy định về bảo vệ dữ liệu cá nhân.</p>
+
+                                    <p><strong>8.5. Ngoại lệ:</strong></p>
+                                    <p>Nghĩa vụ bảo mật không áp dụng đối với thông tin:</p>
+                                    <p>– Đã được công khai hợp pháp trước khi ký hợp đồng;</p>
+                                    <p>– Được tiết lộ theo yêu cầu của cơ quan nhà nước có thẩm quyền;</p>
+                                    <p>– Được sự đồng ý bằng văn bản của bên kia.</p>
+
+                                    <p><strong>8.6. Thời hạn bảo mật:</strong></p>
+                                    <p>Nghĩa vụ bảo mật có hiệu lực trong suốt thời gian hợp đồng và tiếp tục trong vòng 02 (hai) năm sau khi hợp đồng chấm dứt.</p>
+
+                                    <p><strong>8.7. Xử lý vi phạm:</strong></p>
+                                    <p>Bên vi phạm cam kết bảo mật phải chịu trách nhiệm bồi thường toàn bộ thiệt hại phát sinh cho bên bị vi phạm và có thể bị xử lý theo quy định pháp luật.</p>
+                                </div>
+                            </div>
+
+                            {/* Page 6 */}
+                            <div className="scr-a4-page">
+                                <div className="scr-doc-body">
+                                    <p className="scr-section-title">ĐIỀU 9: ĐIỀU KHOẢN CHUNG</p>
+                                    <p><strong>9.1. Sửa đổi, bổ sung hợp đồng:</strong></p>
+                                    <p>Mọi sửa đổi, bổ sung hợp đồng phải được lập thành văn bản (Phụ lục hợp đồng) và có chữ ký, đóng dấu của cả hai bên. Phụ lục hợp đồng là một phần không tách rời của hợp đồng này.</p>
+
+                                    <p><strong>9.2. Chấm dứt hợp đồng:</strong></p>
+                                    <p>Hợp đồng chấm dứt trong các trường hợp sau:</p>
+                                    <p>– Hết thời hạn hợp đồng;</p>
+                                    <p>– Hai bên thỏa thuận chấm dứt trước thời hạn;</p>
+                                    <p>– Một bên đơn phương chấm dứt do bên kia vi phạm nghiêm trọng các điều khoản hợp đồng và phải thông báo trước ít nhất 30 ngày;</p>
+                                    <p>– Theo quyết định của cơ quan có thẩm quyền hoặc theo quy định pháp luật.</p>
+
+                                    <p><strong>9.3. Giải quyết tranh chấp:</strong></p>
+                                    <p>Mọi tranh chấp phát sinh từ hợp đồng này sẽ được giải quyết thông qua thương lượng, hòa giải giữa hai bên.</p>
+                                    <p>Nếu không thương lượng được trong vòng 30 ngày, tranh chấp sẽ được đưa ra giải quyết tại Tòa án nhân dân có thẩm quyền theo quy định của pháp luật Việt Nam.</p>
+
+                                    <p><strong>9.4. Luật áp dụng:</strong></p>
+                                    <p>Hợp đồng này được điều chỉnh và giải thích theo pháp luật Việt Nam.</p>
+
+                                    <p><strong>9.5. Ngôn ngữ hợp đồng:</strong></p>
+                                    <p>Hợp đồng được lập bằng tiếng Việt. Trong trường hợp có phiên bản song ngữ, phiên bản tiếng Việt sẽ được ưu tiên áp dụng.</p>
+
+                                    <p className="scr-section-title">ĐIỀU 10: HIỆU LỰC HỢP ĐỒNG</p>
+                                    <p><strong>10.1. Hiệu lực:</strong></p>
                                     <p>Hợp đồng này có hiệu lực kể từ ngày ký.</p>
-                                    <p>Hợp đồng này gồm 03(ba) tờ. Hai bên mỗi bên giữ 01 (một) bản có giá trị pháp lý như nhau.</p>
-                                    <p>Mọi sửa đổi, bổ sung hợp đồng phải được lập thành Phụ lục hợp đồng, có chữ ký của hai bên mới có hiệu lực.</p>
+
+                                    <p><strong>10.2. Số bản hợp đồng:</strong></p>
+                                    <p>Hợp đồng được lập thành 02 (hai) bản gốc có giá trị pháp lý như nhau, mỗi bên giữ 01 (một) bản.</p>
+
+                                    <p><strong>10.3. Cam kết chung:</strong></p>
+                                    <p>Hai bên cam kết thực hiện đúng và đầy đủ các điều khoản đã thỏa thuận trong hợp đồng này. Mọi vi phạm sẽ được xử lý theo quy định của pháp luật.</p>
                                 </div>
 
                                 <div className="scr-doc-footer">
                                     <div className="scr-signature-section">
                                         <div className="scr-signature-box">
                                             <p className="scr-signature-title">ĐẠI DIỆN BÊN A</p>
+                                            <p className="scr-signature-subtitle">CÔNG TY TNHH AN NINH CON HỔ</p>
                                             <p className="scr-signature-subtitle">(Ký, ghi rõ họ tên, đóng dấu)</p>
                                         </div>
                                         <div className="scr-signature-box">
-                                            <p className="scr-signature-title">BÊN B – Người lao động</p>
-                                            <p className="scr-signature-subtitle">(Ký, ghi rõ họ tên)</p>
+                                            <p className="scr-signature-title">ĐẠI DIỆN BÊN B</p>
+                                            <p className="scr-signature-subtitle">{renderFieldValue('CompanyName')}</p>
+                                            <p className="scr-signature-subtitle">(Ký, ghi rõ họ tên, đóng dấu)</p>
                                         </div>
                                     </div>
                                 </div>
@@ -520,7 +623,7 @@ const ServiceContractReview = () => {
             )}
 
             <SnackbarChecked
-                message="Hợp đồng lao động quản lý đã điền thông tin thành công và gửi đến email bên kí xác nhận"
+                message="Hợp đồng dịch vụ bảo vệ đã điền thông tin thành công và gửi đến email bên kí xác nhận"
                 isOpen={showSnackbarSuccess}
                 duration={4000}
                 onClose={() => setShowSnackbarSuccess(false)}
