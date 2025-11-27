@@ -22,6 +22,8 @@ import TemplateEditor from "./pages/eContract/TemplateEditor.tsx";
 import ContractReview from "./pages/eContract/ContractReview.tsx";
 import LaborTemplateEditor from "./pages/eContract/LaborTemplateEditor.tsx";
 import LaborContractReview from "./pages/eContract/LaborContractReview.tsx";
+import ServiceTemplateEditor from "./pages/eContract/ServiceTemplateEditor.tsx";
+import ServiceContractReview from "./pages/eContract/ServiceContractReview.tsx";
 import ContractSign from "./pages/eContract/ContractSign.tsx";
 import ContractDetail from "./pages/eContract/ContractDetail.tsx";
 {/* Manager Routes */}
@@ -118,6 +120,18 @@ function App() {
                     <Route path="/e-contracts/manager-template-review" element={
                         <EContractRoute>
                             <LaborContractReview/>
+                        </EContractRoute>
+                    }/>
+
+                    <Route path="/e-contracts/service-template-editor" element={
+                        <EContractRoute>
+                            <ServiceTemplateEditor/>
+                        </EContractRoute>
+                    }/>
+
+                    <Route path="/e-contracts/service-template-review" element={
+                        <EContractRoute>
+                            <ServiceContractReview/>
                         </EContractRoute>
                     }/>
 

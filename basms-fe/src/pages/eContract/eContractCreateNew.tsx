@@ -227,6 +227,9 @@ const EContractCreateNew = () => {
         } else if (template.templateType === 'guard_labor_contract') {
             // Navigate to regular Template Editor for guard contracts
             navigate(`/e-contracts/guard-template-editor?template=${templateId}`);
+        } else if (template.templateType === 'guard_service_contract') {
+            // Navigate to Service Template Editor for service contracts
+            navigate(`/e-contracts/service-template-editor?template=${templateId}`);
         } else {
             // Default to regular Template Editor for other contract types
             navigate(`/e-contracts/template-editor?template=${templateId}`);
