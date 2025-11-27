@@ -871,3 +871,211 @@
 .sted-field-textarea::placeholder {
     color: #9ca3af;
 }
+
+/* ==================== A4 Preview Styles ==================== */
+/* Container for A4 document pages */
+.ste-preview-document-pages {
+    max-width: 210mm;
+    margin: 0 auto;
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+
+}
+
+/* Individual A4 Page */
+.ste-preview-a4-page {
+    width: 210mm;
+    min-height: 297mm;
+    background-color: #ffffff;
+    padding: 25mm 20mm;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    font-family: 'Times New Roman', Times, serif;
+    position: relative;
+    page-break-after: always;
+    overflow: visible;
+    word-wrap: break-word;
+    overflow-wrap: break-word;
+}
+
+/* Document Header */
+.ste-preview-doc-header {
+    text-align: center;
+    margin-bottom: 20px;
+    border-bottom: 2px solid #000;
+    padding-bottom: 15px;
+}
+
+.ste-preview-doc-header p {
+    margin: 3px 0;
+    font-size: 13px;
+    font-weight: 700;
+    color: #000;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    line-height: 1.4;
+}
+
+.ste-preview-doc-title {
+    text-align: center;
+    font-size: 18px;
+    font-weight: 700;
+    color: #000;
+    margin: 25px 0 12px 0;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+}
+
+.ste-preview-doc-subtitle {
+    text-align: center;
+    font-size: 14px;
+    font-weight: 600;
+    color: #000;
+    margin-bottom: 25px;
+}
+
+/* Document Body */
+.ste-preview-doc-body {
+    font-size: 13px;
+    line-height: 1.8;
+    color: #000;
+    word-wrap: break-word;
+    overflow-wrap: break-word;
+    word-break: break-word;
+}
+
+.ste-preview-doc-body p {
+    margin: 8px 0;
+    text-align: justify;
+    word-wrap: break-word;
+    overflow-wrap: break-word;
+    word-break: break-word;
+    white-space: pre-wrap;
+    max-width: 100%;
+}
+
+.ste-preview-doc-body strong {
+    font-weight: 700;
+    word-wrap: break-word;
+    overflow-wrap: break-word;
+}
+
+.ste-preview-section-title {
+    font-weight: 700;
+    color: #000;
+    margin-top: 15px !important;
+    margin-bottom: 8px !important;
+    page-break-after: avoid;
+    word-wrap: break-word;
+    overflow-wrap: break-word;
+}
+
+/* Prevent awkward page breaks */
+.ste-preview-doc-body p,
+.ste-preview-doc-body div {
+    page-break-inside: avoid;
+}
+
+/* Multiline field styling */
+.ste-preview-multiline-field {
+    margin: 8px 0;
+    padding-left: 20px;
+    word-wrap: break-word;
+    overflow-wrap: break-word;
+    max-width: 100%;
+    page-break-inside: auto;
+}
+
+.ste-preview-multiline-field p {
+    margin: 6px 0;
+    text-align: justify;
+    word-wrap: break-word;
+    overflow-wrap: break-word;
+    word-break: break-word;
+    white-space: pre-wrap;
+    max-width: 100%;
+}
+
+/* Document Footer */
+.ste-preview-doc-footer {
+    margin-top: 50px;
+    padding-top: 25px;
+    page-break-inside: avoid;
+}
+
+.ste-preview-signature-section {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 40px;
+    margin-top: 35px;
+    page-break-inside: avoid;
+}
+
+.ste-preview-signature-box {
+    text-align: center;
+    word-wrap: break-word;
+    overflow-wrap: break-word;
+}
+
+.ste-preview-signature-title {
+    font-weight: 700;
+    color: #000;
+    margin: 0 0 8px 0;
+    text-transform: uppercase;
+    font-size: 13px;
+    word-wrap: break-word;
+    overflow-wrap: break-word;
+}
+
+.ste-preview-signature-subtitle {
+    font-size: 12px;
+    color: #374151;
+    font-style: italic;
+    margin: 0;
+    word-wrap: break-word;
+    overflow-wrap: break-word;
+}
+
+/* Make preview panel scrollable independently */
+.sted-preview-panel {
+    height: calc(100vh - 200px);
+    overflow-y: auto;
+    overflow-x: hidden;
+    position: sticky;
+    top: 100px;
+}
+
+.sted-preview-content {
+    background-color: #e5e7eb;
+    padding: 40px 20px;
+    min-height: 100%;
+}
+
+/* Responsive adjustments for A4 preview */
+@media (max-width: 1024px) {
+    .ste-preview-a4-page {
+        width: 100%;
+        padding: 20mm 15mm;
+    }
+
+    .ste-preview-document-pages {
+        max-width: 100%;
+    }
+
+    .sted-preview-panel {
+        height: auto;
+        position: relative;
+        top: 0;
+    }
+}
+
+@media print {
+    .ste-preview-a4-page {
+        box-shadow: none;
+        page-break-after: always;
+    }
+
+    .ste-preview-document-pages {
+        gap: 0;
+    }
+}
