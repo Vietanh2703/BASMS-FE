@@ -400,58 +400,78 @@
     margin: 0 auto;
 }
 
-/* Template Document Styling */
-.cr-template-document {
-    background-color: #ffffff;
-    padding: 60px 80px;
-    border: 1px solid #e5e7eb;
-    border-radius: 8px;
-    font-family: 'Times New Roman', Times, serif;
-    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+/* Review Content - A4 Pages */
+.cr-review-content {
+    background-color: #e5e7eb;
+    padding: 40px;
+    min-height: calc(100vh - 200px);
 }
 
+.cr-document-pages {
+    max-width: 210mm;
+    margin: 0 auto;
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+}
+
+/* A4 Page Format */
+.cr-a4-page {
+    width: 210mm;
+    min-height: 297mm;
+    background-color: #ffffff;
+    padding: 25mm 20mm;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    font-family: 'Times New Roman', Times, serif;
+    position: relative;
+    page-break-after: always;
+}
+
+/* Document Header */
 .cr-doc-header {
     text-align: center;
-    margin-bottom: 30px;
+    margin-bottom: 20px;
     border-bottom: 2px solid #000;
-    padding-bottom: 20px;
+    padding-bottom: 15px;
 }
 
 .cr-doc-header p {
-    margin: 4px 0;
+    margin: 3px 0;
     font-size: 13px;
     font-weight: 700;
     color: #000;
     text-transform: uppercase;
     letter-spacing: 0.5px;
+    line-height: 1.4;
 }
 
 .cr-doc-title {
     text-align: center;
-    font-size: 22px;
+    font-size: 18px;
     font-weight: 700;
     color: #000;
-    margin: 30px 0 15px 0;
+    margin: 25px 0 12px 0;
     text-transform: uppercase;
     letter-spacing: 1px;
 }
 
 .cr-doc-subtitle {
     text-align: center;
-    font-size: 15px;
+    font-size: 14px;
     font-weight: 600;
     color: #000;
-    margin-bottom: 30px;
+    margin-bottom: 25px;
 }
 
+/* Document Body */
 .cr-doc-body {
-    font-size: 14px;
-    line-height: 1.9;
+    font-size: 13px;
+    line-height: 1.8;
     color: #000;
 }
 
 .cr-doc-body p {
-    margin: 10px 0;
+    margin: 8px 0;
     text-align: justify;
 }
 
@@ -462,7 +482,8 @@
 .cr-section-title {
     font-weight: 700;
     color: #000;
-    margin-top: 20px !important;
+    margin-top: 15px !important;
+    margin-bottom: 8px !important;
 }
 
 .cr-field-placeholder {
@@ -473,17 +494,17 @@
     min-width: 120px;
 }
 
+/* Document Footer */
 .cr-doc-footer {
-    margin-top: 60px;
-    padding-top: 30px;
-    border-top: 1px solid #e5e7eb;
+    margin-top: 50px;
+    padding-top: 25px;
 }
 
 .cr-signature-section {
     display: grid;
     grid-template-columns: 1fr 1fr;
     gap: 40px;
-    margin-top: 40px;
+    margin-top: 35px;
 }
 
 .cr-signature-box {
@@ -504,6 +525,7 @@
     font-style: italic;
     margin: 0;
 }
+
 
 /* Loading State */
 .cr-loading-container {

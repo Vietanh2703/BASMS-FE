@@ -1,6 +1,7 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useEContractAuth } from '../../hooks/useEContractAuth';
+import SnackbarWarning from '../../components/snackbar/snackbarWarning';
 import './TemplateEditor.css';
 
 interface FieldFormatting {
@@ -55,6 +56,16 @@ const TemplateEditor = () => {
 
     const [activeField, setActiveField] = useState<string | null>(null);
     const [isDataLoaded, setIsDataLoaded] = useState(false);
+
+    // Validation states
+    const [fieldErrors, setFieldErrors] = useState<{ [key: string]: string }>({});
+    const [showSnackbarWarning, setShowSnackbarWarning] = useState(false);
+    const [snackbarMessage, setSnackbarMessage] = useState('');
+
+    // Memoized callback to close snackbar
+    const handleCloseSnackbar = useCallback(() => {
+        setShowSnackbarWarning(false);
+    }, []);
 
     // Load saved data from localStorage on mount
     useEffect(() => {
@@ -187,14 +198,168 @@ const TemplateEditor = () => {
         return <span style={getFieldStyle(fieldKey)}>{field.value}</span>;
     };
 
-    const handleSubmit = () => {
-        // Validate that at least some fields are filled
-        const hasData = Object.values(formData).some(field => field.value.trim() !== '');
+    // Validation helper functions
+    const isValidEmail = (email: string): boolean => {
+        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+        return emailRegex.test(email);
+    };
 
-        if (!hasData) {
-            alert('Vui lòng điền ít nhất một trường thông tin');
+    const isValidPhoneNumber = (phone: string): boolean => {
+        const phoneRegex = /^\d{10}$/;
+        return phoneRegex.test(phone);
+    };
+
+    const isValidCCCD = (cccd: string): boolean => {
+        const cccdRegex = /^\d{12}$/;
+        return cccdRegex.test(cccd);
+    };
+
+    const isValidDate = (dateString: string): boolean => {
+        if (!dateString) return false;
+        const parts = dateString.split('/');
+        if (parts.length !== 3) return false;
+        const day = parseInt(parts[0], 10);
+        const month = parseInt(parts[1], 10);
+        const year = parseInt(parts[2], 10);
+        const date = new Date(year, month - 1, day);
+        return date.getDate() === day && date.getMonth() === month - 1 && date.getFullYear() === year;
+    };
+
+    const isDateNotBeforeToday = (dateString: string): boolean => {
+        if (!dateString) return false;
+        const parts = dateString.split('/');
+        if (parts.length !== 3) return false;
+        const day = parseInt(parts[0], 10);
+        const month = parseInt(parts[1], 10);
+        const year = parseInt(parts[2], 10);
+        const inputDate = new Date(year, month - 1, day);
+        const today = new Date();
+        today.setHours(0, 0, 0, 0);
+        return inputDate >= today;
+    };
+
+    const isSignDateValid = (): boolean => {
+        const day = formData.SignDay.value;
+        const month = formData.SignMonth.value;
+        const year = formData.SignYear.value;
+        if (!day || !month || !year) return false;
+
+        const dateString = `${day.padStart(2, '0')}/${month.padStart(2, '0')}/${year}`;
+        if (!isValidDate(dateString)) return false;
+        return isDateNotBeforeToday(dateString);
+    };
+
+    const validateAllFields = (): boolean => {
+        const errors: { [key: string]: string } = {};
+        let hasError = false;
+
+        // Check all fields except EmployeeCurrentAddress
+        Object.keys(formData).forEach(fieldKey => {
+            if (fieldKey === 'EmployeeCurrentAddress') return;
+
+            const field = formData[fieldKey];
+            const value = field.value.trim();
+
+            // Check if empty
+            if (!value) {
+                errors[fieldKey] = 'Trường này không được để trống';
+                hasError = true;
+                return;
+            }
+
+            // Validate specific field formats
+            switch (fieldKey) {
+                case 'EmployeePhone':
+                    if (!isValidPhoneNumber(value)) {
+                        errors[fieldKey] = 'Số điện thoại phải có 10 số';
+                        hasError = true;
+                    }
+                    break;
+                case 'EmployeeIdentityNumber':
+                    if (!isValidCCCD(value)) {
+                        errors[fieldKey] = 'Số CCCD phải có 12 số';
+                        hasError = true;
+                    }
+                    break;
+                case 'EmployeeEmail':
+                    if (!isValidEmail(value)) {
+                        errors[fieldKey] = 'Email không hợp lệ';
+                        hasError = true;
+                    }
+                    break;
+                case 'EmployeeDateOfBirth':
+                case 'EmployeeIdentityIssueDate':
+                    if (!isValidDate(value)) {
+                        errors[fieldKey] = 'Ngày tháng không hợp lệ (dd/mm/yyyy)';
+                        hasError = true;
+                    }
+                    break;
+                case 'SignDay':
+                case 'SignMonth':
+                case 'SignYear':
+                    // Check signing date
+                    if (fieldKey === 'SignYear' && formData.SignDay.value && formData.SignMonth.value && value) {
+                        if (!isSignDateValid()) {
+                            errors.SignDay = 'Ngày ký không hợp lệ hoặc trước hôm nay';
+                            errors.SignMonth = 'Ngày ký không hợp lệ hoặc trước hôm nay';
+                            errors.SignYear = 'Ngày ký không hợp lệ hoặc trước hôm nay';
+                            hasError = true;
+                        }
+                    }
+                    break;
+                case 'ContractStartDate':
+                    if (!isValidDate(value)) {
+                        errors[fieldKey] = 'Ngày bắt đầu không hợp lệ (dd/mm/yyyy)';
+                        hasError = true;
+                    } else if (!isDateNotBeforeToday(value)) {
+                        errors[fieldKey] = 'Ngày bắt đầu không được trước hôm nay';
+                        hasError = true;
+                    }
+                    break;
+                case 'ContractEndDate':
+                    if (!isValidDate(value)) {
+                        errors[fieldKey] = 'Ngày kết thúc không hợp lệ (dd/mm/yyyy)';
+                        hasError = true;
+                    } else if (!isDateNotBeforeToday(value)) {
+                        errors[fieldKey] = 'Ngày kết thúc không được trước hôm nay';
+                        hasError = true;
+                    } else if (formData.ContractStartDate.value && isValidDate(formData.ContractStartDate.value)) {
+                        // Check if end date is not before start date
+                        const startParts = formData.ContractStartDate.value.split('/');
+                        const endParts = value.split('/');
+                        const startDate = new Date(parseInt(startParts[2]), parseInt(startParts[1]) - 1, parseInt(startParts[0]));
+                        const endDate = new Date(parseInt(endParts[2]), parseInt(endParts[1]) - 1, parseInt(endParts[0]));
+                        if (endDate < startDate) {
+                            errors[fieldKey] = 'Ngày kết thúc không được trước ngày bắt đầu';
+                            hasError = true;
+                        }
+                    }
+                    break;
+            }
+        });
+
+        setFieldErrors(errors);
+        return !hasError;
+    };
+
+    const handleSubmit = () => {
+        // Validate all fields
+        const isValid = validateAllFields();
+
+        if (!isValid) {
+            // Reset snackbar first to ensure clean state
+            setShowSnackbarWarning(false);
+
+            // Show snackbar warning after a brief delay to allow state reset
+            setTimeout(() => {
+                setSnackbarMessage(`Vui lòng kiểm tra và điền đầy đủ thông tin. Có một số trường chưa hợp lệ hoặc bị bỏ trống.`);
+                setShowSnackbarWarning(true);
+            }, 10);
             return;
         }
+
+        // Clear errors if validation passes
+        setFieldErrors({});
 
         // Prepare data for review
         const contractData = {
@@ -332,11 +497,12 @@ const TemplateEditor = () => {
                                     <div key={fieldKey} className="ted-field-group">
                                         <label className="ted-field-label">
                                             {formData[fieldKey].fieldName}
+                                            {fieldKey !== 'EmployeeCurrentAddress' && <span className="ted-required-mark"> *</span>}
                                         </label>
                                         <div className="ted-field-input-wrapper">
                                             <input
                                                 type="text"
-                                                className={`ted-field-input ${activeField === fieldKey ? 'ted-field-active' : ''}`}
+                                                className={`ted-field-input ${activeField === fieldKey ? 'ted-field-active' : ''} ${fieldErrors[fieldKey] ? 'ted-field-error' : ''}`}
                                                 value={formData[fieldKey].value}
                                                 onChange={(e) => handleInputChange(fieldKey, e.target.value)}
                                                 onFocus={() => setActiveField(fieldKey)}
@@ -344,6 +510,9 @@ const TemplateEditor = () => {
                                                 placeholder={`Nhập ${formData[fieldKey].fieldName.toLowerCase()}...`}
                                                 style={getFieldStyle(fieldKey)}
                                             />
+                                            {fieldErrors[fieldKey] && (
+                                                <div className="ted-field-error-message">{fieldErrors[fieldKey]}</div>
+                                            )}
                                             <div className="ted-formatting-toolbar">
                                                 <button
                                                     className={`ted-format-btn ${formData[fieldKey].formatting.bold ? 'ted-format-active' : ''}`}
@@ -457,6 +626,13 @@ const TemplateEditor = () => {
                     </div>
                 </main>
             </div>
+
+            <SnackbarWarning
+                message={snackbarMessage}
+                isOpen={showSnackbarWarning}
+                duration={3000}
+                onClose={handleCloseSnackbar}
+            />
 
             {showLogoutModal && (
                 <div className="ted-modal-overlay" onClick={cancelLogout}>

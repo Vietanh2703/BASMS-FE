@@ -747,6 +747,30 @@
 }
 
 /* Responsive Design */
+/* Validation Error Styles */
+.ted-required-mark {
+    color: #ef4444;
+    font-weight: 700;
+}
+
+.ted-field-error {
+    border-color: #ef4444 !important;
+    background-color: #fef2f2 !important;
+}
+
+.ted-field-error:focus {
+    border-color: #dc2626 !important;
+    box-shadow: 0 0 0 3px rgba(239, 68, 68, 0.1) !important;
+}
+
+.ted-field-error-message {
+    color: #dc2626;
+    font-size: 12px;
+    margin-top: 4px;
+    font-weight: 500;
+}
+
+/* Responsive Styles */
 @media (max-width: 768px) {
     .ted-content-expanded,
     .ted-content-collapsed {
