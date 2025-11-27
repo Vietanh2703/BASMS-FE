@@ -7,6 +7,7 @@ interface ContractTemplate {
     id: string;
     name: string;
     type: string;
+    templateType: string;
     createdAt: string;
     description: string;
 }
@@ -52,6 +53,16 @@ const EContractCreateNew = () => {
         { value: 'service', label: 'Hợp đồng dịch vụ' },
         { value: 'training', label: 'Hợp đồng đào tạo' },
     ];
+
+    // Category mapping function
+    const getCategoryName = (templateType: string): string => {
+        const categoryMap: { [key: string]: string } = {
+            'guard_labor_contract': 'Hợp đồng lao động bảo vệ',
+            'manager_labor_contract': 'Hợp đồng lao động quản lý',
+            'guard_service_contract': 'Hợp đồng dịch vụ bảo vệ',
+        };
+        return categoryMap[templateType] || templateType;
+    };
 
     useEffect(() => {
         const timer = setInterval(() => {
@@ -110,18 +121,23 @@ const EContractCreateNew = () => {
 
                 // Map to ContractTemplate interface
                 const mappedTemplates: ContractTemplate[] = templateDocuments.map(doc => {
-                    // Extract type from templateType field or default to 'service'
-                    let type = doc.templateType || 'service';
+                    const originalTemplateType = doc.templateType || 'service';
 
-                    // Map type if it doesn't match our expected values
-                    if (!['labor', 'service', 'training'].includes(type)) {
-                        type = 'service';
+                    // Map template type to filter category
+                    let filterType = 'service'; // default
+                    if (originalTemplateType === 'guard_labor_contract' || originalTemplateType === 'manager_labor_contract') {
+                        filterType = 'labor';
+                    } else if (originalTemplateType === 'guard_service_contract') {
+                        filterType = 'service';
+                    } else if (originalTemplateType === 'training') {
+                        filterType = 'training';
                     }
 
                     return {
                         id: doc.id,
                         name: doc.documentName,
-                        type: type,
+                        type: filterType,
+                        templateType: originalTemplateType,
                         createdAt: doc.createdAt,
                         description: `Mẫu hợp đồng ${doc.documentName}`,
                     };
@@ -387,6 +403,7 @@ const EContractCreateNew = () => {
                             ) : (
                                 filteredTemplates.map(template => (
                                 <div key={template.id} className="ec-create-template-item">
+                                    <div className="ec-create-category-title">{getCategoryName(template.templateType)}</div>
                                     <div className="ec-create-template-name">{template.name}</div>
                                     <div className="ec-create-template-description">{template.description}</div>
                                     <div className="ec-create-template-details">
