@@ -97,25 +97,25 @@ function App() {
                         </EContractRoute>
                     }/>
 
-                    <Route path="/e-contracts/template-editor" element={
+                    <Route path="/e-contracts/guard-template-editor" element={
                         <EContractRoute>
                             <TemplateEditor/>
                         </EContractRoute>
                     }/>
 
-                    <Route path="/e-contracts/review" element={
+                    <Route path="/e-contracts/guard-template-review" element={
                         <EContractRoute>
                             <ContractReview/>
                         </EContractRoute>
                     }/>
 
-                    <Route path="/e-contracts/labor-template-editor" element={
+                    <Route path="/e-contracts/manager-template-editor" element={
                         <EContractRoute>
                             <LaborTemplateEditor/>
                         </EContractRoute>
                     }/>
 
-                    <Route path="/e-contracts/labor-review" element={
+                    <Route path="/e-contracts/manager-template-review" element={
                         <EContractRoute>
                             <LaborContractReview/>
                         </EContractRoute>
