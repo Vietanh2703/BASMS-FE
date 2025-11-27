@@ -371,7 +371,7 @@ const LaborTemplateEditor = () => {
         localStorage.setItem('laborContractReviewData', JSON.stringify(contractData));
 
         // Navigate to review page
-        navigate('/e-contracts/labor-review');
+        navigate('/e-contracts/manager-template-review');
     };
 
     return (
