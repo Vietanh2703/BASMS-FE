@@ -14,6 +14,7 @@ interface ContractTemplate {
 
 interface Document {
     id: string;
+    category: string;
     documentType: string;
     documentName: string;
     fileUrl: string;
@@ -121,15 +122,15 @@ const EContractCreateNew = () => {
 
                 // Map to ContractTemplate interface
                 const mappedTemplates: ContractTemplate[] = templateDocuments.map(doc => {
-                    const originalTemplateType = doc.templateType || 'service';
+                    const category = doc.category || 'service';
 
-                    // Map template type to filter category
+                    // Map category to filter type
                     let filterType = 'service'; // default
-                    if (originalTemplateType === 'guard_labor_contract' || originalTemplateType === 'manager_labor_contract') {
+                    if (category === 'guard_labor_contract' || category === 'manager_labor_contract') {
                         filterType = 'labor';
-                    } else if (originalTemplateType === 'guard_service_contract') {
+                    } else if (category === 'guard_service_contract') {
                         filterType = 'service';
-                    } else if (originalTemplateType === 'training') {
+                    } else if (category === 'training') {
                         filterType = 'training';
                     }
 
@@ -137,7 +138,7 @@ const EContractCreateNew = () => {
                         id: doc.id,
                         name: doc.documentName,
                         type: filterType,
-                        templateType: originalTemplateType,
+                        templateType: category,
                         createdAt: doc.createdAt,
                         description: `Mẫu hợp đồng ${doc.documentName}`,
                     };
