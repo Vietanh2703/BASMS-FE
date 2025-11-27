@@ -223,10 +223,10 @@ const EContractCreateNew = () => {
         // Navigate to appropriate template editor based on category
         if (template.templateType === 'manager_labor_contract') {
             // Navigate to Labor Template Editor for manager contracts
-            navigate(`/e-contracts/labor-template-editor?template=${templateId}`);
+            navigate(`/e-contracts/manager-template-editor?template=${templateId}`);
         } else if (template.templateType === 'guard_labor_contract') {
             // Navigate to regular Template Editor for guard contracts
-            navigate(`/e-contracts/template-editor?template=${templateId}`);
+            navigate(`/e-contracts/guard-template-editor?template=${templateId}`);
         } else {
             // Default to regular Template Editor for other contract types
             navigate(`/e-contracts/template-editor?template=${templateId}`);
