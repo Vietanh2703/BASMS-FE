@@ -9,6 +9,10 @@ interface Document {
     documentName: string;
     fileUrl: string;
     createdAt: string;
+    category?: string;
+    startDate?: string;
+    endDate?: string;
+    downloadUrl?: string;
 }
 
 interface ContractResponse {
@@ -25,6 +29,11 @@ interface Contract {
     status: 'active' | 'expired' | 'pending' | 'cancelled' | 'awaiting_signature' | 'awaiting_approval' | 'approved';
     createdAt: string;
     expiresAt: string;
+    category?: string;
+    documentType?: string;
+    startDate?: string;
+    endDate?: string;
+    downloadUrl?: string;
 }
 
 const EContractList = () => {
@@ -52,25 +61,16 @@ const EContractList = () => {
 
     const contractTypes = [
         { value: 'all', label: 'Tất cả loại' },
-        { value: 'service', label: 'Dịch vụ' },
-        { value: 'rental', label: 'Thuê' },
-        { value: 'partnership', label: 'Hợp tác' },
-        { value: 'maintenance', label: 'Bảo trì' },
-        { value: 'consulting', label: 'Tư vấn' },
-        { value: 'training', label: 'Đào tạo' },
-        { value: 'insurance', label: 'Bảo hiểm' },
-        { value: 'sales', label: 'Mua bán' },
-        { value: 'transport', label: 'Vận chuyển' },
-        { value: 'marketing', label: 'Quảng cáo' },
-        { value: 'manufacturing', label: 'Gia công' },
-        { value: 'distribution', label: 'Phân phối' },
+        { value: 'labor', label: 'Hợp đồng lao động' },
+        { value: 'service', label: 'Hợp đồng dịch vụ' },
     ];
 
     const contractStatuses = [
         { value: 'all', label: 'Tất cả trạng thái' },
-        { value: 'approved', label: 'Đã xử lí' },
         { value: 'awaiting_signature', label: 'Chờ kí duyệt' },
         { value: 'awaiting_approval', label: 'Chờ xét duyệt' },
+        { value: 'approved', label: 'Đã xét duyệt' },
+        { value: 'expired', label: 'Hết hạn' },
         { value: 'cancelled', label: 'Đã hủy' },
     ];
 
@@ -139,17 +139,13 @@ const EContractList = () => {
 
                 // Map API documents to Contract interface
                 const mappedContracts: Contract[] = nonTemplateDocuments.map(doc => {
-                    const createdDate = new Date(doc.createdAt);
-                    const expiresDate = new Date(createdDate);
-                    expiresDate.setFullYear(expiresDate.getFullYear() + 1); // Default 1 year expiration
-
                     // Map documentType to status
                     let status: 'active' | 'expired' | 'pending' | 'cancelled' | 'awaiting_signature' | 'awaiting_approval' | 'approved' = 'active';
                     if (doc.documentType === 'filled_contract') {
                         status = 'awaiting_signature';
                     } else if (doc.documentType === 'signed_contract') {
                         status = 'awaiting_approval';
-                    } else if (doc.documentType === 'completed_contract') {
+                    } else if (doc.documentType === 'completed_contract' || doc.documentType === 'approved_document') {
                         status = 'approved';
                     } else if (doc.documentType === 'unsign_contract') {
                         status = 'pending';
@@ -159,19 +155,8 @@ const EContractList = () => {
                         status = 'cancelled';
                     }
 
-                    // Map documentType to contract type (simplified)
-                    let type = 'service';
-                    if (doc.documentName.toLowerCase().includes('thuê')) type = 'rental';
-                    else if (doc.documentName.toLowerCase().includes('hợp tác')) type = 'partnership';
-                    else if (doc.documentName.toLowerCase().includes('bảo trì')) type = 'maintenance';
-                    else if (doc.documentName.toLowerCase().includes('tư vấn')) type = 'consulting';
-                    else if (doc.documentName.toLowerCase().includes('đào tạo')) type = 'training';
-                    else if (doc.documentName.toLowerCase().includes('bảo hiểm')) type = 'insurance';
-                    else if (doc.documentName.toLowerCase().includes('mua bán')) type = 'sales';
-                    else if (doc.documentName.toLowerCase().includes('vận chuyển')) type = 'transport';
-                    else if (doc.documentName.toLowerCase().includes('quảng cáo')) type = 'marketing';
-                    else if (doc.documentName.toLowerCase().includes('gia công')) type = 'manufacturing';
-                    else if (doc.documentName.toLowerCase().includes('phân phối')) type = 'distribution';
+                    // Get type from category
+                    const type = getTypeFromCategory(doc.category);
 
                     return {
                         id: doc.id,
@@ -179,7 +164,12 @@ const EContractList = () => {
                         type: type,
                         status: status,
                         createdAt: doc.createdAt,
-                        expiresAt: expiresDate.toISOString(),
+                        expiresAt: doc.endDate || doc.createdAt,
+                        category: doc.category,
+                        documentType: doc.documentType,
+                        startDate: doc.startDate,
+                        endDate: doc.endDate,
+                        downloadUrl: doc.downloadUrl,
                     };
                 });
 
@@ -235,10 +225,26 @@ const EContractList = () => {
         return `${dayName}, ${day}/${month}/${year} ${hours}:${minutes}:${seconds}`;
     };
 
+    const getCategoryLabel = (category?: string) => {
+        const categoryMap: { [key: string]: string } = {
+            'manager_labor_contract': 'Hợp đồng lao động quản lý',
+            'guard_labor_contract': 'Hợp đồng lao động bảo vệ',
+            'guard_service_contract': 'Hợp đồng dịch vụ bảo vệ',
+        };
+        return category ? categoryMap[category] || category : 'Không xác định';
+    };
+
+    const getTypeFromCategory = (category?: string): string => {
+        if (category === 'manager_labor_contract' || category === 'guard_labor_contract') {
+            return 'labor';
+        } else if (category === 'guard_service_contract') {
+            return 'service';
+        }
+        return 'labor';
+    };
+
     const getStatusLabel = (status: string) => {
         const statusMap: { [key: string]: string } = {
-            active: 'Đang hoạt động',
-            pending: 'Chờ xử lý',
             expired: 'Hết hạn',
             cancelled: 'Đã hủy',
             awaiting_signature: 'Chờ kí duyệt',
@@ -246,11 +252,6 @@ const EContractList = () => {
             approved: 'Đã xét duyệt',
         };
         return statusMap[status] || status;
-    };
-
-    const getTypeLabel = (type: string) => {
-        const found = contractTypes.find(t => t.value === type);
-        return found ? found.label : type;
     };
 
     // Filter contracts
@@ -305,6 +306,51 @@ const EContractList = () => {
     const handleViewContract = (contractId: string) => {
         // Navigate to contract detail page
         navigate(`/e-contracts/item/${contractId}`);
+    };
+
+    const handleApproveContract = (contractId: string, category?: string) => {
+        // Navigate to contract approval page
+        navigate(`/e-contracts/approve/${contractId}`, { state: { category } });
+    };
+
+    const handleDownloadContract = async (contractId: string, contractName: string) => {
+        try {
+            const apiUrl = import.meta.env.VITE_API_CONTRACT_URL;
+            const token = localStorage.getItem('eContractAccessToken');
+
+            if (!token) {
+                navigate('/e-contract/login');
+                return;
+            }
+
+            // Call API to download
+            const response = await fetch(`${apiUrl}/contracts/documents/${contractId}/download`, {
+                method: 'GET',
+                headers: {
+                    'Authorization': `Bearer ${token}`,
+                },
+            });
+
+            if (!response.ok) {
+                throw new Error('Không thể tải hợp đồng');
+            }
+
+            // Get blob from response
+            const blob = await response.blob();
+
+            // Create download link
+            const url = window.URL.createObjectURL(blob);
+            const link = document.createElement('a');
+            link.href = url;
+            link.download = contractName || 'contract.docx';
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+            window.URL.revokeObjectURL(url);
+        } catch (error) {
+            console.error('Error downloading contract:', error);
+            alert('Không thể tải hợp đồng. Vui lòng thử lại sau.');
+        }
     };
 
     const handleCancelContract = async (contractId: string) => {
@@ -601,15 +647,19 @@ const EContractList = () => {
                                 <div className="ec-contracts-item-details">
                                     <div className="ec-contracts-item-detail">
                                         <span className="ec-contracts-detail-label">Loại:</span>
-                                        <span className="ec-contracts-detail-value">{getTypeLabel(contract.type)}</span>
+                                        <span className="ec-contracts-detail-value">{getCategoryLabel(contract.category)}</span>
                                     </div>
                                     <div className="ec-contracts-item-detail">
-                                        <span className="ec-contracts-detail-label">Ngày lập:</span>
-                                        <span className="ec-contracts-detail-value">{new Date(contract.createdAt).toLocaleDateString('vi-VN')}</span>
+                                        <span className="ec-contracts-detail-label">Ngày bắt đầu:</span>
+                                        <span className="ec-contracts-detail-value">
+                                            {contract.startDate ? new Date(contract.startDate).toLocaleDateString('vi-VN') : 'Chưa có'}
+                                        </span>
                                     </div>
                                     <div className="ec-contracts-item-detail">
-                                        <span className="ec-contracts-detail-label">Hết hạn:</span>
-                                        <span className="ec-contracts-detail-value">{new Date(contract.expiresAt).toLocaleDateString('vi-VN')}</span>
+                                        <span className="ec-contracts-detail-label">Ngày kết thúc:</span>
+                                        <span className="ec-contracts-detail-value">
+                                            {contract.endDate ? new Date(contract.endDate).toLocaleDateString('vi-VN') : 'Chưa có'}
+                                        </span>
                                     </div>
                                 </div>
                                 <div className="ec-contracts-item-actions">
@@ -619,6 +669,24 @@ const EContractList = () => {
                                     >
                                         Xem hợp đồng
                                     </button>
+                                    {(contract.documentType === 'signed_contract' || contract.documentType === 'approved_document') && (
+                                        <button
+                                            className="ec-contracts-action-btn ec-contracts-btn-download"
+                                            onClick={() => handleDownloadContract(contract.id, contract.name)}
+                                        >
+                                            Tải hợp đồng
+                                        </button>
+                                    )}
+                                    {contract.documentType === 'signed_contract' &&
+                                     contract.category &&
+                                     ['manager_labor_contract', 'guard_labor_contract', 'guard_service_contract'].includes(contract.category) && (
+                                        <button
+                                            className="ec-contracts-action-btn ec-contracts-btn-approve"
+                                            onClick={() => handleApproveContract(contract.id, contract.category)}
+                                        >
+                                            Xét duyệt hợp đồng
+                                        </button>
+                                    )}
                                     {contract.status === 'expired' && (
                                         <button
                                             className="ec-contracts-action-btn ec-contracts-btn-renew"

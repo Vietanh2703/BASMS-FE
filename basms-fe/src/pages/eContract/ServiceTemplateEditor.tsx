@@ -46,7 +46,7 @@ const ServiceTemplateEditor = () => {
         Phone: { fieldName: 'Số điện thoại công ty', value: '', formatting: { bold: false, italic: false, underline: false } },
         CompanyEmail: { fieldName: 'Email công ty', value: '', formatting: { bold: false, italic: false, underline: false } },
         TaxCode: { fieldName: 'Mã số thuế', value: '', formatting: { bold: false, italic: false, underline: false } },
-        Gender: { fieldName: 'Giới tính đại diện (Ông/Bà)', value: '', formatting: { bold: false, italic: false, underline: false } },
+        Gender: { fieldName: 'Ông/Bà', value: '', formatting: { bold: false, italic: false, underline: false } },
         Name: { fieldName: 'Họ tên đại diện', value: '', formatting: { bold: false, italic: false, underline: false } },
         EmployeeIdentityNumber: { fieldName: 'Số CCCD đại diện', value: '', formatting: { bold: false, italic: false, underline: false } },
         GuardQuantity: { fieldName: 'Số lượng bảo vệ', value: '', formatting: { bold: false, italic: false, underline: false } },
@@ -502,7 +502,24 @@ const ServiceTemplateEditor = () => {
                                             <span className="sted-required-mark"> *</span>
                                         </label>
                                         <div className="sted-field-input-wrapper">
-                                            {formData[fieldKey].isTextarea ? (
+                                            {fieldKey === 'Gender' ? (
+                                                <div className="sted-gender-selector">
+                                                    <button
+                                                        type="button"
+                                                        className={`sted-gender-btn ${formData[fieldKey].value === 'Ông' ? 'sted-gender-active' : ''} ${fieldErrors[fieldKey] ? 'sted-field-error' : ''}`}
+                                                        onClick={() => handleInputChange(fieldKey, 'Ông')}
+                                                    >
+                                                        Ông
+                                                    </button>
+                                                    <button
+                                                        type="button"
+                                                        className={`sted-gender-btn ${formData[fieldKey].value === 'Bà' ? 'sted-gender-active' : ''} ${fieldErrors[fieldKey] ? 'sted-field-error' : ''}`}
+                                                        onClick={() => handleInputChange(fieldKey, 'Bà')}
+                                                    >
+                                                        Bà
+                                                    </button>
+                                                </div>
+                                            ) : formData[fieldKey].isTextarea ? (
                                                 <textarea
                                                     className={`sted-field-textarea ${activeField === fieldKey ? 'sted-field-active' : ''} ${fieldErrors[fieldKey] ? 'sted-field-error' : ''}`}
                                                     value={formData[fieldKey].value}

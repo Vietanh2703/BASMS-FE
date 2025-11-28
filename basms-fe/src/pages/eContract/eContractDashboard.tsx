@@ -16,6 +16,9 @@ interface Document {
     createdAt: string;
     fileSizeFormatted: string;
     downloadUrl: string;
+    category?: string;
+    startDate?: string;
+    endDate?: string;
 }
 
 interface ContractResponse {
@@ -185,15 +188,20 @@ const EContractDashboard = () => {
                 // Save documents for chart processing
                 setDocuments(data.documents);
 
+                // Filter out templates
+                const nonTemplateDocuments = data.documents.filter(doc => doc.documentType !== 'template');
+
                 // Count documents by type
-                const completed = data.documents.filter(doc => doc.documentType === 'completed_contract').length;
-                const unsigned = data.documents.filter(doc => doc.documentType === 'unsign_contract').length;
+                const completed = data.documents.filter(doc =>
+                    doc.documentType === 'signed_document' || doc.documentType === 'approved_document'
+                ).length;
+                const unsigned = data.documents.filter(doc => doc.documentType === 'filled_document').length;
                 const expiredOrCanceled = data.documents.filter(doc =>
-                    doc.documentType === 'expired_contract' || doc.documentType === 'canceled_contract'
+                    doc.documentType === 'canceled' || doc.documentType === 'expired_document'
                 ).length;
 
                 setContractStats({
-                    total: data.totalCount,
+                    total: nonTemplateDocuments.length,
                     completed,
                     unsigned,
                     expiredOrCanceled,
@@ -215,6 +223,9 @@ const EContractDashboard = () => {
     const processChartData = (filter: '7days' | '1month' | '1year') => {
         if (documents.length === 0) return [];
 
+        // Filter out templates
+        const nonTemplateDocuments = documents.filter(doc => doc.documentType !== 'template');
+
         const now = new Date();
         const chartData: { date: string; created: number; signed: number; rejected: number }[] = [];
 
@@ -225,7 +236,7 @@ const EContractDashboard = () => {
                 date.setDate(date.getDate() - i);
                 const dateStr = `${date.getDate().toString().padStart(2, '0')}/${(date.getMonth() + 1).toString().padStart(2, '0')}`;
 
-                const dayDocs = documents.filter(doc => {
+                const dayDocs = nonTemplateDocuments.filter(doc => {
                     const docDate = new Date(doc.createdAt);
                     return docDate.toDateString() === date.toDateString();
                 });
@@ -233,8 +244,8 @@ const EContractDashboard = () => {
                 chartData.push({
                     date: dateStr,
                     created: dayDocs.length,
-                    signed: dayDocs.filter(d => d.documentType === 'completed_contract').length,
-                    rejected: dayDocs.filter(d => d.documentType === 'expired_contract' || d.documentType === 'canceled_contract').length,
+                    signed: dayDocs.filter(d => d.documentType === 'signed_document' || d.documentType === 'approved_document').length,
+                    rejected: dayDocs.filter(d => d.documentType === 'expired_document' || d.documentType === 'canceled').length,
                 });
             }
         } else if (filter === '1month') {
@@ -245,7 +256,7 @@ const EContractDashboard = () => {
                 const weekEnd = new Date(weekStart);
                 weekEnd.setDate(weekStart.getDate() + 6);
 
-                const weekDocs = documents.filter(doc => {
+                const weekDocs = nonTemplateDocuments.filter(doc => {
                     const docDate = new Date(doc.createdAt);
                     return docDate >= weekStart && docDate <= weekEnd;
                 });
@@ -253,8 +264,8 @@ const EContractDashboard = () => {
                 chartData.push({
                     date: `Tuần ${4 - i}`,
                     created: weekDocs.length,
-                    signed: weekDocs.filter(d => d.documentType === 'completed_contract').length,
-                    rejected: weekDocs.filter(d => d.documentType === 'expired_contract' || d.documentType === 'canceled_contract').length,
+                    signed: weekDocs.filter(d => d.documentType === 'signed_document' || d.documentType === 'approved_document').length,
+                    rejected: weekDocs.filter(d => d.documentType === 'expired_document' || d.documentType === 'canceled').length,
                 });
             }
         } else if (filter === '1year') {
@@ -264,7 +275,7 @@ const EContractDashboard = () => {
                 month.setMonth(month.getMonth() - i);
                 const monthStr = `T${month.getMonth() + 1}`;
 
-                const monthDocs = documents.filter(doc => {
+                const monthDocs = nonTemplateDocuments.filter(doc => {
                     const docDate = new Date(doc.createdAt);
                     return docDate.getMonth() === month.getMonth() &&
                            docDate.getFullYear() === month.getFullYear();
@@ -273,8 +284,8 @@ const EContractDashboard = () => {
                 chartData.push({
                     date: monthStr,
                     created: monthDocs.length,
-                    signed: monthDocs.filter(d => d.documentType === 'completed_contract').length,
-                    rejected: monthDocs.filter(d => d.documentType === 'expired_contract' || d.documentType === 'canceled_contract').length,
+                    signed: monthDocs.filter(d => d.documentType === 'signed_document' || d.documentType === 'approved_document').length,
+                    rejected: monthDocs.filter(d => d.documentType === 'expired_document' || d.documentType === 'canceled').length,
                 });
             }
         }
@@ -284,6 +295,55 @@ const EContractDashboard = () => {
 
     // Get chart data based on selected filter
     const chartData = processChartData(chartFilter);
+
+    // Get category label
+    const getCategoryLabel = (category?: string) => {
+        const categoryMap: { [key: string]: string } = {
+            'manager_labor_contract': 'HĐ lao động quản lý',
+            'guard_labor_contract': 'HĐ lao động bảo vệ',
+            'guard_service_contract': 'HĐ dịch vụ bảo vệ',
+        };
+        return category ? categoryMap[category] || category : 'Khác';
+    };
+
+    // Process contracts by category for bar chart (last 12 months)
+    const processContractsByCategory = () => {
+        if (documents.length === 0) return [];
+
+        const nonTemplateDocuments = documents.filter(doc => doc.documentType !== 'template');
+        const now = new Date();
+        const monthlyData: { [key: string]: any } = {};
+
+        // Initialize last 12 months
+        for (let i = 11; i >= 0; i--) {
+            const month = new Date(now);
+            month.setMonth(month.getMonth() - i);
+            const monthKey = `${month.getFullYear()}-${(month.getMonth() + 1).toString().padStart(2, '0')}`;
+            const monthLabel = `T${month.getMonth() + 1}`;
+
+            monthlyData[monthKey] = {
+                month: monthLabel,
+                'HĐ lao động quản lý': 0,
+                'HĐ lao động bảo vệ': 0,
+                'HĐ dịch vụ bảo vệ': 0,
+            };
+        }
+
+        // Count contracts by category for each month
+        nonTemplateDocuments.forEach(doc => {
+            const docDate = new Date(doc.createdAt);
+            const monthKey = `${docDate.getFullYear()}-${(docDate.getMonth() + 1).toString().padStart(2, '0')}`;
+
+            if (monthlyData[monthKey]) {
+                const categoryLabel = getCategoryLabel(doc.category);
+                if (monthlyData[monthKey][categoryLabel] !== undefined) {
+                    monthlyData[monthKey][categoryLabel]++;
+                }
+            }
+        });
+
+        return Object.values(monthlyData);
+    };
 
     // Mock data for activity feed
     const activities = [
@@ -319,21 +379,8 @@ const EContractDashboard = () => {
         { name: 'Hết hạn/Từ chối', value: contractStats.expiredOrCanceled, color: '#ef4444' },
     ];
 
-    // Mock data for Bar Chart (Monthly Contract Creation)
-    const barChartData = [
-        { month: 'T1', contracts: 12 },
-        { month: 'T2', contracts: 19 },
-        { month: 'T3', contracts: 15 },
-        { month: 'T4', contracts: 25 },
-        { month: 'T5', contracts: 22 },
-        { month: 'T6', contracts: 30 },
-        { month: 'T7', contracts: 28 },
-        { month: 'T8', contracts: 35 },
-        { month: 'T9', contracts: 32 },
-        { month: 'T10', contracts: 40 },
-        { month: 'T11', contracts: 38 },
-        { month: 'T12', contracts: 45 },
-    ];
+    // Bar Chart Data - Contracts by Category
+    const barChartData = processContractsByCategory();
 
     // Mock data for Performance Metrics
     const performanceMetrics = [
@@ -825,7 +872,10 @@ const EContractDashboard = () => {
                                         <XAxis dataKey="month" tick={{ fontSize: 12 }} stroke="#6b7280" />
                                         <YAxis tick={{ fontSize: 12 }} stroke="#6b7280" />
                                         <Tooltip />
-                                        <Bar dataKey="contracts" fill="#059669" radius={[4, 4, 0, 0]} />
+                                        <Legend wrapperStyle={{ fontSize: '12px' }} />
+                                        <Bar dataKey="HĐ lao động quản lý" fill="#059669" radius={[4, 4, 0, 0]} />
+                                        <Bar dataKey="HĐ lao động bảo vệ" fill="#3b82f6" radius={[4, 4, 0, 0]} />
+                                        <Bar dataKey="HĐ dịch vụ bảo vệ" fill="#f59e0b" radius={[4, 4, 0, 0]} />
                                     </BarChart>
                                 </ResponsiveContainer>
                             </div>

@@ -561,6 +561,26 @@
     background-color: #d1fae5;
 }
 
+.ec-contracts-btn-approve {
+    background-color: #dbeafe;
+    color: #1e40af;
+    border: 1px solid #bfdbfe;
+}
+
+.ec-contracts-btn-approve:hover {
+    background-color: #bfdbfe;
+}
+
+.ec-contracts-btn-download {
+    background-color: #fef3c7;
+    color: #d97706;
+    border: 1px solid #fde68a;
+}
+
+.ec-contracts-btn-download:hover {
+    background-color: #fde68a;
+}
+
 .ec-contracts-btn-renew {
     background-color: #fef3c7;
     color: #d97706;
