@@ -13,7 +13,7 @@ import ForgotPassword from './pages/reset-password/forgotPassword';
 {/* Admin Routes */}
 import DashboardAdmin from './pages/admin/dashboard/dashboardAdmin';
 {/* Director Routes */}
-import DashboardDirector from "./pages/director/dashboard/dashboardDirector.tsx";
+import DashboardDirector from "./pages/director/dashboardDirector.tsx";
 import EContractLogin from './pages/eContract/eContractLogin';
 import EContractDashboard from './pages/eContract/eContractDashboard';
 import EContractList from "./pages/eContract/eContractList.tsx";

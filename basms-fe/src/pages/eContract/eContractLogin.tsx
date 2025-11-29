@@ -73,7 +73,7 @@ const EContractLogin = () => {
                 }
             );
 
-            const { roleId, accessToken, refreshToken, fullName, email, userId, accessTokenExpiry, refreshTokenExpiry } = response.data;
+            const { accessToken, refreshToken, fullName, email, userId, roleId, accessTokenExpiry, refreshTokenExpiry } = response.data;
 
             // Check roleId
             if (roleId !== ALLOWED_ROLE_ID) {
@@ -83,13 +83,20 @@ const EContractLogin = () => {
                 return;
             }
 
-            // Use context login function to save tokens and start auto-refresh
-            login(accessToken, refreshToken, {
+            // Tạo userInfo object
+            const userInfo = {
                 userId,
                 email,
                 fullName,
                 roleId
-            }, accessTokenExpiry, refreshTokenExpiry);
+            };
+
+            // Sử dụng expiry times từ API, hoặc fallback nếu API không trả về
+            const finalAccessTokenExpiry = accessTokenExpiry || new Date(Date.now() + 30 * 60 * 1000).toISOString();
+            const finalRefreshTokenExpiry = refreshTokenExpiry || new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString();
+
+            // Login qua context - truyền đầy đủ params bao gồm expiry times
+            login(accessToken, refreshToken, userInfo, finalAccessTokenExpiry, finalRefreshTokenExpiry);
 
             setSnackbarMessage('Đăng nhập thành công!');
             setShowSnackbarSuccess(true);

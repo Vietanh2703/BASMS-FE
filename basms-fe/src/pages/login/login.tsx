@@ -68,8 +68,7 @@ const Login = () => {
                 loginData
             );
 
-            const { accessToken: _accessToken, refreshToken: _refreshToken, fullName, email, userId, roleId, accessTokenExpiry, refreshTokenExpiry } = response.data;
-
+            const { accessToken, refreshToken, fullName, email, userId, roleId, accessTokenExpiry, refreshTokenExpiry } = response.data;
 
             // Tạo userInfo object
             const userInfo: UserInfo = {
@@ -80,15 +79,12 @@ const Login = () => {
                 sub: userId
             };
 
-            // Lưu expiry dates vào response data để authContext có thể sử dụng
-            const updatedResponse = {
-                ...response.data,
-                accessTokenExpiry: accessTokenExpiry || new Date(Date.now() + 30 * 60 * 1000).toISOString(),
-                refreshTokenExpiry: refreshTokenExpiry || new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString()
-            };
+            // Sử dụng expiry times từ API, hoặc fallback nếu API không trả về
+            const finalAccessTokenExpiry = accessTokenExpiry || new Date(Date.now() + 30 * 60 * 1000).toISOString();
+            const finalRefreshTokenExpiry = refreshTokenExpiry || new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString();
 
-            // Login qua context - sẽ tự động lưu tokens và redirect
-            login(updatedResponse.accessToken, updatedResponse.refreshToken, userInfo);
+            // Login qua context - truyền đầy đủ params bao gồm expiry times
+            login(accessToken, refreshToken, userInfo, finalAccessTokenExpiry, finalRefreshTokenExpiry);
 
             setSnackbarMessage('Đăng nhập thành công!');
             setShowSnackbarSuccess(true);

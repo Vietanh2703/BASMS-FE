@@ -16,7 +16,7 @@ interface AuthContextType {
     user: UserInfo | null;
     isAuthenticated: boolean;
     loading: boolean;
-    login: (accessToken: string, refreshToken: string, userInfo: UserInfo) => void;
+    login: (accessToken: string, refreshToken: string, userInfo: UserInfo, accessTokenExpiry: string, refreshTokenExpiry: string) => void;
     logout: () => Promise<void>;
 }
 
@@ -134,15 +134,21 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         localStorage.setItem('roleId', userInfo.roleId);
     };
 
-    const login = (accessToken: string, refreshToken: string, userInfo: UserInfo) => {
-        // Lưu tokens vào localStorage qua authService
+    const login = (
+        accessToken: string,
+        refreshToken: string,
+        userInfo: UserInfo,
+        accessTokenExpiry: string,
+        refreshTokenExpiry: string
+    ) => {
+        // Lưu tokens vào localStorage qua authService với expiry times từ API
         const loginResponse = {
             userId: userInfo.userId,
             email: userInfo.email,
             accessToken,
             refreshToken,
-            accessTokenExpiry: new Date(Date.now() + 30 * 60 * 1000).toISOString(), // 30 phút
-            refreshTokenExpiry: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString() // 30 ngày
+            accessTokenExpiry, // Sử dụng expiry time từ API
+            refreshTokenExpiry // Sử dụng expiry time từ API
         };
 
         authService.saveTokens(loginResponse);
