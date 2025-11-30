@@ -162,7 +162,7 @@ function App() {
                             <DashboardDirector />
                         </RoleBasedRoute>
                     }/>
-                    <Route path="/director/customers" element={
+                    <Route path="/director/customer-list" element={
                         <RoleBasedRoute allowedRoles={[ROLES.DIRECTOR]}>
                             <CustomerList />
                         </RoleBasedRoute>
