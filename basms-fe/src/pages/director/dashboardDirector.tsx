@@ -117,7 +117,7 @@ const MOCK_EXECUTIVE_SUMMARY: ExecutiveSummaryItem[] = [
 ];
 
 const DashboardDirector = () => {
-    const navigate = useNavigate();
+    useNavigate();
     const { logout } = useAuth();
     const [isMenuOpen, setIsMenuOpen] = useState(true);
     const [currentTime, setCurrentTime] = useState(new Date());
