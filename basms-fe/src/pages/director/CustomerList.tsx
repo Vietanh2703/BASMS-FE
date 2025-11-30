@@ -175,6 +175,10 @@ const CustomerList = () => {
         const statusMap: { [key: string]: string } = {
             active: 'Đang hoạt động',
             inactive: 'Không hoạt động',
+            assigning_manager: 'Phân công bảo vệ',
+            schedule_shifts: 'Phân công ca trực',
+            Cancelled: 'Đã hủy',
+            Expired: 'Hết hạn',
         };
         return statusMap[status] || status;
     };
@@ -221,6 +225,10 @@ const CustomerList = () => {
     const handleViewCustomer = (customerId: string) => {
         // Navigate to customer detail page (you can implement this later)
         console.log('View customer:', customerId);
+    };
+
+    const handleRefresh = () => {
+        window.location.reload();
     };
 
     return (
@@ -334,6 +342,11 @@ const CustomerList = () => {
                 <main className="dir-customers-main">
                     <div className="dir-customers-page-header">
                         <h1 className="dir-customers-page-title">Quản lý khách hàng</h1>
+                        <button className="dir-customers-refresh-btn" onClick={handleRefresh} title="Làm mới danh sách">
+                            <svg viewBox="0 0 24 24" fill="currentColor" width="20" height="20">
+                                <path d="M17.65 6.35C16.2 4.9 14.21 4 12 4c-4.42 0-7.99 3.58-7.99 8s3.57 8 7.99 8c3.73 0 6.84-2.55 7.73-6h-2.08c-.82 2.33-3.04 4-5.65 4-3.31 0-6-2.69-6-6s2.69-6 6-6c1.66 0 3.14.69 4.22 1.78L13 11h7V4l-2.35 2.35z"/>
+                            </svg>
+                        </button>
                     </div>
 
                     {/* Search and Sort */}

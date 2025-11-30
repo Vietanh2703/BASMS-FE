@@ -330,6 +330,29 @@
     color: #1f2937;
 }
 
+.dir-customers-refresh-btn {
+    background: transparent;
+    border: none;
+    color: #6b7280;
+    cursor: pointer;
+    padding: 8px;
+    border-radius: 6px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.2s ease;
+}
+
+.dir-customers-refresh-btn:hover {
+    background-color: #f3f4f6;
+    color: #3b82f6;
+}
+
+.dir-customers-refresh-btn:active {
+    transform: rotate(180deg);
+    transition: transform 0.3s ease;
+}
+
 /* Filters Section */
 .dir-customers-filters-section {
     background-color: #ffffff;
@@ -520,6 +543,26 @@
 .dir-customers-status-inactive {
     background-color: #f3f4f6;
     color: #6b7280;
+}
+
+.dir-customers-status-assigning_manager {
+    background-color: #fef3c7;
+    color: #d97706;
+}
+
+.dir-customers-status-schedule_shifts {
+    background-color: #dbeafe;
+    color: #1e40af;
+}
+
+.dir-customers-status-Cancelled {
+    background-color: #fee2e2;
+    color: #dc2626;
+}
+
+.dir-customers-status-Expired {
+    background-color: #fecaca;
+    color: #b91c1c;
 }
 
 .dir-customers-item-details {
