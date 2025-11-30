@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
+import { useAuth } from '../../hooks/useAuth';
 import './CustomerList.css';
 
 interface Customer {
@@ -33,6 +34,7 @@ interface CustomerResponse {
 
 const CustomerList = () => {
     const navigate = useNavigate();
+    const { logout } = useAuth();
     const [isMenuOpen, setIsMenuOpen] = useState(false);
     const [currentTime, setCurrentTime] = useState(new Date());
     const [isProfileDropdownOpen, setIsProfileDropdownOpen] = useState(false);
@@ -88,10 +90,12 @@ const CustomerList = () => {
 
             try {
                 const apiUrl = import.meta.env.VITE_API_CONTRACT_URL;
-                const token = localStorage.getItem('eContractAccessToken');
+                const token = localStorage.getItem('accessToken'); // Changed from eContractAccessToken
 
                 if (!token) {
-                    navigate('/e-contract/login');
+                    console.error('No access token found');
+                    setError('Không tìm thấy token xác thực. Vui lòng đăng nhập lại.');
+                    setIsLoading(false);
                     return;
                 }
 
@@ -138,8 +142,7 @@ const CustomerList = () => {
         setIsLoggingOut(true);
         setShowLogoutModal(false);
         try {
-            localStorage.removeItem('eContractAccessToken');
-            navigate('/e-contract/login');
+            await logout();
         } catch (error) {
             console.error('Logout failed:', error);
             setIsLoggingOut(false);

@@ -40,14 +40,20 @@ class AuthService {
 
     // Logout
     async logout(): Promise<void> {
-        const refreshToken = localStorage.getItem('refreshToken');
-        if (refreshToken) {
+        const accessToken = localStorage.getItem('accessToken');
+        if (accessToken) {
             try {
                 await axios.post(`${API_URL}/logout`, {
-                    RefreshToken: refreshToken
+                    AccessToken: accessToken
+                }, {
+                    headers: {
+                        'Authorization': `Bearer ${accessToken}`,
+                        'Content-Type': 'application/json'
+                    }
                 });
             } catch (error) {
                 console.error('Logout error:', error);
+                // Vẫn tiếp tục clear tokens dù API call bị lỗi
             }
         }
     }

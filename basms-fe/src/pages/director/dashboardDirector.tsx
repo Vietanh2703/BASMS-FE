@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef, useMemo, useCallback } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
+import { useAuth } from '../../hooks/useAuth';
 import KPICards from './components/KPICards';
 import { ContractPerformance, PersonnelAnalytics } from './components/PerformanceCharts';
 import { ReportAnalytics, FinancialOverview, OperationalExcellence } from './components/AnalyticsSection';
@@ -117,6 +118,7 @@ const MOCK_EXECUTIVE_SUMMARY: ExecutiveSummaryItem[] = [
 
 const DashboardDirector = () => {
     const navigate = useNavigate();
+    const { logout } = useAuth();
     const [isMenuOpen, setIsMenuOpen] = useState(true);
     const [currentTime, setCurrentTime] = useState(new Date());
     const [isProfileDropdownOpen, setIsProfileDropdownOpen] = useState(false);
@@ -232,9 +234,8 @@ const DashboardDirector = () => {
     // Handlers
     const toggleMenu = () => setIsMenuOpen(!isMenuOpen);
     const toggleProfileDropdown = () => setIsProfileDropdownOpen(!isProfileDropdownOpen);
-    const handleLogout = () => {
-        localStorage.clear();
-        navigate('/login');
+    const handleLogout = async () => {
+        await logout();
     };
 
     // Use useCallback to memoize format functions and prevent unnecessary re-renders
