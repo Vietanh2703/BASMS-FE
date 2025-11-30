@@ -14,6 +14,7 @@ import ForgotPassword from './pages/reset-password/forgotPassword';
 import DashboardAdmin from './pages/admin/dashboard/dashboardAdmin';
 {/* Director Routes */}
 import DashboardDirector from "./pages/director/dashboardDirector.tsx";
+import CustomerList from "./pages/director/CustomerList.tsx";
 import EContractLogin from './pages/eContract/eContractLogin';
 import EContractDashboard from './pages/eContract/eContractDashboard';
 import EContractList from "./pages/eContract/eContractList.tsx";
@@ -159,6 +160,11 @@ function App() {
                     <Route path="/director/dashboard" element={
                         <RoleBasedRoute allowedRoles={[ROLES.DIRECTOR]}>
                             <DashboardDirector />
+                        </RoleBasedRoute>
+                    }/>
+                    <Route path="/director/customers" element={
+                        <RoleBasedRoute allowedRoles={[ROLES.DIRECTOR]}>
+                            <CustomerList />
                         </RoleBasedRoute>
                     }/>
 
