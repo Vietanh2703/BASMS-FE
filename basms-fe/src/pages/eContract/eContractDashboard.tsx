@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, PieChart, Pie, Cell, BarChart, Bar } from 'recharts';
+import { useEContractAuth } from '../../hooks/useEContractAuth';
 import './eContractDashboard.css';
 
 interface Document {
@@ -38,15 +39,12 @@ interface ContractStats {
 const EContractDashboard = () => {
     const navigate = useNavigate();
     const location = useLocation();
+    const { user} = useEContractAuth();
     const [isMenuOpen, setIsMenuOpen] = useState(false);
     const [currentTime, setCurrentTime] = useState(new Date());
     const [isProfileDropdownOpen, setIsProfileDropdownOpen] = useState(false);
     const [isLoggingOut, setIsLoggingOut] = useState(false);
     const [showLogoutModal, setShowLogoutModal] = useState(false);
-    const [userInfo, setUserInfo] = useState({
-        fullName: '',
-        email: '',
-    });
     const [contractStats, setContractStats] = useState<ContractStats>({
         total: 0,
         completed: 0,
@@ -65,10 +63,7 @@ const EContractDashboard = () => {
     const profileRef = useRef<HTMLDivElement>(null);
 
     useEffect(() => {
-        // Load user info
-        const fullName = localStorage.getItem('eContractFullName') || '';
-        const email = localStorage.getItem('eContractEmail') || '';
-        setUserInfo({ fullName, email });
+        // User info is now loaded from context via useEContractAuth
 
         // Prevent back navigation
         window.history.pushState(null, '', location.pathname);
@@ -502,11 +497,11 @@ const EContractDashboard = () => {
                             onClick={toggleProfileDropdown}
                         >
                             <div className="ec-user-avatar">
-                                <span>{userInfo.fullName?.charAt(0).toUpperCase() || userInfo.email?.charAt(0).toUpperCase() || 'E'}</span>
+                                <span>{user?.fullName?.charAt(0).toUpperCase() || user?.email?.charAt(0).toUpperCase() || 'E'}</span>
                             </div>
                             <div className="ec-user-info">
                                 <span className="ec-user-name">
-                                    {userInfo.fullName || userInfo.email?.split('@')[0] || 'eContract User'}
+                                    {user?.fullName || user?.email?.split('@')[0] || 'eContract User'}
                                 </span>
                                 <span className="ec-user-role">Quản lý hợp đồng</span>
                             </div>

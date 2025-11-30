@@ -34,7 +34,7 @@ interface CustomerResponse {
 
 const CustomerList = () => {
     const navigate = useNavigate();
-    const { logout } = useAuth();
+    const { user, logout } = useAuth();
     const [isMenuOpen, setIsMenuOpen] = useState(false);
     const [currentTime, setCurrentTime] = useState(new Date());
     const [isProfileDropdownOpen, setIsProfileDropdownOpen] = useState(false);
@@ -298,11 +298,11 @@ const CustomerList = () => {
                             onClick={toggleProfileDropdown}
                         >
                             <div className="dir-customers-user-avatar">
-                                <span>D</span>
+                                <span>{user?.fullName?.charAt(0).toUpperCase() || 'D'}</span>
                             </div>
                             <div className="dir-customers-user-info">
-                                <span className="dir-customers-user-name">Director</span>
-                                <span className="dir-customers-user-role">Quản lý</span>
+                                <span className="dir-customers-user-name">{user?.fullName || 'Director'}</span>
+                                <span className="dir-customers-user-role">Giám đốc điều hành</span>
                             </div>
 
                             {isProfileDropdownOpen && (

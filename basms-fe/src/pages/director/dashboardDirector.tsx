@@ -118,19 +118,12 @@ const MOCK_EXECUTIVE_SUMMARY: ExecutiveSummaryItem[] = [
 
 const DashboardDirector = () => {
     useNavigate();
-    const { logout } = useAuth();
+    const { user, logout } = useAuth();
     const [isMenuOpen, setIsMenuOpen] = useState(true);
     const [currentTime, setCurrentTime] = useState(new Date());
     const [isProfileDropdownOpen, setIsProfileDropdownOpen] = useState(false);
     const [timeFilter, setTimeFilter] = useState<'today' | '7days' | '30days' | '90days' | 'year'>('30days');
     const profileRef = useRef<HTMLDivElement>(null);
-
-    // User info - Replace with actual auth
-    const [userInfo] = useState({
-        fullName: 'Nguyễn Văn Director',
-        email: 'director@basms.com',
-        role: 'Giám đốc điều hành'
-    });
 
     // API Endpoints - Replace these with your actual API URLs
     // @ts-ignore - Keep for future API integration
@@ -343,11 +336,11 @@ const DashboardDirector = () => {
                         </button>
                         <div ref={profileRef} className="dd-user-profile" onClick={toggleProfileDropdown}>
                             <div className="dd-user-avatar">
-                                <span>{userInfo.fullName?.charAt(0).toUpperCase()}</span>
+                                <span>{user?.fullName?.charAt(0).toUpperCase() || 'D'}</span>
                             </div>
                             <div className="dd-user-info">
-                                <span className="dd-user-name">{userInfo.fullName}</span>
-                                <span className="dd-user-role">{userInfo.role}</span>
+                                <span className="dd-user-name">{user?.fullName || 'Director'}</span>
+                                <span className="dd-user-role">Giám đốc điều hành</span>
                             </div>
                             {isProfileDropdownOpen && (
                                 <div className="dd-profile-dropdown">
