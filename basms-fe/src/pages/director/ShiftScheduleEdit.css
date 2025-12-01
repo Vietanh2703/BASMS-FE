@@ -241,6 +241,146 @@
     display: inline-block;
 }
 
+/* Public Holidays Styles */
+.shift-schedule-holidays-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+    gap: 20px;
+    margin-top: 16px;
+}
+
+.shift-schedule-holiday-card {
+    padding: 20px;
+    background-color: #ffffff;
+    border: 2px solid #e5e7eb;
+    border-radius: 12px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.shift-schedule-holiday-card:hover {
+    border-color: #3b82f6;
+    box-shadow: 0 4px 12px rgba(59, 130, 246, 0.15);
+}
+
+.shift-schedule-holiday-selected {
+    background-color: #eff6ff;
+    border-color: #3b82f6;
+    box-shadow: 0 4px 12px rgba(59, 130, 246, 0.2);
+}
+
+.shift-schedule-holiday-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    margin-bottom: 12px;
+    gap: 12px;
+}
+
+.shift-schedule-holiday-name {
+    font-size: 18px;
+    font-weight: 700;
+    color: #1f2937;
+    margin: 0;
+    flex: 1;
+}
+
+.shift-schedule-holiday-category {
+    font-size: 11px;
+    font-weight: 600;
+    padding: 4px 10px;
+    border-radius: 12px;
+    white-space: nowrap;
+}
+
+.shift-schedule-holiday-category.national {
+    background-color: #dbeafe;
+    color: #1e40af;
+}
+
+.shift-schedule-holiday-category.traditional {
+    background-color: #fef3c7;
+    color: #92400e;
+}
+
+.shift-schedule-holiday-date {
+    font-size: 15px;
+    font-weight: 600;
+    color: #3b82f6;
+    margin-bottom: 12px;
+}
+
+.shift-schedule-holiday-info {
+    margin-bottom: 12px;
+}
+
+.shift-schedule-holiday-field {
+    display: flex;
+    gap: 8px;
+    margin-bottom: 6px;
+    font-size: 13px;
+}
+
+.shift-schedule-holiday-label {
+    color: #6b7280;
+    font-weight: 500;
+}
+
+.shift-schedule-holiday-value {
+    color: #1f2937;
+    font-weight: 600;
+}
+
+.shift-schedule-holiday-badge {
+    display: inline-block;
+    padding: 4px 10px;
+    background-color: #dcfce7;
+    color: #166534;
+    font-size: 11px;
+    font-weight: 600;
+    border-radius: 12px;
+    margin-right: 6px;
+    margin-top: 6px;
+}
+
+.shift-schedule-holiday-description {
+    font-size: 13px;
+    color: #6b7280;
+    line-height: 1.5;
+    margin-top: 12px;
+    margin-bottom: 12px;
+    padding-top: 12px;
+    border-top: 1px solid #e5e7eb;
+}
+
+.shift-schedule-holiday-details {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    margin-top: 12px;
+    padding-top: 12px;
+    border-top: 1px solid #e5e7eb;
+}
+
+.shift-schedule-holiday-detail-item {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 13px;
+    color: #4b5563;
+}
+
+.shift-schedule-holiday-detail-item input[type="checkbox"] {
+    width: 16px;
+    height: 16px;
+    cursor: pointer;
+    accent-color: #3b82f6;
+}
+
+.shift-schedule-holiday-detail-item span {
+    user-select: none;
+}
+
 /* Responsive Design */
 @media (max-width: 768px) {
     .shift-schedule-form-grid {

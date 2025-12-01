@@ -548,6 +548,12 @@ const CustomerEdit = () => {
                 if (!shiftScheduleSaved) {
                     throw new Error('Không thể lưu thông tin lịch ca trực');
                 }
+
+                // Save public holidays
+                const holidaysSaved = await shiftScheduleRef.current.savePublicHolidays();
+                if (!holidaysSaved) {
+                    throw new Error('Không thể lưu thông tin ngày lễ');
+                }
             }
 
             // Show success message

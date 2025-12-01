@@ -75,12 +75,38 @@ interface ShiftSchedule {
     notes: string;
 }
 
+interface PublicHoliday {
+    id: string;
+    contractId: string | null;
+    holidayDate: string;
+    holidayName: string;
+    holidayNameEn: string;
+    holidayCategory: string;
+    isTetPeriod: boolean;
+    isTetHoliday: boolean;
+    tetDayNumber: number | null;
+    holidayStartDate: string | null;
+    holidayEndDate: string | null;
+    totalHolidayDays: number;
+    isOfficialHoliday: boolean;
+    isObserved: boolean;
+    originalDate: string | null;
+    observedDate: string | null;
+    appliesNationwide: boolean;
+    appliesToRegions: string | null;
+    standardWorkplacesClosed: boolean;
+    essentialServicesOperating: boolean;
+    description: string;
+    year: number;
+}
+
 interface ShiftScheduleEditProps {
     customerId: string;
 }
 
 export interface ShiftScheduleEditHandle {
     saveShiftSchedule: () => Promise<boolean>;
+    savePublicHolidays: () => Promise<boolean>;
     hasChanges: () => boolean;
 }
 
@@ -102,10 +128,13 @@ const ShiftScheduleEdit = forwardRef<ShiftScheduleEditHandle, ShiftScheduleEditP
     const [shiftSchedules, setShiftSchedules] = useState<ShiftSchedule[]>([]);
     const [selectedScheduleId, setSelectedScheduleId] = useState<string | null>(null);
     const [contractId, setContractId] = useState<string | null>(null);
+    const [publicHolidays, setPublicHolidays] = useState<PublicHoliday[]>([]);
+    const [selectedHolidayId, setSelectedHolidayId] = useState<string | null>(null);
 
     // Loading states
     const [isLoadingContracts, setIsLoadingContracts] = useState(false);
     const [isLoadingSchedules, setIsLoadingSchedules] = useState(false);
+    const [isLoadingHolidays, setIsLoadingHolidays] = useState(false);
     const [loadError, setLoadError] = useState<string | null>(null);
 
     const [formData, setFormData] = useState<ShiftScheduleData>({
@@ -227,11 +256,19 @@ const ShiftScheduleEdit = forwardRef<ShiftScheduleEditHandle, ShiftScheduleEditP
                 }
 
                 const data = await response.json();
-                setShiftSchedules(data.shiftSchedules || []);
+
+                // Sort schedules: morning -> afternoon -> night
+                const scheduleOrder = { 'morning': 1, 'afternoon': 2, 'night': 3 };
+                const sortedSchedules = (data.shiftSchedules || []).sort((a: ShiftSchedule, b: ShiftSchedule) => {
+                    return (scheduleOrder[a.scheduleName as keyof typeof scheduleOrder] || 999) -
+                           (scheduleOrder[b.scheduleName as keyof typeof scheduleOrder] || 999);
+                });
+
+                setShiftSchedules(sortedSchedules);
 
                 // Automatically select first schedule if available
-                if (data.shiftSchedules && data.shiftSchedules.length > 0) {
-                    setSelectedScheduleId(data.shiftSchedules[0].id);
+                if (sortedSchedules.length > 0) {
+                    setSelectedScheduleId(sortedSchedules[0].id);
                 }
             } catch (err) {
                 setLoadError('Không thể tải danh sách lịch ca trực. Vui lòng thử lại sau.');
@@ -241,6 +278,53 @@ const ShiftScheduleEdit = forwardRef<ShiftScheduleEditHandle, ShiftScheduleEditP
         };
 
         fetchShiftSchedules();
+    }, [contractId]);
+
+    // Fetch public holidays when contractId changes
+    useEffect(() => {
+        const fetchPublicHolidays = async () => {
+            if (!contractId) return;
+
+            setIsLoadingHolidays(true);
+            setLoadError(null);
+
+            try {
+                const apiUrl = import.meta.env.VITE_API_CONTRACT_URL;
+                const token = localStorage.getItem('accessToken');
+
+                if (!token) {
+                    setLoadError('Không tìm thấy token xác thực. Vui lòng đăng nhập lại.');
+                    return;
+                }
+
+                const response = await fetch(`${apiUrl}/contracts/${contractId}/public-holidays`, {
+                    method: 'GET',
+                    headers: {
+                        'Authorization': `Bearer ${token}`,
+                        'Content-Type': 'application/json',
+                    },
+                });
+
+                if (!response.ok) {
+                    throw new Error('Failed to fetch public holidays');
+                }
+
+                const data = await response.json();
+                const holidaysData = data.holidays || data.publicHolidays || data.data || data.items || [];
+                setPublicHolidays(holidaysData);
+
+                // Automatically select first holiday if available
+                if (holidaysData.length > 0) {
+                    setSelectedHolidayId(holidaysData[0].id);
+                }
+            } catch (err) {
+                setLoadError('Không thể tải danh sách ngày lễ. Vui lòng thử lại sau.');
+            } finally {
+                setIsLoadingHolidays(false);
+            }
+        };
+
+        fetchPublicHolidays();
     }, [contractId]);
 
     // Load selected schedule data into form
@@ -381,7 +465,7 @@ const ShiftScheduleEdit = forwardRef<ShiftScheduleEditHandle, ShiftScheduleEditP
         return Object.keys(newErrors).length === 0;
     };
 
-    // Expose save function to parent via ref
+    // Expose save functions to parent via ref
     useImperativeHandle(ref, () => ({
         saveShiftSchedule: async () => {
             if (!selectedScheduleId) {
@@ -411,6 +495,36 @@ const ShiftScheduleEdit = forwardRef<ShiftScheduleEditHandle, ShiftScheduleEditP
 
                 if (!response.ok) {
                     throw new Error('Failed to update shift schedule');
+                }
+
+                return true;
+            } catch (err) {
+                return false;
+            }
+        },
+        savePublicHolidays: async () => {
+            try {
+                const apiUrl = import.meta.env.VITE_API_CONTRACT_URL;
+                const token = localStorage.getItem('accessToken');
+
+                if (!token) {
+                    return false;
+                }
+
+                // Save all holidays
+                for (const holiday of publicHolidays) {
+                    const response = await fetch(`${apiUrl}/contracts/holidays/${holiday.id}`, {
+                        method: 'PUT',
+                        headers: {
+                            'Authorization': `Bearer ${token}`,
+                            'Content-Type': 'application/json',
+                        },
+                        body: JSON.stringify(holiday),
+                    });
+
+                    if (!response.ok) {
+                        throw new Error('Failed to update public holiday');
+                    }
                 }
 
                 return true;
@@ -810,20 +924,10 @@ const ShiftScheduleEdit = forwardRef<ShiftScheduleEditHandle, ShiftScheduleEditP
                         </div>
                     </div>
 
-                    {/* Additional Fields */}
+                    {/* Auto-generate Info */}
                     <div className="shift-schedule-section">
-                        <h3 className="shift-schedule-section-title">Thông tin bổ sung</h3>
+                        <h3 className="shift-schedule-section-title">Thông tin tự tạo ca</h3>
                         <div className="shift-schedule-form-grid">
-                            <div className="shift-schedule-form-group">
-                                <label className="shift-schedule-label">Kinh nghiệm tối thiểu (tháng)</label>
-                                <input
-                                    type="number"
-                                    className="shift-schedule-input"
-                                    value={formData.minimumExperienceMonths}
-                                    onChange={(e) => handleInputChange('minimumExperienceMonths', Number(e.target.value))}
-                                    min="0"
-                                />
-                            </div>
                             <div className="shift-schedule-form-group">
                                 <label className="shift-schedule-label">Số ngày tạo trước</label>
                                 <input
@@ -835,33 +939,117 @@ const ShiftScheduleEdit = forwardRef<ShiftScheduleEditHandle, ShiftScheduleEditP
                                 />
                             </div>
                             <div className="shift-schedule-form-group">
-                                <label className="shift-schedule-label">Hiệu lực từ</label>
+                                <label className="shift-schedule-label">Chứng chỉ yêu cầu</label>
                                 <input
-                                    type="date"
+                                    type="text"
                                     className="shift-schedule-input"
-                                    value={formData.effectiveFrom.split('T')[0]}
-                                    onChange={(e) => handleInputChange('effectiveFrom', `${e.target.value}T00:00:00`)}
-                                />
-                            </div>
-                            <div className="shift-schedule-form-group">
-                                <label className="shift-schedule-label">Hiệu lực đến</label>
-                                <input
-                                    type="date"
-                                    className="shift-schedule-input"
-                                    value={formData.effectiveTo ? formData.effectiveTo.split('T')[0] : ''}
-                                    onChange={(e) => handleInputChange('effectiveTo', e.target.value ? `${e.target.value}T00:00:00` : null)}
-                                />
-                            </div>
-                            <div className="shift-schedule-form-group shift-schedule-full-width">
-                                <label className="shift-schedule-label">Ghi chú</label>
-                                <textarea
-                                    className="shift-schedule-textarea"
-                                    value={formData.notes}
-                                    onChange={(e) => handleInputChange('notes', e.target.value)}
-                                    rows={3}
+                                    value={formData.requiredCertifications || ''}
+                                    onChange={(e) => handleInputChange('requiredCertifications', e.target.value || null)}
                                 />
                             </div>
                         </div>
+                    </div>
+
+                    {/* Public Holidays Section */}
+                    <div className="shift-schedule-section">
+                        <h3 className="shift-schedule-section-title">Thông tin các ngày lễ đặc biệt</h3>
+
+                        {isLoadingHolidays && (
+                            <div className="shift-schedule-info-text">Đang tải danh sách ngày lễ...</div>
+                        )}
+
+                        {!isLoadingHolidays && publicHolidays.length > 0 && (
+                            <div className="shift-schedule-holidays-grid">
+                                {publicHolidays.map((holiday) => (
+                                    <div
+                                        key={holiday.id}
+                                        className={`shift-schedule-holiday-card ${selectedHolidayId === holiday.id ? 'shift-schedule-holiday-selected' : ''}`}
+                                        onClick={() => setSelectedHolidayId(holiday.id)}
+                                    >
+                                        <div className="shift-schedule-holiday-header">
+                                            <h4 className="shift-schedule-holiday-name">{holiday.holidayName}</h4>
+                                            <span className={`shift-schedule-holiday-category ${holiday.holidayCategory}`}>
+                                                {holiday.holidayCategory === 'national' ? 'Quốc gia' :
+                                                 holiday.holidayCategory === 'traditional' ? 'Truyền thống' :
+                                                 holiday.holidayCategory}
+                                            </span>
+                                        </div>
+                                        <div className="shift-schedule-holiday-date">
+                                            {new Date(holiday.holidayDate).toLocaleDateString('vi-VN')}
+                                        </div>
+                                        <div className="shift-schedule-holiday-info">
+                                            <div className="shift-schedule-holiday-field">
+                                                <span className="shift-schedule-holiday-label">Tên tiếng Anh:</span>
+                                                <span className="shift-schedule-holiday-value">{holiday.holidayNameEn}</span>
+                                            </div>
+                                            <div className="shift-schedule-holiday-field">
+                                                <span className="shift-schedule-holiday-label">Số ngày nghỉ:</span>
+                                                <span className="shift-schedule-holiday-value">{holiday.totalHolidayDays} ngày</span>
+                                            </div>
+                                            {holiday.isTetHoliday && (
+                                                <div className="shift-schedule-holiday-badge">Ngày Tết</div>
+                                            )}
+                                            {holiday.isOfficialHoliday && (
+                                                <div className="shift-schedule-holiday-badge">Ngày lễ chính thức</div>
+                                            )}
+                                        </div>
+                                        {holiday.description && (
+                                            <div className="shift-schedule-holiday-description">
+                                                {holiday.description}
+                                            </div>
+                                        )}
+                                        <div className="shift-schedule-holiday-details">
+                                            <div className="shift-schedule-holiday-detail-item">
+                                                <input
+                                                    type="checkbox"
+                                                    checked={holiday.appliesNationwide}
+                                                    onChange={(e) => {
+                                                        const updated = publicHolidays.map(h =>
+                                                            h.id === holiday.id ? { ...h, appliesNationwide: e.target.checked } : h
+                                                        );
+                                                        setPublicHolidays(updated);
+                                                    }}
+                                                    onClick={(e) => e.stopPropagation()}
+                                                />
+                                                <span>Áp dụng toàn quốc</span>
+                                            </div>
+                                            <div className="shift-schedule-holiday-detail-item">
+                                                <input
+                                                    type="checkbox"
+                                                    checked={holiday.standardWorkplacesClosed}
+                                                    onChange={(e) => {
+                                                        const updated = publicHolidays.map(h =>
+                                                            h.id === holiday.id ? { ...h, standardWorkplacesClosed: e.target.checked } : h
+                                                        );
+                                                        setPublicHolidays(updated);
+                                                    }}
+                                                    onClick={(e) => e.stopPropagation()}
+                                                />
+                                                <span>Nơi làm việc đóng cửa</span>
+                                            </div>
+                                            <div className="shift-schedule-holiday-detail-item">
+                                                <input
+                                                    type="checkbox"
+                                                    checked={holiday.essentialServicesOperating}
+                                                    onChange={(e) => {
+                                                        const updated = publicHolidays.map(h =>
+                                                            h.id === holiday.id ? { ...h, essentialServicesOperating: e.target.checked } : h
+                                                        );
+                                                        setPublicHolidays(updated);
+                                                    }}
+                                                    onClick={(e) => e.stopPropagation()}
+                                                />
+                                                <span>Dịch vụ thiết yếu hoạt động</span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                ))}
+                            </div>
+                        )}
+
+                        {!isLoadingHolidays && publicHolidays.length === 0 && contractId && (
+                            <div className="shift-schedule-info-text">Không có ngày lễ nào cho hợp đồng này.</div>
+                        )}
                     </div>
                 </>
             )}
