@@ -223,8 +223,7 @@ const CustomerList = () => {
     };
 
     const handleViewCustomer = (customerId: string) => {
-        // Navigate to customer detail page (you can implement this later)
-        console.log('View customer:', customerId);
+        navigate(`/director/customer/${customerId}`);
     };
 
     const handleRefresh = () => {

@@ -15,6 +15,8 @@ import DashboardAdmin from './pages/admin/dashboard/dashboardAdmin';
 {/* Director Routes */}
 import DashboardDirector from "./pages/director/dashboardDirector.tsx";
 import CustomerList from "./pages/director/CustomerList.tsx";
+import CustomerDetail from "./pages/director/CustomerDetail.tsx";
+import CustomerEdit from "./pages/director/CustomerEdit.tsx";
 import EContractLogin from './pages/eContract/eContractLogin';
 import EContractDashboard from './pages/eContract/eContractDashboard';
 import EContractList from "./pages/eContract/eContractList.tsx";
@@ -165,6 +167,16 @@ function App() {
                     <Route path="/director/customer-list" element={
                         <RoleBasedRoute allowedRoles={[ROLES.DIRECTOR]}>
                             <CustomerList />
+                        </RoleBasedRoute>
+                    }/>
+                    <Route path="/director/customer/:customerId" element={
+                        <RoleBasedRoute allowedRoles={[ROLES.DIRECTOR]}>
+                            <CustomerDetail />
+                        </RoleBasedRoute>
+                    }/>
+                    <Route path="/director/customer/:customerId/edit" element={
+                        <RoleBasedRoute allowedRoles={[ROLES.DIRECTOR]}>
+                            <CustomerEdit />
                         </RoleBasedRoute>
                     }/>
 
