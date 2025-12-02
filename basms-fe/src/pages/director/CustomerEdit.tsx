@@ -103,9 +103,8 @@ const CustomerEdit = () => {
     const [mapError, setMapError] = useState<string | null>(null);
 
     // Snackbar states
-    const [snackbarSuccess, setSnackbarSuccess] = useState(false);
-    const [snackbarFailed, setSnackbarFailed] = useState(false);
-    const [snackbarMessage, setSnackbarMessage] = useState('');
+    const [showSnackbarSuccess, setShowSnackbarSuccess] = useState(false);
+    const [showSnackbarFailed, setShowSnackbarFailed] = useState(false);
 
     // Form states
     const [formData, setFormData] = useState<UpdateCustomerRequest>({
@@ -558,12 +557,10 @@ const CustomerEdit = () => {
 
             // Show success message
             setShowSuccessMessage(true);
-            setSnackbarMessage('Lưu thay đổi thành công');
-            setSnackbarSuccess(true);
+            setShowSnackbarSuccess(true);
         } catch (err: any) {
             setError(err.message || 'Có lỗi xảy ra khi lưu thông tin. Vui lòng thử lại.');
-            setSnackbarMessage(err.message || 'Lưu thay đổi thất bại');
-            setSnackbarFailed(true);
+            setShowSnackbarFailed(true);
         } finally {
             setIsSaving(false);
         }
@@ -1045,14 +1042,16 @@ const CustomerEdit = () => {
 
             {/* Snackbar Notifications */}
             <SnackbarChecked
-                message={snackbarMessage}
-                isOpen={snackbarSuccess}
-                onClose={() => setSnackbarSuccess(false)}
+                message="Lưu thay đổi thành công"
+                isOpen={showSnackbarSuccess}
+                duration={4000}
+                onClose={() => setShowSnackbarSuccess(false)}
             />
             <SnackbarFailed
-                message={snackbarMessage}
-                isOpen={snackbarFailed}
-                onClose={() => setSnackbarFailed(false)}
+                message="Lưu thay đổi thất bại. Vui lòng thử lại"
+                isOpen={showSnackbarFailed}
+                duration={4000}
+                onClose={() => setShowSnackbarFailed(false)}
             />
         </div>
     );

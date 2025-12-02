@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useRef } from 'react';
 import './snackbarChecked.css';
 
 interface SnackbarCheckedProps {
@@ -16,6 +16,12 @@ const SnackbarChecked: React.FC<SnackbarCheckedProps> = ({
                                                          }) => {
     const [isVisible, setIsVisible] = useState(false);
     const [isExiting, setIsExiting] = useState(false);
+    const onCloseRef = useRef(onClose);
+
+    // Keep onCloseRef up to date
+    useEffect(() => {
+        onCloseRef.current = onClose;
+    }, [onClose]);
 
     useEffect(() => {
         if (isOpen) {
@@ -29,7 +35,7 @@ const SnackbarChecked: React.FC<SnackbarCheckedProps> = ({
 
             const closeTimer = setTimeout(() => {
                 setIsVisible(false);
-                onClose();
+                onCloseRef.current();
             }, duration + 300);
 
             return () => {
@@ -37,7 +43,7 @@ const SnackbarChecked: React.FC<SnackbarCheckedProps> = ({
                 clearTimeout(closeTimer);
             };
         }
-    }, [isOpen, duration, onClose]);
+    }, [isOpen, duration]);
 
     if (!isOpen && !isVisible) return null;
 

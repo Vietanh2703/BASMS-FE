@@ -1,5 +1,6 @@
 import { useState, useEffect, forwardRef, useImperativeHandle } from 'react';
 import './ShiftScheduleEdit.css';
+import SnackbarWarning from '../../components/snackbar/snackbarWarning';
 
 interface ShiftScheduleData {
     scheduleName: string;
@@ -111,9 +112,9 @@ export interface ShiftScheduleEditHandle {
 }
 
 const SCHEDULE_NAMES = [
-    { value: 'morning', label: 'Ca sáng' },
-    { value: 'afternoon', label: 'Ca chiều' },
-    { value: 'night', label: 'Ca đêm' }
+    { value: 'Ca sáng', label: 'Ca sáng' },
+    { value: 'Ca chiều', label: 'Ca chiều' },
+    { value: 'Ca đêm', label: 'Ca đêm' }
 ];
 
 const HOURS = Array.from({ length: 24 }, (_, i) => i.toString().padStart(2, '0'));
@@ -126,10 +127,8 @@ const ShiftScheduleEdit = forwardRef<ShiftScheduleEditHandle, ShiftScheduleEditP
     // API data states
     const [contracts, setContracts] = useState<Contract[]>([]);
     const [shiftSchedules, setShiftSchedules] = useState<ShiftSchedule[]>([]);
-    const [selectedScheduleId, setSelectedScheduleId] = useState<string | null>(null);
     const [contractId, setContractId] = useState<string | null>(null);
     const [publicHolidays, setPublicHolidays] = useState<PublicHoliday[]>([]);
-    const [selectedHolidayId, setSelectedHolidayId] = useState<string | null>(null);
 
     // Loading states
     const [isLoadingContracts, setIsLoadingContracts] = useState(false);
@@ -137,48 +136,25 @@ const ShiftScheduleEdit = forwardRef<ShiftScheduleEditHandle, ShiftScheduleEditP
     const [isLoadingHolidays, setIsLoadingHolidays] = useState(false);
     const [loadError, setLoadError] = useState<string | null>(null);
 
-    const [formData, setFormData] = useState<ShiftScheduleData>({
-        scheduleName: 'morning',
-        scheduleType: 'regular',
-        shiftStartTime: '07:00:00',
-        shiftEndTime: '16:00:00',
-        crossesMidnight: false,
-        durationHours: 9.0,
-        breakMinutes: 60,
-        guardsPerShift: 3,
-        recurrenceType: 'weekly',
-        appliesMonday: true,
-        appliesTuesday: true,
-        appliesWednesday: true,
-        appliesThursday: true,
-        appliesFriday: true,
-        appliesSaturday: false,
-        appliesSunday: false,
-        appliesOnPublicHolidays: true,
-        appliesOnCustomerHolidays: true,
-        appliesOnWeekends: false,
-        skipWhenLocationClosed: false,
-        requiresArmedGuard: false,
-        requiresSupervisor: true,
-        minimumExperienceMonths: 12,
-        requiredCertifications: null,
-        autoGenerateEnabled: true,
-        generateAdvanceDays: 30,
-        effectiveFrom: '2025-01-01T00:00:00',
-        effectiveTo: null,
-        isActive: true,
-        notes: ''
-    });
+    // Form data for each schedule - keyed by schedule ID
+    const [scheduleFormsData, setScheduleFormsData] = useState<{ [scheduleId: string]: ShiftScheduleData }>({});
 
-    const [startHour, setStartHour] = useState('07');
-    const [startMinute, setStartMinute] = useState('00');
-    const [startSecond, setStartSecond] = useState('00');
+    // Time pickers for each schedule
+    const [timePickers, setTimePickers] = useState<{
+        [scheduleId: string]: {
+            startHour: string;
+            startMinute: string;
+            startSecond: string;
+            endHour: string;
+            endMinute: string;
+            endSecond: string;
+        }
+    }>({});
 
-    const [endHour, setEndHour] = useState('16');
-    const [endMinute, setEndMinute] = useState('00');
-    const [endSecond, setEndSecond] = useState('00');
+    const [errors, setErrors] = useState<{ [scheduleId: string]: { [key: string]: string } }>({});
 
-    const [errors, setErrors] = useState<{ [key: string]: string }>({});
+    // Snackbar state
+    const [snackbarOpen, setSnackbarOpen] = useState(false);
 
     // Fetch contracts when component mounts
     useEffect(() => {
@@ -258,18 +234,70 @@ const ShiftScheduleEdit = forwardRef<ShiftScheduleEditHandle, ShiftScheduleEditP
                 const data = await response.json();
 
                 // Sort schedules: morning -> afternoon -> night
-                const scheduleOrder = { 'morning': 1, 'afternoon': 2, 'night': 3 };
+                const scheduleOrder: { [key: string]: number } = {
+                    'Ca sáng': 1,
+                    'Ca chiều': 2,
+                    'Ca đêm': 3
+                };
                 const sortedSchedules = (data.shiftSchedules || []).sort((a: ShiftSchedule, b: ShiftSchedule) => {
-                    return (scheduleOrder[a.scheduleName as keyof typeof scheduleOrder] || 999) -
-                           (scheduleOrder[b.scheduleName as keyof typeof scheduleOrder] || 999);
+                    return (scheduleOrder[a.scheduleName] || 999) - (scheduleOrder[b.scheduleName] || 999);
                 });
 
                 setShiftSchedules(sortedSchedules);
 
-                // Automatically select first schedule if available
-                if (sortedSchedules.length > 0) {
-                    setSelectedScheduleId(sortedSchedules[0].id);
-                }
+                // Initialize form data and time pickers for all schedules
+                const formsData: { [scheduleId: string]: ShiftScheduleData } = {};
+                const timers: typeof timePickers = {};
+
+                sortedSchedules.forEach((schedule: ShiftSchedule) => {
+                    const [startH, startM, startS] = schedule.shiftStartTime.split(':');
+                    const [endH, endM, endS] = schedule.shiftEndTime.split(':');
+
+                    timers[schedule.id] = {
+                        startHour: startH,
+                        startMinute: startM,
+                        startSecond: startS,
+                        endHour: endH,
+                        endMinute: endM,
+                        endSecond: endS
+                    };
+
+                    formsData[schedule.id] = {
+                        scheduleName: schedule.scheduleName,
+                        scheduleType: schedule.scheduleType,
+                        shiftStartTime: schedule.shiftStartTime,
+                        shiftEndTime: schedule.shiftEndTime,
+                        crossesMidnight: schedule.crossesMidnight,
+                        durationHours: schedule.durationHours,
+                        breakMinutes: schedule.breakMinutes,
+                        guardsPerShift: schedule.guardsPerShift,
+                        recurrenceType: schedule.recurrenceType,
+                        appliesMonday: schedule.appliesMonday,
+                        appliesTuesday: schedule.appliesTuesday,
+                        appliesWednesday: schedule.appliesWednesday,
+                        appliesThursday: schedule.appliesThursday,
+                        appliesFriday: schedule.appliesFriday,
+                        appliesSaturday: schedule.appliesSaturday,
+                        appliesSunday: schedule.appliesSunday,
+                        appliesOnPublicHolidays: schedule.appliesOnPublicHolidays,
+                        appliesOnCustomerHolidays: schedule.appliesOnCustomerHolidays,
+                        appliesOnWeekends: schedule.appliesOnWeekends,
+                        skipWhenLocationClosed: schedule.skipWhenLocationClosed,
+                        requiresArmedGuard: schedule.requiresArmedGuard,
+                        requiresSupervisor: schedule.requiresSupervisor,
+                        minimumExperienceMonths: schedule.minimumExperienceMonths,
+                        requiredCertifications: schedule.requiredCertifications,
+                        autoGenerateEnabled: schedule.autoGenerateEnabled,
+                        generateAdvanceDays: schedule.generateAdvanceDays,
+                        effectiveFrom: schedule.effectiveFrom,
+                        effectiveTo: schedule.effectiveTo,
+                        isActive: schedule.isActive,
+                        notes: schedule.notes,
+                    };
+                });
+
+                setScheduleFormsData(formsData);
+                setTimePickers(timers);
             } catch (err) {
                 setLoadError('Không thể tải danh sách lịch ca trực. Vui lòng thử lại sau.');
             } finally {
@@ -312,11 +340,6 @@ const ShiftScheduleEdit = forwardRef<ShiftScheduleEditHandle, ShiftScheduleEditP
                 const data = await response.json();
                 const holidaysData = data.holidays || data.publicHolidays || data.data || data.items || [];
                 setPublicHolidays(holidaysData);
-
-                // Automatically select first holiday if available
-                if (holidaysData.length > 0) {
-                    setSelectedHolidayId(holidaysData[0].id);
-                }
             } catch (err) {
                 setLoadError('Không thể tải danh sách ngày lễ. Vui lòng thử lại sau.');
             } finally {
@@ -327,152 +350,222 @@ const ShiftScheduleEdit = forwardRef<ShiftScheduleEditHandle, ShiftScheduleEditP
         fetchPublicHolidays();
     }, [contractId]);
 
-    // Load selected schedule data into form
-    useEffect(() => {
-        if (!selectedScheduleId) return;
-
-        const selectedSchedule = shiftSchedules.find(s => s.id === selectedScheduleId);
-        if (!selectedSchedule) return;
-
-        // Parse time components
-        const [startH, startM, startS] = selectedSchedule.shiftStartTime.split(':');
-        setStartHour(startH);
-        setStartMinute(startM);
-        setStartSecond(startS);
-
-        const [endH, endM, endS] = selectedSchedule.shiftEndTime.split(':');
-        setEndHour(endH);
-        setEndMinute(endM);
-        setEndSecond(endS);
-
-        // Set form data
-        setFormData({
-            scheduleName: selectedSchedule.scheduleName,
-            scheduleType: selectedSchedule.scheduleType,
-            shiftStartTime: selectedSchedule.shiftStartTime,
-            shiftEndTime: selectedSchedule.shiftEndTime,
-            crossesMidnight: selectedSchedule.crossesMidnight,
-            durationHours: selectedSchedule.durationHours,
-            breakMinutes: selectedSchedule.breakMinutes,
-            guardsPerShift: selectedSchedule.guardsPerShift,
-            recurrenceType: selectedSchedule.recurrenceType,
-            appliesMonday: selectedSchedule.appliesMonday,
-            appliesTuesday: selectedSchedule.appliesTuesday,
-            appliesWednesday: selectedSchedule.appliesWednesday,
-            appliesThursday: selectedSchedule.appliesThursday,
-            appliesFriday: selectedSchedule.appliesFriday,
-            appliesSaturday: selectedSchedule.appliesSaturday,
-            appliesSunday: selectedSchedule.appliesSunday,
-            appliesOnPublicHolidays: selectedSchedule.appliesOnPublicHolidays,
-            appliesOnCustomerHolidays: selectedSchedule.appliesOnCustomerHolidays,
-            appliesOnWeekends: selectedSchedule.appliesOnWeekends,
-            skipWhenLocationClosed: selectedSchedule.skipWhenLocationClosed,
-            requiresArmedGuard: selectedSchedule.requiresArmedGuard,
-            requiresSupervisor: selectedSchedule.requiresSupervisor,
-            minimumExperienceMonths: selectedSchedule.minimumExperienceMonths,
-            requiredCertifications: selectedSchedule.requiredCertifications,
-            autoGenerateEnabled: selectedSchedule.autoGenerateEnabled,
-            generateAdvanceDays: selectedSchedule.generateAdvanceDays,
-            effectiveFrom: selectedSchedule.effectiveFrom,
-            effectiveTo: selectedSchedule.effectiveTo,
-            isActive: selectedSchedule.isActive,
-            notes: selectedSchedule.notes,
-        });
-    }, [selectedScheduleId, shiftSchedules]);
-
-    // Update shiftStartTime when components change
-    useEffect(() => {
-        const newStartTime = `${startHour}:${startMinute}:${startSecond}`;
-        setFormData(prev => ({ ...prev, shiftStartTime: newStartTime }));
-    }, [startHour, startMinute, startSecond]);
-
-    // Update shiftEndTime when components change
-    useEffect(() => {
-        const newEndTime = `${endHour}:${endMinute}:${endSecond}`;
-        setFormData(prev => ({ ...prev, shiftEndTime: newEndTime }));
-    }, [endHour, endMinute, endSecond]);
-
-    // Auto-calculate duration
-    useEffect(() => {
-        calculateDuration();
-        validateTimes();
-    }, [formData.shiftStartTime, formData.shiftEndTime, formData.scheduleName]);
-
-    // Auto-update appliesOnWeekends
-    useEffect(() => {
-        const hasWeekendDays = formData.appliesSaturday || formData.appliesSunday;
-        setFormData(prev => ({ ...prev, appliesOnWeekends: hasWeekendDays }));
-    }, [formData.appliesSaturday, formData.appliesSunday]);
-
-    const calculateDuration = () => {
-        const [startH, startM, startS] = formData.shiftStartTime.split(':').map(Number);
-        const [endH, endM, endS] = formData.shiftEndTime.split(':').map(Number);
+    const calculateDuration = (scheduleId: string, startTime: string, endTime: string) => {
+        const [startH, startM, startS] = startTime.split(':').map(Number);
+        const [endH, endM, endS] = endTime.split(':').map(Number);
 
         const startMinutes = startH * 60 + startM + startS / 60;
         let endMinutes = endH * 60 + endM + endS / 60;
 
+        // Auto-detect if shift crosses midnight
+        const crossesMidnight = endMinutes < startMinutes;
+
         // If end time is before start time, assume it crosses midnight
-        if (endMinutes < startMinutes) {
+        if (crossesMidnight) {
             endMinutes += 24 * 60;
         }
 
         const durationMinutes = endMinutes - startMinutes;
         const durationHours = durationMinutes / 60;
 
-        setFormData(prev => ({
+        setScheduleFormsData(prev => ({
             ...prev,
-            durationHours: Math.round(durationHours * 100) / 100
+            [scheduleId]: {
+                ...prev[scheduleId],
+                durationHours: Math.round(durationHours * 100) / 100,
+                crossesMidnight: crossesMidnight
+            }
         }));
     };
 
-    const validateTimes = () => {
+    const validateTimes = (scheduleId: string, scheduleName: string, startTime: string, endTime: string) => {
         const newErrors: { [key: string]: string } = {};
-        const [startH, startM] = formData.shiftStartTime.split(':').map(Number);
-        const [endH, endM] = formData.shiftEndTime.split(':').map(Number);
+        const [startH, startM] = startTime.split(':').map(Number);
+        const [endH, endM] = endTime.split(':').map(Number);
 
         const startMinutes = startH * 60 + startM;
         const endMinutes = endH * 60 + endM;
 
         // Only validate for morning and afternoon shifts
-        if ((formData.scheduleName === 'morning' || formData.scheduleName === 'afternoon') &&
+        if ((scheduleName === 'Ca sáng' || scheduleName === 'Ca chiều') &&
             startMinutes >= endMinutes) {
             newErrors.shiftTime = 'Thời gian bắt đầu phải trước thời gian kết thúc';
         }
 
-        setErrors(newErrors);
+        setErrors(prev => ({
+            ...prev,
+            [scheduleId]: newErrors
+        }));
     };
 
-    const handleInputChange = (field: keyof ShiftScheduleData, value: any) => {
-        setFormData(prev => ({ ...prev, [field]: value }));
+    const validateScheduleName = (scheduleId: string, newName: string): boolean => {
+        // Check if another schedule already has this name
+        const otherSchedules = shiftSchedules.filter(s => s.id !== scheduleId);
+        const nameExists = otherSchedules.some(s =>
+            getScheduleNameLabel(scheduleFormsData[s.id]?.scheduleName || s.scheduleName) ===
+            getScheduleNameLabel(newName)
+        );
+
+        if (nameExists) {
+            setSnackbarOpen(true);
+            return false;
+        }
+
+        return true;
     };
 
-    const handleCheckboxChange = (field: keyof ShiftScheduleData) => {
-        setFormData(prev => ({ ...prev, [field]: !prev[field] }));
+    const handleInputChange = (scheduleId: string, field: keyof ShiftScheduleData, value: any) => {
+        setScheduleFormsData(prev => ({
+            ...prev,
+            [scheduleId]: {
+                ...prev[scheduleId],
+                [field]: value
+            }
+        }));
+    };
+
+    const handleCheckboxChange = (scheduleId: string, field: keyof ShiftScheduleData) => {
+        setScheduleFormsData(prev => ({
+            ...prev,
+            [scheduleId]: {
+                ...prev[scheduleId],
+                [field]: !prev[scheduleId][field]
+            }
+        }));
+
+        // Auto-update appliesOnWeekends
+        if (field === 'appliesSaturday' || field === 'appliesSunday') {
+            const formData = scheduleFormsData[scheduleId];
+            const newSaturday = field === 'appliesSaturday' ? !formData.appliesSaturday : formData.appliesSaturday;
+            const newSunday = field === 'appliesSunday' ? !formData.appliesSunday : formData.appliesSunday;
+            const hasWeekendDays = newSaturday || newSunday;
+
+            setScheduleFormsData(prev => ({
+                ...prev,
+                [scheduleId]: {
+                    ...prev[scheduleId],
+                    appliesOnWeekends: hasWeekendDays
+                }
+            }));
+        }
+    };
+
+    const handleTimePickerChange = (scheduleId: string, field: string, value: string) => {
+        setTimePickers(prev => ({
+            ...prev,
+            [scheduleId]: {
+                ...prev[scheduleId],
+                [field]: value
+            }
+        }));
+
+        // Update the corresponding time in form data
+        const timePicker = timePickers[scheduleId];
+        const newTimePicker = { ...timePicker, [field]: value };
+
+        if (field.startsWith('start')) {
+            const newStartTime = `${newTimePicker.startHour}:${newTimePicker.startMinute}:${newTimePicker.startSecond}`;
+            setScheduleFormsData(prev => ({
+                ...prev,
+                [scheduleId]: {
+                    ...prev[scheduleId],
+                    shiftStartTime: newStartTime
+                }
+            }));
+
+            const formData = scheduleFormsData[scheduleId];
+            calculateDuration(scheduleId, newStartTime, formData.shiftEndTime);
+            validateTimes(scheduleId, formData.scheduleName, newStartTime, formData.shiftEndTime);
+        } else {
+            const newEndTime = `${newTimePicker.endHour}:${newTimePicker.endMinute}:${newTimePicker.endSecond}`;
+            setScheduleFormsData(prev => ({
+                ...prev,
+                [scheduleId]: {
+                    ...prev[scheduleId],
+                    shiftEndTime: newEndTime
+                }
+            }));
+
+            const formData = scheduleFormsData[scheduleId];
+            calculateDuration(scheduleId, formData.shiftStartTime, newEndTime);
+            validateTimes(scheduleId, formData.scheduleName, formData.shiftStartTime, newEndTime);
+        }
     };
 
     const validateForm = (): boolean => {
-        const newErrors: { [key: string]: string } = {};
+        const allErrors: { [scheduleId: string]: { [key: string]: string } } = {};
+        let hasErrors = false;
 
-        if (formData.breakMinutes <= 0) {
-            newErrors.breakMinutes = 'Thời gian nghỉ phải lớn hơn 0';
-        }
+        shiftSchedules.forEach(schedule => {
+            const formData = scheduleFormsData[schedule.id];
+            if (!formData) return;
 
-        if (formData.guardsPerShift <= 0) {
-            newErrors.guardsPerShift = 'Số lượng bảo vệ phải lớn hơn 0';
-        }
+            const scheduleErrors: { [key: string]: string } = {};
 
-        setErrors(newErrors);
-        return Object.keys(newErrors).length === 0;
+            if (formData.breakMinutes <= 0) {
+                scheduleErrors.breakMinutes = 'Thời gian nghỉ phải lớn hơn 0';
+            }
+
+            if (formData.guardsPerShift <= 0) {
+                scheduleErrors.guardsPerShift = 'Số lượng bảo vệ phải lớn hơn 0';
+            }
+
+            if (Object.keys(scheduleErrors).length > 0) {
+                allErrors[schedule.id] = scheduleErrors;
+                hasErrors = true;
+            }
+        });
+
+        setErrors(allErrors);
+        return !hasErrors;
+    };
+
+    const handleHolidayChange = (holidayId: string, field: keyof PublicHoliday, value: any) => {
+        setPublicHolidays(prev => prev.map(h =>
+            h.id === holidayId ? { ...h, [field]: value } : h
+        ));
+    };
+
+    const handleAddHoliday = () => {
+        const newHoliday: PublicHoliday = {
+            id: `temp-${Date.now()}`,
+            contractId: contractId,
+            holidayDate: new Date().toISOString().split('T')[0] + 'T00:00:00',
+            holidayName: '',
+            holidayNameEn: '',
+            holidayCategory: 'national',
+            isTetPeriod: false,
+            isTetHoliday: false,
+            tetDayNumber: null,
+            holidayStartDate: null,
+            holidayEndDate: null,
+            totalHolidayDays: 1,
+            isOfficialHoliday: true,
+            isObserved: true,
+            originalDate: null,
+            observedDate: null,
+            appliesNationwide: true,
+            appliesToRegions: null,
+            standardWorkplacesClosed: true,
+            essentialServicesOperating: false,
+            description: '',
+            year: new Date().getFullYear()
+        };
+        setPublicHolidays(prev => [...prev, newHoliday]);
+    };
+
+    const handleDeleteHoliday = (holidayId: string) => {
+        setPublicHolidays(prev => prev.filter(h => h.id !== holidayId));
     };
 
     // Expose save functions to parent via ref
     useImperativeHandle(ref, () => ({
         saveShiftSchedule: async () => {
-            if (!selectedScheduleId) {
+            if (shiftSchedules.length === 0) {
                 return false;
             }
 
-            if (!validateForm() || Object.keys(errors).length > 0) {
+            if (!validateForm()) {
                 return false;
             }
 
@@ -484,17 +577,28 @@ const ShiftScheduleEdit = forwardRef<ShiftScheduleEditHandle, ShiftScheduleEditP
                     return false;
                 }
 
-                const response = await fetch(`${apiUrl}/contracts/shift-schedules/${selectedScheduleId}`, {
-                    method: 'PUT',
-                    headers: {
-                        'Authorization': `Bearer ${token}`,
-                        'Content-Type': 'application/json',
-                    },
-                    body: JSON.stringify(formData),
-                });
+                // Save all schedules
+                for (const schedule of shiftSchedules) {
+                    const formData = scheduleFormsData[schedule.id];
+                    if (!formData) continue;
 
-                if (!response.ok) {
-                    throw new Error('Failed to update shift schedule');
+                    // Validate schedule name before saving
+                    if (!validateScheduleName(schedule.id, formData.scheduleName)) {
+                        return false;
+                    }
+
+                    const response = await fetch(`${apiUrl}/contracts/shift-schedules/${schedule.id}`, {
+                        method: 'PUT',
+                        headers: {
+                            'Authorization': `Bearer ${token}`,
+                            'Content-Type': 'application/json',
+                        },
+                        body: JSON.stringify(formData),
+                    });
+
+                    if (!response.ok) {
+                        throw new Error('Failed to update shift schedule');
+                    }
                 }
 
                 return true;
@@ -565,7 +669,6 @@ const ShiftScheduleEdit = forwardRef<ShiftScheduleEditHandle, ShiftScheduleEditP
                                 value={contractId || ''}
                                 onChange={(e) => {
                                     setContractId(e.target.value);
-                                    setSelectedScheduleId(null);
                                 }}
                             >
                                 {contracts.map(contract => (
@@ -582,48 +685,22 @@ const ShiftScheduleEdit = forwardRef<ShiftScheduleEditHandle, ShiftScheduleEditP
                     <div className="shift-schedule-info-text">Đang tải danh sách lịch ca trực...</div>
                 )}
 
-                {!isLoadingSchedules && shiftSchedules.length > 0 && (
-                    <div className="shift-schedule-list">
-                        <label className="shift-schedule-label">Chọn ca trực để chỉnh sửa</label>
-                        <div className="shift-schedule-cards">
-                            {shiftSchedules.map(schedule => (
-                                <div
-                                    key={schedule.id}
-                                    className={`shift-schedule-card ${selectedScheduleId === schedule.id ? 'shift-schedule-card-selected' : ''}`}
-                                    onClick={() => setSelectedScheduleId(schedule.id)}
-                                >
-                                    <div className="shift-schedule-card-header">
-                                        <span className="shift-schedule-card-name">
-                                            {getScheduleNameLabel(schedule.scheduleName)}
-                                        </span>
-                                        <span className={`shift-schedule-card-status ${schedule.isActive ? 'shift-schedule-status-active' : 'shift-schedule-status-inactive'}`}>
-                                            {schedule.isActive ? 'Đang hoạt động' : 'Không hoạt động'}
-                                        </span>
-                                    </div>
-                                    <div className="shift-schedule-card-time">
-                                        {schedule.shiftStartTime} - {schedule.shiftEndTime}
-                                    </div>
-                                    <div className="shift-schedule-card-details">
-                                        <span>{schedule.guardsPerShift} bảo vệ</span>
-                                        <span>•</span>
-                                        <span>{schedule.durationHours}h</span>
-                                    </div>
-                                </div>
-                            ))}
-                        </div>
-                    </div>
-                )}
-
                 {!isLoadingContracts && !isLoadingSchedules && shiftSchedules.length === 0 && contractId && (
                     <div className="shift-schedule-info-text">Không có lịch ca trực nào cho hợp đồng này.</div>
                 )}
             </div>
 
-            {/* Only show form if a schedule is selected */}
-            {selectedScheduleId && (
-                <>
-                    <div className="shift-schedule-section">
-                        <h3 className="shift-schedule-section-title">Thông tin ca trực</h3>
+            {/* Render all shift schedules */}
+            {!isLoadingSchedules && shiftSchedules.length > 0 && shiftSchedules.map(schedule => {
+                const formData = scheduleFormsData[schedule.id];
+                const timePicker = timePickers[schedule.id];
+                const scheduleErrors = errors[schedule.id] || {};
+
+                if (!formData || !timePicker) return null;
+
+                return (
+                    <div key={schedule.id} className="shift-schedule-section">
+                        <h3 className="shift-schedule-section-title">{getScheduleNameLabel(formData.scheduleName)}</h3>
 
                         <div className="shift-schedule-form-grid">
                             {/* Schedule Name */}
@@ -632,7 +709,11 @@ const ShiftScheduleEdit = forwardRef<ShiftScheduleEditHandle, ShiftScheduleEditP
                                 <select
                                     className="shift-schedule-input"
                                     value={formData.scheduleName}
-                                    onChange={(e) => handleInputChange('scheduleName', e.target.value)}
+                                    onChange={(e) => {
+                                        if (validateScheduleName(schedule.id, e.target.value)) {
+                                            handleInputChange(schedule.id, 'scheduleName', e.target.value);
+                                        }
+                                    }}
                                 >
                                     {SCHEDULE_NAMES.map(opt => (
                                         <option key={opt.value} value={opt.value}>{opt.label}</option>
@@ -647,7 +728,7 @@ const ShiftScheduleEdit = forwardRef<ShiftScheduleEditHandle, ShiftScheduleEditP
                                     type="text"
                                     className="shift-schedule-input"
                                     value={formData.scheduleType}
-                                    onChange={(e) => handleInputChange('scheduleType', e.target.value)}
+                                    onChange={(e) => handleInputChange(schedule.id, 'scheduleType', e.target.value)}
                                 />
                             </div>
 
@@ -657,8 +738,8 @@ const ShiftScheduleEdit = forwardRef<ShiftScheduleEditHandle, ShiftScheduleEditP
                                 <div className="shift-schedule-time-picker">
                                     <select
                                         className="shift-schedule-time-input"
-                                        value={startHour}
-                                        onChange={(e) => setStartHour(e.target.value)}
+                                        value={timePicker.startHour}
+                                        onChange={(e) => handleTimePickerChange(schedule.id, 'startHour', e.target.value)}
                                     >
                                         {HOURS.map(h => (
                                             <option key={h} value={h}>{h}</option>
@@ -667,8 +748,8 @@ const ShiftScheduleEdit = forwardRef<ShiftScheduleEditHandle, ShiftScheduleEditP
                                     <span>:</span>
                                     <select
                                         className="shift-schedule-time-input"
-                                        value={startMinute}
-                                        onChange={(e) => setStartMinute(e.target.value)}
+                                        value={timePicker.startMinute}
+                                        onChange={(e) => handleTimePickerChange(schedule.id, 'startMinute', e.target.value)}
                                     >
                                         {MINUTES.map(m => (
                                             <option key={m} value={m}>{m}</option>
@@ -677,8 +758,8 @@ const ShiftScheduleEdit = forwardRef<ShiftScheduleEditHandle, ShiftScheduleEditP
                                     <span>:</span>
                                     <select
                                         className="shift-schedule-time-input"
-                                        value={startSecond}
-                                        onChange={(e) => setStartSecond(e.target.value)}
+                                        value={timePicker.startSecond}
+                                        onChange={(e) => handleTimePickerChange(schedule.id, 'startSecond', e.target.value)}
                                     >
                                         {SECONDS.map(s => (
                                             <option key={s} value={s}>{s}</option>
@@ -693,8 +774,8 @@ const ShiftScheduleEdit = forwardRef<ShiftScheduleEditHandle, ShiftScheduleEditP
                                 <div className="shift-schedule-time-picker">
                                     <select
                                         className="shift-schedule-time-input"
-                                        value={endHour}
-                                        onChange={(e) => setEndHour(e.target.value)}
+                                        value={timePicker.endHour}
+                                        onChange={(e) => handleTimePickerChange(schedule.id, 'endHour', e.target.value)}
                                     >
                                         {HOURS.map(h => (
                                             <option key={h} value={h}>{h}</option>
@@ -703,8 +784,8 @@ const ShiftScheduleEdit = forwardRef<ShiftScheduleEditHandle, ShiftScheduleEditP
                                     <span>:</span>
                                     <select
                                         className="shift-schedule-time-input"
-                                        value={endMinute}
-                                        onChange={(e) => setEndMinute(e.target.value)}
+                                        value={timePicker.endMinute}
+                                        onChange={(e) => handleTimePickerChange(schedule.id, 'endMinute', e.target.value)}
                                     >
                                         {MINUTES.map(m => (
                                             <option key={m} value={m}>{m}</option>
@@ -713,32 +794,18 @@ const ShiftScheduleEdit = forwardRef<ShiftScheduleEditHandle, ShiftScheduleEditP
                                     <span>:</span>
                                     <select
                                         className="shift-schedule-time-input"
-                                        value={endSecond}
-                                        onChange={(e) => setEndSecond(e.target.value)}
+                                        value={timePicker.endSecond}
+                                        onChange={(e) => handleTimePickerChange(schedule.id, 'endSecond', e.target.value)}
                                     >
                                         {SECONDS.map(s => (
                                             <option key={s} value={s}>{s}</option>
                                         ))}
                                     </select>
                                 </div>
-                                {errors.shiftTime && (
-                                    <span className="shift-schedule-error-text">{errors.shiftTime}</span>
+                                {scheduleErrors.shiftTime && (
+                                    <span className="shift-schedule-error-text">{scheduleErrors.shiftTime}</span>
                                 )}
                             </div>
-
-                            {/* Crosses Midnight - only for night shift */}
-                            {formData.scheduleName === 'night' && (
-                                <div className="shift-schedule-form-group">
-                                    <label className="shift-schedule-checkbox-label">
-                                        <input
-                                            type="checkbox"
-                                            checked={formData.crossesMidnight}
-                                            onChange={() => handleCheckboxChange('crossesMidnight')}
-                                        />
-                                        <span>Qua nửa đêm</span>
-                                    </label>
-                                </div>
-                            )}
 
                             {/* Duration (read-only) */}
                             <div className="shift-schedule-form-group">
@@ -759,11 +826,11 @@ const ShiftScheduleEdit = forwardRef<ShiftScheduleEditHandle, ShiftScheduleEditP
                                     type="number"
                                     className="shift-schedule-input"
                                     value={formData.breakMinutes}
-                                    onChange={(e) => handleInputChange('breakMinutes', Number(e.target.value))}
+                                    onChange={(e) => handleInputChange(schedule.id, 'breakMinutes', Number(e.target.value))}
                                     min="1"
                                 />
-                                {errors.breakMinutes && (
-                                    <span className="shift-schedule-error-text">{errors.breakMinutes}</span>
+                                {scheduleErrors.breakMinutes && (
+                                    <span className="shift-schedule-error-text">{scheduleErrors.breakMinutes}</span>
                                 )}
                             </div>
 
@@ -774,11 +841,11 @@ const ShiftScheduleEdit = forwardRef<ShiftScheduleEditHandle, ShiftScheduleEditP
                                     type="number"
                                     className="shift-schedule-input"
                                     value={formData.guardsPerShift}
-                                    onChange={(e) => handleInputChange('guardsPerShift', Number(e.target.value))}
+                                    onChange={(e) => handleInputChange(schedule.id, 'guardsPerShift', Number(e.target.value))}
                                     min="1"
                                 />
-                                {errors.guardsPerShift && (
-                                    <span className="shift-schedule-error-text">{errors.guardsPerShift}</span>
+                                {scheduleErrors.guardsPerShift && (
+                                    <span className="shift-schedule-error-text">{scheduleErrors.guardsPerShift}</span>
                                 )}
                             </div>
 
@@ -789,21 +856,19 @@ const ShiftScheduleEdit = forwardRef<ShiftScheduleEditHandle, ShiftScheduleEditP
                                     type="text"
                                     className="shift-schedule-input"
                                     value={formData.recurrenceType}
-                                    onChange={(e) => handleInputChange('recurrenceType', e.target.value)}
+                                    onChange={(e) => handleInputChange(schedule.id, 'recurrenceType', e.target.value)}
                                 />
                             </div>
                         </div>
-                    </div>
 
-                    {/* Days of Week */}
-                    <div className="shift-schedule-section">
-                        <h3 className="shift-schedule-section-title">Áp dụng theo ngày</h3>
+                        {/* Days of Week - moved inside the schedule section */}
+                        <h4 className="shift-schedule-subsection-title">Áp dụng theo ngày</h4>
                         <div className="shift-schedule-days-grid">
                             <label className="shift-schedule-checkbox-label">
                                 <input
                                     type="checkbox"
                                     checked={formData.appliesMonday}
-                                    onChange={() => handleCheckboxChange('appliesMonday')}
+                                    onChange={() => handleCheckboxChange(schedule.id, 'appliesMonday')}
                                 />
                                 <span>Thứ 2</span>
                             </label>
@@ -811,7 +876,7 @@ const ShiftScheduleEdit = forwardRef<ShiftScheduleEditHandle, ShiftScheduleEditP
                                 <input
                                     type="checkbox"
                                     checked={formData.appliesTuesday}
-                                    onChange={() => handleCheckboxChange('appliesTuesday')}
+                                    onChange={() => handleCheckboxChange(schedule.id, 'appliesTuesday')}
                                 />
                                 <span>Thứ 3</span>
                             </label>
@@ -819,7 +884,7 @@ const ShiftScheduleEdit = forwardRef<ShiftScheduleEditHandle, ShiftScheduleEditP
                                 <input
                                     type="checkbox"
                                     checked={formData.appliesWednesday}
-                                    onChange={() => handleCheckboxChange('appliesWednesday')}
+                                    onChange={() => handleCheckboxChange(schedule.id, 'appliesWednesday')}
                                 />
                                 <span>Thứ 4</span>
                             </label>
@@ -827,7 +892,7 @@ const ShiftScheduleEdit = forwardRef<ShiftScheduleEditHandle, ShiftScheduleEditP
                                 <input
                                     type="checkbox"
                                     checked={formData.appliesThursday}
-                                    onChange={() => handleCheckboxChange('appliesThursday')}
+                                    onChange={() => handleCheckboxChange(schedule.id, 'appliesThursday')}
                                 />
                                 <span>Thứ 5</span>
                             </label>
@@ -835,7 +900,7 @@ const ShiftScheduleEdit = forwardRef<ShiftScheduleEditHandle, ShiftScheduleEditP
                                 <input
                                     type="checkbox"
                                     checked={formData.appliesFriday}
-                                    onChange={() => handleCheckboxChange('appliesFriday')}
+                                    onChange={() => handleCheckboxChange(schedule.id, 'appliesFriday')}
                                 />
                                 <span>Thứ 6</span>
                             </label>
@@ -843,7 +908,7 @@ const ShiftScheduleEdit = forwardRef<ShiftScheduleEditHandle, ShiftScheduleEditP
                                 <input
                                     type="checkbox"
                                     checked={formData.appliesSaturday}
-                                    onChange={() => handleCheckboxChange('appliesSaturday')}
+                                    onChange={() => handleCheckboxChange(schedule.id, 'appliesSaturday')}
                                 />
                                 <span>Thứ 7</span>
                             </label>
@@ -851,7 +916,7 @@ const ShiftScheduleEdit = forwardRef<ShiftScheduleEditHandle, ShiftScheduleEditP
                                 <input
                                     type="checkbox"
                                     checked={formData.appliesSunday}
-                                    onChange={() => handleCheckboxChange('appliesSunday')}
+                                    onChange={() => handleCheckboxChange(schedule.id, 'appliesSunday')}
                                 />
                                 <span>Chủ nhật</span>
                             </label>
@@ -859,17 +924,15 @@ const ShiftScheduleEdit = forwardRef<ShiftScheduleEditHandle, ShiftScheduleEditP
                         {formData.appliesOnWeekends && (
                             <p className="shift-schedule-info-text">✓ Tự động áp dụng cho cuối tuần</p>
                         )}
-                    </div>
 
-                    {/* Other Options */}
-                    <div className="shift-schedule-section">
-                        <h3 className="shift-schedule-section-title">Tùy chọn khác</h3>
+                        {/* Other Options - moved inside the schedule section */}
+                        <h4 className="shift-schedule-subsection-title">Tùy chọn khác</h4>
                         <div className="shift-schedule-checkboxes-grid">
                             <label className="shift-schedule-checkbox-label">
                                 <input
                                     type="checkbox"
                                     checked={formData.appliesOnPublicHolidays}
-                                    onChange={() => handleCheckboxChange('appliesOnPublicHolidays')}
+                                    onChange={() => handleCheckboxChange(schedule.id, 'appliesOnPublicHolidays')}
                                 />
                                 <span>Áp dụng vào ngày lễ</span>
                             </label>
@@ -877,7 +940,7 @@ const ShiftScheduleEdit = forwardRef<ShiftScheduleEditHandle, ShiftScheduleEditP
                                 <input
                                     type="checkbox"
                                     checked={formData.appliesOnCustomerHolidays}
-                                    onChange={() => handleCheckboxChange('appliesOnCustomerHolidays')}
+                                    onChange={() => handleCheckboxChange(schedule.id, 'appliesOnCustomerHolidays')}
                                 />
                                 <span>Áp dụng vào ngày nghỉ của khách hàng</span>
                             </label>
@@ -885,7 +948,7 @@ const ShiftScheduleEdit = forwardRef<ShiftScheduleEditHandle, ShiftScheduleEditP
                                 <input
                                     type="checkbox"
                                     checked={formData.skipWhenLocationClosed}
-                                    onChange={() => handleCheckboxChange('skipWhenLocationClosed')}
+                                    onChange={() => handleCheckboxChange(schedule.id, 'skipWhenLocationClosed')}
                                 />
                                 <span>Bỏ qua khi địa điểm đóng cửa</span>
                             </label>
@@ -893,7 +956,7 @@ const ShiftScheduleEdit = forwardRef<ShiftScheduleEditHandle, ShiftScheduleEditP
                                 <input
                                     type="checkbox"
                                     checked={formData.requiresArmedGuard}
-                                    onChange={() => handleCheckboxChange('requiresArmedGuard')}
+                                    onChange={() => handleCheckboxChange(schedule.id, 'requiresArmedGuard')}
                                 />
                                 <span>Yêu cầu bảo vệ có vũ trang</span>
                             </label>
@@ -901,7 +964,7 @@ const ShiftScheduleEdit = forwardRef<ShiftScheduleEditHandle, ShiftScheduleEditP
                                 <input
                                     type="checkbox"
                                     checked={formData.requiresSupervisor}
-                                    onChange={() => handleCheckboxChange('requiresSupervisor')}
+                                    onChange={() => handleCheckboxChange(schedule.id, 'requiresSupervisor')}
                                 />
                                 <span>Yêu cầu giám sát viên</span>
                             </label>
@@ -909,7 +972,7 @@ const ShiftScheduleEdit = forwardRef<ShiftScheduleEditHandle, ShiftScheduleEditP
                                 <input
                                     type="checkbox"
                                     checked={formData.autoGenerateEnabled}
-                                    onChange={() => handleCheckboxChange('autoGenerateEnabled')}
+                                    onChange={() => handleCheckboxChange(schedule.id, 'autoGenerateEnabled')}
                                 />
                                 <span>Tự động tạo lịch</span>
                             </label>
@@ -917,16 +980,14 @@ const ShiftScheduleEdit = forwardRef<ShiftScheduleEditHandle, ShiftScheduleEditP
                                 <input
                                     type="checkbox"
                                     checked={formData.isActive}
-                                    onChange={() => handleCheckboxChange('isActive')}
+                                    onChange={() => handleCheckboxChange(schedule.id, 'isActive')}
                                 />
                                 <span>Đang hoạt động</span>
                             </label>
                         </div>
-                    </div>
 
-                    {/* Auto-generate Info */}
-                    <div className="shift-schedule-section">
-                        <h3 className="shift-schedule-section-title">Thông tin tự tạo ca</h3>
+                        {/* Auto-generate Info - moved inside the schedule section */}
+                        <h4 className="shift-schedule-subsection-title">Thông tin tự tạo ca</h4>
                         <div className="shift-schedule-form-grid">
                             <div className="shift-schedule-form-group">
                                 <label className="shift-schedule-label">Số ngày tạo trước</label>
@@ -934,113 +995,183 @@ const ShiftScheduleEdit = forwardRef<ShiftScheduleEditHandle, ShiftScheduleEditP
                                     type="number"
                                     className="shift-schedule-input"
                                     value={formData.generateAdvanceDays}
-                                    onChange={(e) => handleInputChange('generateAdvanceDays', Number(e.target.value))}
+                                    onChange={(e) => handleInputChange(schedule.id, 'generateAdvanceDays', Number(e.target.value))}
                                     min="0"
                                 />
                             </div>
                             <div className="shift-schedule-form-group">
-                                <label className="shift-schedule-label">Chứng chỉ yêu cầu</label>
+                                <label className="shift-schedule-label">Bắt đầu (EffectiveFrom)</label>
                                 <input
-                                    type="text"
+                                    type="date"
                                     className="shift-schedule-input"
-                                    value={formData.requiredCertifications || ''}
-                                    onChange={(e) => handleInputChange('requiredCertifications', e.target.value || null)}
+                                    value={formData.effectiveFrom ? formData.effectiveFrom.split('T')[0] : ''}
+                                    onChange={(e) => {
+                                        const dateValue = e.target.value ? `${e.target.value}T00:00:00` : '';
+                                        handleInputChange(schedule.id, 'effectiveFrom', dateValue);
+                                    }}
+                                />
+                            </div>
+                            <div className="shift-schedule-form-group">
+                                <label className="shift-schedule-label">Kết thúc (EffectiveTo)</label>
+                                <input
+                                    type="date"
+                                    className="shift-schedule-input"
+                                    value={formData.effectiveTo ? formData.effectiveTo.split('T')[0] : ''}
+                                    onChange={(e) => {
+                                        const dateValue = e.target.value ? `${e.target.value}T00:00:00` : null;
+                                        handleInputChange(schedule.id, 'effectiveTo', dateValue);
+                                    }}
                                 />
                             </div>
                         </div>
                     </div>
+                );
+            })}
 
-                    {/* Public Holidays Section */}
+            {/* Public Holidays Section - Keep outside of schedule loop */}
+            {!isLoadingSchedules && shiftSchedules.length > 0 && (
+                <>
                     <div className="shift-schedule-section">
-                        <h3 className="shift-schedule-section-title">Thông tin các ngày lễ đặc biệt</h3>
+                        <div className="shift-schedule-section-header">
+                            <h3 className="shift-schedule-section-title">Thông tin các ngày lễ đặc biệt</h3>
+                            <button
+                                className="shift-schedule-add-button"
+                                onClick={handleAddHoliday}
+                                type="button"
+                            >
+                                + Thêm ngày lễ
+                            </button>
+                        </div>
 
                         {isLoadingHolidays && (
                             <div className="shift-schedule-info-text">Đang tải danh sách ngày lễ...</div>
                         )}
 
                         {!isLoadingHolidays && publicHolidays.length > 0 && (
-                            <div className="shift-schedule-holidays-grid">
-                                {publicHolidays.map((holiday) => (
-                                    <div
-                                        key={holiday.id}
-                                        className={`shift-schedule-holiday-card ${selectedHolidayId === holiday.id ? 'shift-schedule-holiday-selected' : ''}`}
-                                        onClick={() => setSelectedHolidayId(holiday.id)}
-                                    >
-                                        <div className="shift-schedule-holiday-header">
-                                            <h4 className="shift-schedule-holiday-name">{holiday.holidayName}</h4>
-                                            <span className={`shift-schedule-holiday-category ${holiday.holidayCategory}`}>
-                                                {holiday.holidayCategory === 'national' ? 'Quốc gia' :
-                                                 holiday.holidayCategory === 'traditional' ? 'Truyền thống' :
-                                                 holiday.holidayCategory}
-                                            </span>
+                            <div className="shift-schedule-holidays-list">
+                                {publicHolidays.map((holiday, index) => (
+                                    <div key={holiday.id} className="shift-schedule-holiday-item">
+                                        <div className="shift-schedule-holiday-item-header">
+                                            <h4 className="shift-schedule-holiday-item-title">Ngày lễ #{index + 1}</h4>
+                                            <button
+                                                className="shift-schedule-delete-button"
+                                                onClick={() => handleDeleteHoliday(holiday.id)}
+                                                type="button"
+                                            >
+                                                Xóa
+                                            </button>
                                         </div>
-                                        <div className="shift-schedule-holiday-date">
-                                            {new Date(holiday.holidayDate).toLocaleDateString('vi-VN')}
+
+                                        <div className="shift-schedule-form-grid">
+                                            <div className="shift-schedule-form-group">
+                                                <label className="shift-schedule-label">Tên ngày lễ (Tiếng Việt) *</label>
+                                                <input
+                                                    type="text"
+                                                    className="shift-schedule-input"
+                                                    value={holiday.holidayName}
+                                                    onChange={(e) => handleHolidayChange(holiday.id, 'holidayName', e.target.value)}
+                                                    placeholder="VD: Tết Nguyên Đán"
+                                                />
+                                            </div>
+
+                                            <div className="shift-schedule-form-group">
+                                                <label className="shift-schedule-label">Tên ngày lễ (Tiếng Anh) *</label>
+                                                <input
+                                                    type="text"
+                                                    className="shift-schedule-input"
+                                                    value={holiday.holidayNameEn}
+                                                    onChange={(e) => handleHolidayChange(holiday.id, 'holidayNameEn', e.target.value)}
+                                                    placeholder="VD: Lunar New Year"
+                                                />
+                                            </div>
+
+                                            <div className="shift-schedule-form-group">
+                                                <label className="shift-schedule-label">Ngày *</label>
+                                                <input
+                                                    type="date"
+                                                    className="shift-schedule-input"
+                                                    value={holiday.holidayDate ? holiday.holidayDate.split('T')[0] : ''}
+                                                    onChange={(e) => handleHolidayChange(holiday.id, 'holidayDate', e.target.value + 'T00:00:00')}
+                                                />
+                                            </div>
+
+                                            <div className="shift-schedule-form-group">
+                                                <label className="shift-schedule-label">Số ngày nghỉ *</label>
+                                                <input
+                                                    type="number"
+                                                    className="shift-schedule-input"
+                                                    value={holiday.totalHolidayDays}
+                                                    onChange={(e) => handleHolidayChange(holiday.id, 'totalHolidayDays', Number(e.target.value))}
+                                                    min="1"
+                                                />
+                                            </div>
+
+                                            <div className="shift-schedule-form-group">
+                                                <label className="shift-schedule-label">Loại ngày lễ *</label>
+                                                <select
+                                                    className="shift-schedule-input"
+                                                    value={holiday.holidayCategory}
+                                                    onChange={(e) => handleHolidayChange(holiday.id, 'holidayCategory', e.target.value)}
+                                                >
+                                                    <option value="national">Quốc gia</option>
+                                                    <option value="traditional">Truyền thống</option>
+                                                    <option value="tet">Tết</option>
+                                                </select>
+                                            </div>
+
+                                            <div className="shift-schedule-form-group shift-schedule-full-width">
+                                                <label className="shift-schedule-label">Mô tả</label>
+                                                <textarea
+                                                    className="shift-schedule-input shift-schedule-textarea"
+                                                    value={holiday.description || ''}
+                                                    onChange={(e) => handleHolidayChange(holiday.id, 'description', e.target.value)}
+                                                    rows={3}
+                                                    placeholder="Mô tả về ngày lễ..."
+                                                />
+                                            </div>
                                         </div>
-                                        <div className="shift-schedule-holiday-info">
-                                            <div className="shift-schedule-holiday-field">
-                                                <span className="shift-schedule-holiday-label">Tên tiếng Anh:</span>
-                                                <span className="shift-schedule-holiday-value">{holiday.holidayNameEn}</span>
-                                            </div>
-                                            <div className="shift-schedule-holiday-field">
-                                                <span className="shift-schedule-holiday-label">Số ngày nghỉ:</span>
-                                                <span className="shift-schedule-holiday-value">{holiday.totalHolidayDays} ngày</span>
-                                            </div>
-                                            {holiday.isTetHoliday && (
-                                                <div className="shift-schedule-holiday-badge">Ngày Tết</div>
-                                            )}
-                                            {holiday.isOfficialHoliday && (
-                                                <div className="shift-schedule-holiday-badge">Ngày lễ chính thức</div>
-                                            )}
-                                        </div>
-                                        {holiday.description && (
-                                            <div className="shift-schedule-holiday-description">
-                                                {holiday.description}
-                                            </div>
-                                        )}
-                                        <div className="shift-schedule-holiday-details">
-                                            <div className="shift-schedule-holiday-detail-item">
+
+                                        <div className="shift-schedule-checkboxes-grid">
+                                            <label className="shift-schedule-checkbox-label">
                                                 <input
                                                     type="checkbox"
                                                     checked={holiday.appliesNationwide}
-                                                    onChange={(e) => {
-                                                        const updated = publicHolidays.map(h =>
-                                                            h.id === holiday.id ? { ...h, appliesNationwide: e.target.checked } : h
-                                                        );
-                                                        setPublicHolidays(updated);
-                                                    }}
-                                                    onClick={(e) => e.stopPropagation()}
+                                                    onChange={(e) => handleHolidayChange(holiday.id, 'appliesNationwide', e.target.checked)}
                                                 />
                                                 <span>Áp dụng toàn quốc</span>
-                                            </div>
-                                            <div className="shift-schedule-holiday-detail-item">
+                                            </label>
+                                            <label className="shift-schedule-checkbox-label">
                                                 <input
                                                     type="checkbox"
                                                     checked={holiday.standardWorkplacesClosed}
-                                                    onChange={(e) => {
-                                                        const updated = publicHolidays.map(h =>
-                                                            h.id === holiday.id ? { ...h, standardWorkplacesClosed: e.target.checked } : h
-                                                        );
-                                                        setPublicHolidays(updated);
-                                                    }}
-                                                    onClick={(e) => e.stopPropagation()}
+                                                    onChange={(e) => handleHolidayChange(holiday.id, 'standardWorkplacesClosed', e.target.checked)}
                                                 />
                                                 <span>Nơi làm việc đóng cửa</span>
-                                            </div>
-                                            <div className="shift-schedule-holiday-detail-item">
+                                            </label>
+                                            <label className="shift-schedule-checkbox-label">
                                                 <input
                                                     type="checkbox"
                                                     checked={holiday.essentialServicesOperating}
-                                                    onChange={(e) => {
-                                                        const updated = publicHolidays.map(h =>
-                                                            h.id === holiday.id ? { ...h, essentialServicesOperating: e.target.checked } : h
-                                                        );
-                                                        setPublicHolidays(updated);
-                                                    }}
-                                                    onClick={(e) => e.stopPropagation()}
+                                                    onChange={(e) => handleHolidayChange(holiday.id, 'essentialServicesOperating', e.target.checked)}
                                                 />
                                                 <span>Dịch vụ thiết yếu hoạt động</span>
-                                            </div>
+                                            </label>
+                                            <label className="shift-schedule-checkbox-label">
+                                                <input
+                                                    type="checkbox"
+                                                    checked={holiday.isOfficialHoliday}
+                                                    onChange={(e) => handleHolidayChange(holiday.id, 'isOfficialHoliday', e.target.checked)}
+                                                />
+                                                <span>Ngày lễ chính thức</span>
+                                            </label>
+                                            <label className="shift-schedule-checkbox-label">
+                                                <input
+                                                    type="checkbox"
+                                                    checked={holiday.isTetHoliday}
+                                                    onChange={(e) => handleHolidayChange(holiday.id, 'isTetHoliday', e.target.checked)}
+                                                />
+                                                <span>Ngày Tết</span>
+                                            </label>
                                         </div>
                                     </div>
                                 ))}
@@ -1048,11 +1179,21 @@ const ShiftScheduleEdit = forwardRef<ShiftScheduleEditHandle, ShiftScheduleEditP
                         )}
 
                         {!isLoadingHolidays && publicHolidays.length === 0 && contractId && (
-                            <div className="shift-schedule-info-text">Không có ngày lễ nào cho hợp đồng này.</div>
+                            <div className="shift-schedule-info-text">
+                                Chưa có ngày lễ nào. Nhấn "Thêm ngày lễ" để thêm mới.
+                            </div>
                         )}
                     </div>
                 </>
             )}
+
+            {/* Snackbar Warning */}
+            <SnackbarWarning
+                message="Tên ca trực đã tồn tại. Vui lòng chọn tên khác"
+                isOpen={snackbarOpen}
+                duration={4000}
+                onClose={() => setSnackbarOpen(false)}
+            />
         </div>
     );
 });

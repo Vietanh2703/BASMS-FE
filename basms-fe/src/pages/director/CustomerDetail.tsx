@@ -3,6 +3,13 @@ import { useNavigate, useParams, Link } from 'react-router-dom';
 import { useAuth } from '../../hooks/useAuth';
 import './CustomerDetail.css';
 
+// Declare HERE Maps types
+declare global {
+    interface Window {
+        H: any;
+    }
+}
+
 interface Customer {
     id: string;
     customerCode: string;
@@ -204,12 +211,60 @@ const CustomerDetail = () => {
     const [customerData, setCustomerData] = useState<CustomerDetailResponse | null>(null);
     const [isLoading, setIsLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
+    const [mapsLoaded, setMapsLoaded] = useState(false);
+    const mapRefs = useRef<{ [key: string]: any }>({});
 
     useEffect(() => {
         const timer = setInterval(() => {
             setCurrentTime(new Date());
         }, 1000);
         return () => clearInterval(timer);
+    }, []);
+
+    // Load Here Maps scripts
+    useEffect(() => {
+        if (window.H) {
+            setMapsLoaded(true);
+            return;
+        }
+
+        const loadScript = (src: string): Promise<void> => {
+            return new Promise((resolve, reject) => {
+                const script = document.createElement('script');
+                script.src = src;
+                script.async = true;
+                script.onload = () => resolve();
+                script.onerror = () => reject(new Error(`Failed to load script: ${src}`));
+                document.head.appendChild(script);
+            });
+        };
+
+        const loadStyles = (href: string) => {
+            const link = document.createElement('link');
+            link.rel = 'stylesheet';
+            link.type = 'text/css';
+            link.href = href;
+            document.head.appendChild(link);
+        };
+
+        const loadHereMaps = async () => {
+            try {
+                // Load HERE Maps CSS
+                loadStyles('https://js.api.here.com/v3/3.1/mapsjs-ui.css');
+
+                // Load HERE Maps scripts in order
+                await loadScript('https://js.api.here.com/v3/3.1/mapsjs-core.js');
+                await loadScript('https://js.api.here.com/v3/3.1/mapsjs-service.js');
+                await loadScript('https://js.api.here.com/v3/3.1/mapsjs-ui.js');
+                await loadScript('https://js.api.here.com/v3/3.1/mapsjs-mapevents.js');
+
+                setMapsLoaded(true);
+            } catch (error) {
+                console.error('Error loading HERE Maps:', error);
+            }
+        };
+
+        loadHereMaps();
     }, []);
 
     useEffect(() => {
@@ -274,6 +329,79 @@ const CustomerDetail = () => {
 
         fetchCustomerDetail();
     }, [customerId]);
+
+    // Initialize maps for locations
+    useEffect(() => {
+        if (!mapsLoaded || !customerData || !customerData.locations) {
+            return;
+        }
+
+        const initializeMaps = () => {
+            const apiKey = import.meta.env.VITE_HERE_MAP_API_KEY;
+
+            customerData.locations.forEach((location) => {
+                if (!location.latitude || !location.longitude) {
+                    return;
+                }
+
+                const mapContainer = document.getElementById(`map-${location.id}`);
+                if (!mapContainer || mapRefs.current[location.id]) {
+                    return;
+                }
+
+                try {
+                    // Initialize the platform
+                    const platform = new window.H.service.Platform({
+                        apikey: apiKey
+                    });
+
+                    // Obtain the default map types from the platform object
+                    const defaultLayers = platform.createDefaultLayers();
+
+                    // Instantiate the map
+                    const map = new window.H.Map(
+                        mapContainer,
+                        defaultLayers.vector.normal.map,
+                        {
+                            zoom: 16,
+                            center: { lat: location.latitude, lng: location.longitude }
+                        }
+                    );
+
+                    // Disable all interactions (read-only mode)
+                    // Note: We're not adding MapEvents or Behavior, which disables interactions
+
+                    // Add a marker at the location
+                    const marker = new window.H.map.Marker({
+                        lat: location.latitude,
+                        lng: location.longitude
+                    });
+                    map.addObject(marker);
+
+                    // Store map reference
+                    mapRefs.current[location.id] = map;
+
+                    // Make the map resize when window is resized
+                    window.addEventListener('resize', () => map.getViewPort().resize());
+                } catch (error) {
+                    console.error(`Error initializing map for location ${location.id}:`, error);
+                }
+            });
+        };
+
+        // Small delay to ensure DOM is ready
+        setTimeout(initializeMaps, 100);
+
+        // Cleanup function
+        return () => {
+            Object.values(mapRefs.current).forEach((map) => {
+                if (map && map.dispose) {
+                    map.dispose();
+                }
+            });
+            mapRefs.current = {};
+        };
+    }, [mapsLoaded, customerData]);
 
     const toggleMenu = () => {
         setIsMenuOpen(!isMenuOpen);
@@ -556,32 +684,12 @@ const CustomerDetail = () => {
                                         <span className="cust-detail-info-value">{customerData.customer.companyName}</span>
                                     </div>
                                     <div className="cust-detail-info-item">
-                                        <span className="cust-detail-info-label">Trạng thái:</span>
-                                        <span className={`cust-detail-status cust-detail-status-${customerData.customer.status}`}>
-                                            {getStatusLabel(customerData.customer.status)}
-                                        </span>
-                                    </div>
-                                    <div className="cust-detail-info-item">
-                                        <span className="cust-detail-info-label">Khách hàng từ:</span>
-                                        <span className="cust-detail-info-value">{formatDate(customerData.customer.customerSince)}</span>
-                                    </div>
-                                    <div className="cust-detail-info-item">
                                         <span className="cust-detail-info-label">Địa chỉ:</span>
                                         <span className="cust-detail-info-value">{customerData.customer.address}</span>
                                     </div>
                                     <div className="cust-detail-info-item">
-                                        <span className="cust-detail-info-label">Ngành nghề:</span>
-                                        <span className="cust-detail-info-value">{customerData.customer.industry || 'Chưa có'}</span>
-                                    </div>
-                                    <div className="cust-detail-info-item">
-                                        <span className="cust-detail-info-label">Quy mô công ty:</span>
-                                        <span className="cust-detail-info-value">{customerData.customer.companySize || 'Chưa có'}</span>
-                                    </div>
-                                    <div className="cust-detail-info-item">
-                                        <span className="cust-detail-info-label">Theo lịch nghỉ lễ:</span>
-                                        <span className="cust-detail-info-value">
-                                            {customerData.customer.followsNationalHolidays ? 'Có' : 'Không'}
-                                        </span>
+                                        <span className="cust-detail-info-label">Khách hàng từ:</span>
+                                        <span className="cust-detail-info-value">{formatDate(customerData.customer.customerSince)}</span>
                                     </div>
                                 </div>
                             </div>
@@ -647,18 +755,10 @@ const CustomerDetail = () => {
                                                     <span className="cust-detail-info-value">{location.address}</span>
                                                 </div>
                                                 <div className="cust-detail-info-item">
-                                                    <span className="cust-detail-info-label">Giờ hoạt động:</span>
-                                                    <span className="cust-detail-info-value">{location.operatingHoursType}</span>
-                                                </div>
-                                                <div className="cust-detail-info-item">
                                                     <span className="cust-detail-info-label">Yêu cầu 24/7:</span>
                                                     <span className="cust-detail-info-value">
                                                         {location.requires24x7Coverage ? 'Có' : 'Không'}
                                                     </span>
-                                                </div>
-                                                <div className="cust-detail-info-item">
-                                                    <span className="cust-detail-info-label">Số bảo vệ tối thiểu:</span>
-                                                    <span className="cust-detail-info-value">{location.minimumGuardsRequired}</span>
                                                 </div>
                                                 {location.siteManagerName && (
                                                     <>
@@ -673,6 +773,40 @@ const CustomerDetail = () => {
                                                     </>
                                                 )}
                                             </div>
+
+                                            {/* HERE Maps Display */}
+                                            {location.latitude && location.longitude && (
+                                                <div className="cust-detail-location-map">
+                                                    <h4 className="cust-detail-map-title">Vị trí trên bản đồ</h4>
+                                                    <div className="cust-detail-map-coordinates">
+                                                        <span>Kinh độ: {location.longitude.toFixed(6)}</span>
+                                                        <span>Vĩ độ: {location.latitude.toFixed(6)}</span>
+                                                    </div>
+                                                    <div
+                                                        id={`map-${location.id}`}
+                                                        className="cust-detail-map-container"
+                                                        style={{
+                                                            width: '100%',
+                                                            height: '400px',
+                                                            borderRadius: '8px',
+                                                            overflow: 'hidden'
+                                                        }}
+                                                    >
+                                                        {!mapsLoaded && (
+                                                            <div style={{
+                                                                display: 'flex',
+                                                                alignItems: 'center',
+                                                                justifyContent: 'center',
+                                                                height: '100%',
+                                                                background: '#f5f5f5',
+                                                                color: '#666'
+                                                            }}>
+                                                                Đang tải bản đồ...
+                                                            </div>
+                                                        )}
+                                                    </div>
+                                                </div>
+                                            )}
                                         </div>
                                     ))}
                                 </div>
@@ -764,10 +898,6 @@ const CustomerDetail = () => {
                                                                 <div className="cust-detail-info-item">
                                                                     <span className="cust-detail-info-label">Số bảo vệ/ca:</span>
                                                                     <span className="cust-detail-info-value">{shift.guardsPerShift}</span>
-                                                                </div>
-                                                                <div className="cust-detail-info-item">
-                                                                    <span className="cust-detail-info-label">Kinh nghiệm tối thiểu:</span>
-                                                                    <span className="cust-detail-info-value">{shift.minimumExperienceMonths} tháng</span>
                                                                 </div>
                                                             </div>
                                                             <div className="cust-detail-shift-days">
