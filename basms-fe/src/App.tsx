@@ -9,6 +9,7 @@ import HomePage from './pages/home/homepage';
 import Login from './pages/login/login';
 import VerifyEmail from './pages/reset-password/verifyEmail';
 import VerifyOtpPassword from './pages/reset-password/verifyOtpPassword';
+import UpdatePassword from "./pages/update-password/updatePassword.tsx";
 import ForgotPassword from './pages/reset-password/forgotPassword';
 {/* Admin Routes */}
 import DashboardAdmin from './pages/admin/dashboard/dashboardAdmin';
@@ -69,6 +70,12 @@ function App() {
                     <Route path="/forgot-password" element={
                         <PublicRoute>
                             <ForgotPassword/>
+                        </PublicRoute>
+                    }/>
+
+                    <Route path="/update-password" element={
+                        <PublicRoute>
+                            <UpdatePassword/>
                         </PublicRoute>
                     }/>
 

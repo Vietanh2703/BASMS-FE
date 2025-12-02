@@ -9,6 +9,12 @@ import { useAuth } from '../../hooks/useAuth';
 import './login.css';
 import type { UserInfo } from "../../contexts/authContext";
 
+interface CheckFirstLoginResponse {
+    isFirstLogin: boolean;
+    email: string;
+    loginCount: number;
+}
+
 const Login = () => {
     const { login } = useAuth();
     const [username, setUsername] = useState('');
@@ -21,9 +27,10 @@ const Login = () => {
     const [failedAttempts, setFailedAttempts] = useState(0);
     const [isRateLimited, setIsRateLimited] = useState(false);
 
+
     const [showPasswordResetModal, setShowPasswordResetModal] = useState(false);
 
-    useNavigate();
+    const navigate = useNavigate();
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
     const handleSubmit = async (e: React.FormEvent) => {
@@ -79,23 +86,70 @@ const Login = () => {
                 return;
             }
 
-            const userInfo: UserInfo = {
-                fullName,
-                email,
-                userId,
-                roleId,
-                sub: userId
-            };
+            try {
+                const checkFirstLoginResponse = await apiClient.post<CheckFirstLoginResponse>(
+                    `${import.meta.env.VITE_API_BASE_URL}/users/check-first-login`,
+                    { Email: username }
+                );
 
-            // Sử dụng expiry times từ API, hoặc fallback nếu API không trả về
-            const finalAccessTokenExpiry = accessTokenExpiry || new Date(Date.now() + 30 * 60 * 1000).toISOString();
-            const finalRefreshTokenExpiry = refreshTokenExpiry || new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString();
+                const { loginCount } = checkFirstLoginResponse.data;
 
-            // Login qua context - truyền đầy đủ params bao gồm expiry times
-            login(accessToken, refreshToken, userInfo, finalAccessTokenExpiry, finalRefreshTokenExpiry);
+                if (loginCount === 1) {
 
-            setSnackbarMessage('Đăng nhập thành công!');
-            setShowSnackbarSuccess(true);
+                    const userInfo: UserInfo = {
+                        fullName,
+                        email,
+                        userId,
+                        roleId,
+                        sub: userId
+                    };
+
+                    const finalAccessTokenExpiry = accessTokenExpiry || new Date(Date.now() + 30 * 60 * 1000).toISOString();
+                    const finalRefreshTokenExpiry = refreshTokenExpiry || new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString();
+
+                    login(accessToken, refreshToken, userInfo, finalAccessTokenExpiry, finalRefreshTokenExpiry);
+
+                    // Chuyển đến trang update-password với email trong state
+                    navigate('/update-password', { state: { email: username } });
+                    return;
+                }
+
+                // Nếu không phải lần đầu (loginCount > 1), đăng nhập bình thường
+                const userInfo: UserInfo = {
+                    fullName,
+                    email,
+                    userId,
+                    roleId,
+                    sub: userId
+                };
+
+                const finalAccessTokenExpiry = accessTokenExpiry || new Date(Date.now() + 30 * 60 * 1000).toISOString();
+                const finalRefreshTokenExpiry = refreshTokenExpiry || new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString();
+
+                login(accessToken, refreshToken, userInfo, finalAccessTokenExpiry, finalRefreshTokenExpiry);
+
+                setSnackbarMessage('Đăng nhập thành công!');
+                setShowSnackbarSuccess(true);
+
+            } catch (checkError) {
+                console.error('Check first login error:', checkError);
+                // Nếu API check-first-login lỗi, vẫn cho đăng nhập bình thường
+                const userInfo: UserInfo = {
+                    fullName,
+                    email,
+                    userId,
+                    roleId,
+                    sub: userId
+                };
+
+                const finalAccessTokenExpiry = accessTokenExpiry || new Date(Date.now() + 30 * 60 * 1000).toISOString();
+                const finalRefreshTokenExpiry = refreshTokenExpiry || new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString();
+
+                login(accessToken, refreshToken, userInfo, finalAccessTokenExpiry, finalRefreshTokenExpiry);
+
+                setSnackbarMessage('Đăng nhập thành công!');
+                setShowSnackbarSuccess(true);
+            }
 
         } catch (error: unknown) {
             let errorMessage = 'Đăng nhập thất bại';
