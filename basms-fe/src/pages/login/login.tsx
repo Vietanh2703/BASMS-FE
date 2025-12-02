@@ -74,7 +74,7 @@ const Login = () => {
             const { loginCount } = checkFirstLoginResponse.data;
 
             // Nếu loginCount === 0, redirect đến update-password KHÔNG GỌI API LOGIN
-            if (loginCount === 0) {
+            if (loginCount === 1) {
                 setIsLoading(false);
                 navigate('/update-password', { state: { email: username } });
                 return;
