@@ -94,7 +94,7 @@ const Login = () => {
 
                 const { loginCount } = checkFirstLoginResponse.data;
 
-                if (loginCount === 1) {
+                if (loginCount === 0) {
 
                     const userInfo: UserInfo = {
                         fullName,
@@ -114,7 +114,7 @@ const Login = () => {
                     return;
                 }
 
-                // Nếu không phải lần đầu (loginCount > 1), đăng nhập bình thường
+                // Nếu không phải lần đầu (loginCount > 0), đăng nhập bình thường
                 const userInfo: UserInfo = {
                     fullName,
                     email,
