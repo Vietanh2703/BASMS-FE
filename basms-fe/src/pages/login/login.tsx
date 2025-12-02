@@ -94,7 +94,7 @@ const Login = () => {
 
                 const { loginCount } = checkFirstLoginResponse.data;
 
-                if (loginCount === 0) {
+                if (loginCount === 1) {
                     // Nếu là lần đầu đăng nhập, chuyển đến trang update-password
                     // KHÔNG lưu accessToken để tránh redirect vào dashboard
                     navigate('/update-password', { state: { email: username } });
