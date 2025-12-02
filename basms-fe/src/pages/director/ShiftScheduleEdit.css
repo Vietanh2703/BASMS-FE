@@ -487,6 +487,125 @@
     transform: translateY(1px);
 }
 
+.shift-schedule-remove-button {
+    padding: 8px 16px;
+    background-color: #f59e0b;
+    color: white;
+    border: none;
+    border-radius: 6px;
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.shift-schedule-remove-button:hover {
+    background-color: #d97706;
+    box-shadow: 0 4px 12px rgba(245, 158, 11, 0.3);
+}
+
+.shift-schedule-remove-button:active {
+    transform: translateY(1px);
+}
+
+/* Delete Confirmation Modal */
+.shift-schedule-modal-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: rgba(0, 0, 0, 0.5);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 1000;
+    animation: fadeIn 0.2s ease;
+}
+
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+    }
+    to {
+        opacity: 1;
+    }
+}
+
+.shift-schedule-modal-content {
+    background-color: white;
+    border-radius: 12px;
+    padding: 32px;
+    max-width: 480px;
+    width: 90%;
+    box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+    animation: slideUp 0.3s ease;
+}
+
+@keyframes slideUp {
+    from {
+        transform: translateY(20px);
+        opacity: 0;
+    }
+    to {
+        transform: translateY(0);
+        opacity: 1;
+    }
+}
+
+.shift-schedule-modal-title {
+    font-size: 20px;
+    font-weight: 700;
+    color: #1f2937;
+    margin: 0 0 16px 0;
+}
+
+.shift-schedule-modal-message {
+    font-size: 15px;
+    color: #4b5563;
+    line-height: 1.6;
+    margin: 0 0 24px 0;
+}
+
+.shift-schedule-modal-actions {
+    display: flex;
+    gap: 12px;
+    justify-content: flex-end;
+}
+
+.shift-schedule-modal-button {
+    padding: 10px 24px;
+    border: none;
+    border-radius: 8px;
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.shift-schedule-modal-button-cancel {
+    background-color: #f3f4f6;
+    color: #374151;
+}
+
+.shift-schedule-modal-button-cancel:hover {
+    background-color: #e5e7eb;
+}
+
+.shift-schedule-modal-button-confirm {
+    background-color: #ef4444;
+    color: white;
+}
+
+.shift-schedule-modal-button-confirm:hover {
+    background-color: #dc2626;
+    box-shadow: 0 4px 12px rgba(239, 68, 68, 0.3);
+}
+
+.shift-schedule-modal-button:active {
+    transform: translateY(1px);
+}
+
 /* Responsive Design */
 @media (max-width: 768px) {
     .shift-schedule-form-grid {

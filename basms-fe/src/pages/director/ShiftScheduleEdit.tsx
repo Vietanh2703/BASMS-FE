@@ -1,6 +1,8 @@
 import { useState, useEffect, forwardRef, useImperativeHandle } from 'react';
 import './ShiftScheduleEdit.css';
 import SnackbarWarning from '../../components/snackbar/snackbarWarning';
+import SnackbarChecked from '../../components/snackbar/snackbarChecked';
+import SnackbarFailed from '../../components/snackbar/snackbarFailed';
 
 interface ShiftScheduleData {
     scheduleName: string;
@@ -155,6 +157,13 @@ const ShiftScheduleEdit = forwardRef<ShiftScheduleEditHandle, ShiftScheduleEditP
 
     // Snackbar state
     const [snackbarOpen, setSnackbarOpen] = useState(false);
+    const [snackbarCheckedOpen, setSnackbarCheckedOpen] = useState(false);
+    const [snackbarFailedOpen, setSnackbarFailedOpen] = useState(false);
+    const [snackbarHolidayValidationOpen, setSnackbarHolidayValidationOpen] = useState(false);
+
+    // Delete confirmation modal state
+    const [showDeleteModal, setShowDeleteModal] = useState(false);
+    const [holidayToDelete, setHolidayToDelete] = useState<string | null>(null);
 
     // Fetch contracts when component mounts
     useEffect(() => {
@@ -554,8 +563,56 @@ const ShiftScheduleEdit = forwardRef<ShiftScheduleEditHandle, ShiftScheduleEditP
         setPublicHolidays(prev => [...prev, newHoliday]);
     };
 
-    const handleDeleteHoliday = (holidayId: string) => {
+    const handleRemoveHoliday = (holidayId: string) => {
+        // For new holidays that haven't been saved yet, just remove from state
         setPublicHolidays(prev => prev.filter(h => h.id !== holidayId));
+    };
+
+    const handleDeleteHoliday = (holidayId: string) => {
+        setHolidayToDelete(holidayId);
+        setShowDeleteModal(true);
+    };
+
+    const confirmDeleteHoliday = async () => {
+        if (!holidayToDelete) return;
+
+        try {
+            const apiUrl = import.meta.env.VITE_API_CONTRACT_URL;
+            const token = localStorage.getItem('accessToken');
+
+            if (!token) {
+                setSnackbarFailedOpen(true);
+                setShowDeleteModal(false);
+                setHolidayToDelete(null);
+                return;
+            }
+
+            const response = await fetch(`${apiUrl}/contracts/holidays/${holidayToDelete}`, {
+                method: 'DELETE',
+                headers: {
+                    'Authorization': `Bearer ${token}`,
+                    'Content-Type': 'application/json',
+                },
+            });
+
+            if (!response.ok) {
+                throw new Error('Failed to delete holiday');
+            }
+
+            // Remove from local state on success
+            setPublicHolidays(prev => prev.filter(h => h.id !== holidayToDelete));
+            setSnackbarCheckedOpen(true);
+        } catch (err) {
+            setSnackbarFailedOpen(true);
+        } finally {
+            setShowDeleteModal(false);
+            setHolidayToDelete(null);
+        }
+    };
+
+    const cancelDeleteHoliday = () => {
+        setShowDeleteModal(false);
+        setHolidayToDelete(null);
     };
 
     // Expose save functions to parent via ref
@@ -615,8 +672,68 @@ const ShiftScheduleEdit = forwardRef<ShiftScheduleEditHandle, ShiftScheduleEditP
                     return false;
                 }
 
-                // Save all holidays
-                for (const holiday of publicHolidays) {
+                // Separate new holidays (with temp- IDs) from existing ones
+                const newHolidays = publicHolidays.filter(h => h.id.startsWith('temp-'));
+                const existingHolidays = publicHolidays.filter(h => !h.id.startsWith('temp-'));
+
+                // Validate new holidays for required fields
+                for (const holiday of newHolidays) {
+                    if (!holiday.holidayName || holiday.holidayName.trim() === '') {
+                        setSnackbarHolidayValidationOpen(true);
+                        return false;
+                    }
+                    if (!holiday.holidayNameEn || holiday.holidayNameEn.trim() === '') {
+                        setSnackbarHolidayValidationOpen(true);
+                        return false;
+                    }
+                    if (!holiday.holidayDate) {
+                        setSnackbarHolidayValidationOpen(true);
+                        return false;
+                    }
+                }
+
+                // Create new holidays via POST
+                for (const holiday of newHolidays) {
+                    const requestBody = {
+                        ContractId: contractId,
+                        HolidayDate: holiday.holidayDate,
+                        HolidayName: holiday.holidayName,
+                        HolidayNameEn: holiday.holidayNameEn,
+                        HolidayCategory: holiday.holidayCategory,
+                        IsTetPeriod: holiday.isTetPeriod,
+                        IsTetHoliday: holiday.isTetHoliday,
+                        TetDayNumber: holiday.tetDayNumber,
+                        HolidayStartDate: holiday.holidayStartDate,
+                        HolidayEndDate: holiday.holidayEndDate,
+                        TotalHolidayDays: holiday.totalHolidayDays,
+                        IsOfficialHoliday: holiday.isOfficialHoliday,
+                        IsObserved: holiday.isObserved,
+                        OriginalDate: holiday.originalDate,
+                        ObservedDate: holiday.observedDate,
+                        AppliesNationwide: holiday.appliesNationwide,
+                        AppliesToRegions: holiday.appliesToRegions,
+                        StandardWorkplacesClosed: holiday.standardWorkplacesClosed,
+                        EssentialServicesOperating: holiday.essentialServicesOperating,
+                        Description: holiday.description,
+                        Year: holiday.year
+                    };
+
+                    const response = await fetch(`${apiUrl}/contracts/holidays`, {
+                        method: 'POST',
+                        headers: {
+                            'Authorization': `Bearer ${token}`,
+                            'Content-Type': 'application/json',
+                        },
+                        body: JSON.stringify(requestBody),
+                    });
+
+                    if (!response.ok) {
+                        throw new Error('Failed to create public holiday');
+                    }
+                }
+
+                // Update existing holidays via PUT
+                for (const holiday of existingHolidays) {
                     const response = await fetch(`${apiUrl}/contracts/holidays/${holiday.id}`, {
                         method: 'PUT',
                         headers: {
@@ -1053,13 +1170,23 @@ const ShiftScheduleEdit = forwardRef<ShiftScheduleEditHandle, ShiftScheduleEditP
                                     <div key={holiday.id} className="shift-schedule-holiday-item">
                                         <div className="shift-schedule-holiday-item-header">
                                             <h4 className="shift-schedule-holiday-item-title">Ngày lễ #{index + 1}</h4>
-                                            <button
-                                                className="shift-schedule-delete-button"
-                                                onClick={() => handleDeleteHoliday(holiday.id)}
-                                                type="button"
-                                            >
-                                                Xóa
-                                            </button>
+                                            {holiday.id.startsWith('temp-') ? (
+                                                <button
+                                                    className="shift-schedule-remove-button"
+                                                    onClick={() => handleRemoveHoliday(holiday.id)}
+                                                    type="button"
+                                                >
+                                                    Gỡ
+                                                </button>
+                                            ) : (
+                                                <button
+                                                    className="shift-schedule-delete-button"
+                                                    onClick={() => handleDeleteHoliday(holiday.id)}
+                                                    type="button"
+                                                >
+                                                    Xóa
+                                                </button>
+                                            )}
                                         </div>
 
                                         <div className="shift-schedule-form-grid">
@@ -1187,12 +1314,63 @@ const ShiftScheduleEdit = forwardRef<ShiftScheduleEditHandle, ShiftScheduleEditP
                 </>
             )}
 
-            {/* Snackbar Warning */}
+            {showDeleteModal && (
+                <div className="shift-schedule-modal-overlay" onClick={cancelDeleteHoliday}>
+                    <div className="shift-schedule-modal-content" onClick={(e) => e.stopPropagation()}>
+                        <h3 className="shift-schedule-modal-title">Xác nhận xóa</h3>
+                        <p className="shift-schedule-modal-message">
+                            Bạn có chắc chắn muốn xóa ngày lễ này không?
+                        </p>
+                        <div className="shift-schedule-modal-actions">
+                            <button
+                                className="shift-schedule-modal-button shift-schedule-modal-button-cancel"
+                                onClick={cancelDeleteHoliday}
+                                type="button"
+                            >
+                                Không
+                            </button>
+                            <button
+                                className="shift-schedule-modal-button shift-schedule-modal-button-confirm"
+                                onClick={confirmDeleteHoliday}
+                                type="button"
+                            >
+                                Xóa
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
+
+            {/* Snackbar Warning - Schedule Name */}
             <SnackbarWarning
                 message="Tên ca trực đã tồn tại. Vui lòng chọn tên khác"
                 isOpen={snackbarOpen}
                 duration={4000}
                 onClose={() => setSnackbarOpen(false)}
+            />
+
+            {/* Snackbar Warning - Holiday Validation */}
+            <SnackbarWarning
+                message="Vui lòng điền đầy đủ thông tin bắt buộc (*) cho ngày lễ mới"
+                isOpen={snackbarHolidayValidationOpen}
+                duration={4000}
+                onClose={() => setSnackbarHolidayValidationOpen(false)}
+            />
+
+            {/* Snackbar Success */}
+            <SnackbarChecked
+                message="Xóa ngày lễ thành công"
+                isOpen={snackbarCheckedOpen}
+                duration={3000}
+                onClose={() => setSnackbarCheckedOpen(false)}
+            />
+
+            {/* Snackbar Error */}
+            <SnackbarFailed
+                message="Xóa ngày lễ thất bại. Vui lòng thử lại"
+                isOpen={snackbarFailedOpen}
+                duration={3000}
+                onClose={() => setSnackbarFailedOpen(false)}
             />
         </div>
     );
