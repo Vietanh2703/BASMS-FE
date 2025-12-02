@@ -95,21 +95,8 @@ const Login = () => {
                 const { loginCount } = checkFirstLoginResponse.data;
 
                 if (loginCount === 0) {
-
-                    const userInfo: UserInfo = {
-                        fullName,
-                        email,
-                        userId,
-                        roleId,
-                        sub: userId
-                    };
-
-                    const finalAccessTokenExpiry = accessTokenExpiry || new Date(Date.now() + 30 * 60 * 1000).toISOString();
-                    const finalRefreshTokenExpiry = refreshTokenExpiry || new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString();
-
-                    login(accessToken, refreshToken, userInfo, finalAccessTokenExpiry, finalRefreshTokenExpiry);
-
-                    // Chuyển đến trang update-password với email trong state
+                    // Nếu là lần đầu đăng nhập, chuyển đến trang update-password
+                    // KHÔNG lưu accessToken để tránh redirect vào dashboard
                     navigate('/update-password', { state: { email: username } });
                     return;
                 }
