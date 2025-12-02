@@ -1,6 +1,9 @@
 import { useState, useEffect, useRef } from 'react';
 import { useNavigate, useParams, Link } from 'react-router-dom';
 import { useAuth } from '../../hooks/useAuth';
+import ManagerAssignmentModal from '../../components/ManagerAssignmentModal/ManagerAssignmentModal';
+import SnackbarChecked from '../../components/snackbar/snackbarChecked';
+import SnackbarFailed from '../../components/snackbar/snackbarFailed';
 import './CustomerDetail.css';
 
 // Declare HERE Maps types
@@ -213,6 +216,19 @@ const CustomerDetail = () => {
     const [error, setError] = useState<string | null>(null);
     const [mapsLoaded, setMapsLoaded] = useState(false);
     const mapRefs = useRef<{ [key: string]: any }>({});
+
+    // Manager assignment modal state
+    const [modalState, setModalState] = useState<{
+        isOpen: boolean;
+        contract: { id: string; title: string; number: string } | null;
+    }>({
+        isOpen: false,
+        contract: null
+    });
+
+    // Snackbar states
+    const [showSnackbarSuccess, setShowSnackbarSuccess] = useState(false);
+    const [showSnackbarFailed, setShowSnackbarFailed] = useState(false);
 
     useEffect(() => {
         const timer = setInterval(() => {
@@ -499,6 +515,60 @@ const CustomerDetail = () => {
         return typeMap[type] || type;
     };
 
+    // Manager assignment functions
+    const handleOpenManagerModal = (contract: Contract) => {
+        setModalState({
+            isOpen: true,
+            contract: {
+                id: contract.id,
+                title: contract.contractTitle,
+                number: contract.contractNumber
+            }
+        });
+    };
+
+    const handleCloseManagerModal = () => {
+        setModalState({
+            isOpen: false,
+            contract: null
+        });
+    };
+
+    const handleManagerAssignmentSuccess = async () => {
+        // Show success snackbar
+        setShowSnackbarSuccess(true);
+
+        // Refresh customer data after successful activation
+        if (customerId) {
+            try {
+                const apiUrl = import.meta.env.VITE_API_CONTRACT_URL;
+                const token = localStorage.getItem('accessToken');
+
+                if (!token) return;
+
+                const response = await fetch(`${apiUrl}/customers/${customerId}/details`, {
+                    method: 'GET',
+                    headers: {
+                        'Authorization': `Bearer ${token}`,
+                        'Content-Type': 'application/json',
+                    },
+                });
+
+                if (response.ok) {
+                    const data = await response.json();
+                    setCustomerData(data);
+                }
+            } catch (err) {
+                console.error('Error refreshing customer data:', err);
+            }
+        }
+    };
+
+    const handleManagerAssignmentError = () => {
+        // Show error snackbar
+        setShowSnackbarFailed(true);
+    };
+
     return (
         <div className="cust-detail-container">
             <aside className={`cust-detail-sidebar ${isMenuOpen ? 'cust-detail-sidebar-open' : 'cust-detail-sidebar-closed'}`}>
@@ -622,30 +692,39 @@ const CustomerDetail = () => {
                             </button>
                             <h1 className="cust-detail-page-title">Chi tiết khách hàng</h1>
                         </div>
-                        <div className="cust-detail-header-actions">
-                            <button
-                                className="cust-detail-action-btn cust-detail-btn-update"
-                                onClick={() => {
-                                    navigate(`/director/customer/${customerId}/edit`);
-                                }}
-                            >
-                                <svg viewBox="0 0 24 24" fill="currentColor" width="20" height="20">
-                                    <path d="M3 17.25V21h3.75L17.81 9.94l-3.75-3.75L3 17.25zM20.71 7.04c.39-.39.39-1.02 0-1.41l-2.34-2.34c-.39-.39-1.02-.39-1.41 0l-1.83 1.83 3.75 3.75 1.83-1.83z"/>
-                                </svg>
-                                Cập nhật thông tin
-                            </button>
-                            <button
-                                className="cust-detail-action-btn cust-detail-btn-assign"
-                                onClick={() => {
-                                    console.log('Assign manager');
-                                }}
-                            >
-                                <svg viewBox="0 0 24 24" fill="currentColor" width="20" height="20">
-                                    <path d="M16 11c1.66 0 2.99-1.34 2.99-3S17.66 5 16 5c-1.66 0-3 1.34-3 3s1.34 3 3 3zm-8 0c1.66 0 2.99-1.34 2.99-3S9.66 5 8 5C6.34 5 5 6.34 5 8s1.34 3 3 3zm0 2c-2.33 0-7 1.17-7 3.5V19h14v-2.5c0-2.33-4.67-3.5-7-3.5zm8 0c-.29 0-.62.02-.97.05 1.16.84 1.97 1.97 1.97 3.45V19h6v-2.5c0-2.33-4.67-3.5-7-3.5z"/>
-                                </svg>
-                                Phân công cho quản lý
-                            </button>
-                        </div>
+                        {/* Hide buttons when customer status is schedule_shifts */}
+                        {customerData?.customer?.status !== 'schedule_shifts' && (
+                            <div className="cust-detail-header-actions">
+                                <button
+                                    className="cust-detail-action-btn cust-detail-btn-update"
+                                    onClick={() => {
+                                        navigate(`/director/customer/${customerId}/edit`);
+                                    }}
+                                >
+                                    <svg viewBox="0 0 24 24" fill="currentColor" width="20" height="20">
+                                        <path d="M3 17.25V21h3.75L17.81 9.94l-3.75-3.75L3 17.25zM20.71 7.04c.39-.39.39-1.02 0-1.41l-2.34-2.34c-.39-.39-1.02-.39-1.41 0l-1.83 1.83 3.75 3.75 1.83-1.83z"/>
+                                    </svg>
+                                    Cập nhật thông tin
+                                </button>
+                                <button
+                                    className="cust-detail-action-btn cust-detail-btn-assign"
+                                    onClick={() => {
+                                        if (customerData?.contracts && customerData.contracts.length > 0) {
+                                            // Use the first contract for now
+                                            handleOpenManagerModal(customerData.contracts[0]);
+                                        } else {
+                                            console.log('No contracts found');
+                                        }
+                                    }}
+                                    disabled={!customerData?.contracts || customerData.contracts.length === 0}
+                                >
+                                    <svg viewBox="0 0 24 24" fill="currentColor" width="20" height="20">
+                                        <path d="M16 11c1.66 0 2.99-1.34 2.99-3S17.66 5 16 5c-1.66 0-3 1.34-3 3s1.34 3 3 3zm-8 0c1.66 0 2.99-1.34 2.99-3S9.66 5 8 5C6.34 5 5 6.34 5 8s1.34 3 3 3zm0 2c-2.33 0-7 1.17-7 3.5V19h14v-2.5c0-2.33-4.67-3.5-7-3.5zm8 0c-.29 0-.62.02-.97.05 1.16.84 1.97 1.97 1.97 3.45V19h6v-2.5c0-2.33-4.67-3.5-7-3.5z"/>
+                                    </svg>
+                                    Phân công cho quản lý
+                                </button>
+                            </div>
+                        )}
                     </div>
 
                     {/* Loading State */}
@@ -823,9 +902,18 @@ const CustomerDetail = () => {
                                                     <h3 className="cust-detail-contract-title">{contract.contractTitle}</h3>
                                                     <p className="cust-detail-contract-number">{contract.contractNumber}</p>
                                                 </div>
-                                                <span className={`cust-detail-contract-status cust-detail-status-${contract.status}`}>
-                                                    {getStatusLabel(contract.status)}
-                                                </span>
+                                                <div className="cust-detail-contract-header-actions">
+                                                    <span className={`cust-detail-contract-status cust-detail-status-${contract.status}`}>
+                                                        {getStatusLabel(contract.status)}
+                                                    </span>
+                                                    <button
+                                                        className="cust-detail-assign-manager-btn"
+                                                        onClick={() => handleOpenManagerModal(contract)}
+                                                        type="button"
+                                                    >
+                                                        Phân công quản lý
+                                                    </button>
+                                                </div>
                                             </div>
 
                                             {/* Contract Basic Info */}
@@ -969,6 +1057,33 @@ const CustomerDetail = () => {
                     </div>
                 </div>
             )}
+
+            {/* Manager Assignment Modal */}
+            {modalState.contract && (
+                <ManagerAssignmentModal
+                    isOpen={modalState.isOpen}
+                    onClose={handleCloseManagerModal}
+                    contractId={modalState.contract.id}
+                    contractTitle={modalState.contract.title}
+                    contractNumber={modalState.contract.number}
+                    onSuccess={handleManagerAssignmentSuccess}
+                    onError={handleManagerAssignmentError}
+                />
+            )}
+
+            {/* Snackbar Notifications */}
+            <SnackbarChecked
+                message="Phân công thành công"
+                isOpen={showSnackbarSuccess}
+                duration={4000}
+                onClose={() => setShowSnackbarSuccess(false)}
+            />
+            <SnackbarFailed
+                message="Phân công thất bại. Vui lòng thử lại"
+                isOpen={showSnackbarFailed}
+                duration={4000}
+                onClose={() => setShowSnackbarFailed(false)}
+            />
         </div>
     );
 };

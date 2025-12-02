@@ -175,7 +175,7 @@ const CustomerList = () => {
         const statusMap: { [key: string]: string } = {
             active: 'Đang hoạt động',
             inactive: 'Không hoạt động',
-            assigning_manager: 'Phân công bảo vệ',
+            assigning_manager: 'Phân công quản lý',
             schedule_shifts: 'Phân công ca trực',
             Cancelled: 'Đã hủy',
             Expired: 'Hết hạn',

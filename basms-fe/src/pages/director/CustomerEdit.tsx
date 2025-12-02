@@ -636,7 +636,6 @@ const CustomerEdit = () => {
         }
     };
 
-
     return (
         <div className="cust-edit-container">
             {/* Sidebar */}
