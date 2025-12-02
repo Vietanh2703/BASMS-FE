@@ -70,7 +70,15 @@ const Login = () => {
 
             const { accessToken, refreshToken, fullName, email, userId, roleId, accessTokenExpiry, refreshTokenExpiry } = response.data;
 
-            // Tạo userInfo object
+            const blockedRoleIds = import.meta.env.VITE_BLOCKED_ROLE_IDS?.split(',') || [];
+
+            if (blockedRoleIds.includes(roleId)) {
+                setSnackbarMessage('Bạn không được cấp quyền để vào hệ thống');
+                setShowSnackbarFailed(true);
+                setIsLoading(false);
+                return;
+            }
+
             const userInfo: UserInfo = {
                 fullName,
                 email,
