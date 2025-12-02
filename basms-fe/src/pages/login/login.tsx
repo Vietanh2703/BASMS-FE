@@ -65,6 +65,22 @@ const Login = () => {
         setIsLoading(true);
 
         try {
+            // BƯỚC 1: Check loginCount TRƯỚC khi gọi API login
+            const checkFirstLoginResponse = await apiClient.post<CheckFirstLoginResponse>(
+                `${import.meta.env.VITE_API_BASE_URL}/users/check-first-login`,
+                { Email: username }
+            );
+
+            const { loginCount } = checkFirstLoginResponse.data;
+
+            // Nếu loginCount === 0, redirect đến update-password KHÔNG GỌI API LOGIN
+            if (loginCount === 0) {
+                setIsLoading(false);
+                navigate('/update-password', { state: { email: username } });
+                return;
+            }
+
+            // BƯỚC 2: Nếu loginCount > 0, tiến hành login bình thường
             const loginData: LoginRequest = {
                 Email: username,
                 Password: password,
@@ -86,57 +102,21 @@ const Login = () => {
                 return;
             }
 
-            try {
-                const checkFirstLoginResponse = await apiClient.post<CheckFirstLoginResponse>(
-                    `${import.meta.env.VITE_API_BASE_URL}/users/check-first-login`,
-                    { Email: username }
-                );
+            const userInfo: UserInfo = {
+                fullName,
+                email,
+                userId,
+                roleId,
+                sub: userId
+            };
 
-                const { loginCount } = checkFirstLoginResponse.data;
+            const finalAccessTokenExpiry = accessTokenExpiry || new Date(Date.now() + 30 * 60 * 1000).toISOString();
+            const finalRefreshTokenExpiry = refreshTokenExpiry || new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString();
 
-                if (loginCount === 1) {
-                    // Nếu là lần đầu đăng nhập, chuyển đến trang update-password
-                    // KHÔNG lưu accessToken để tránh redirect vào dashboard
-                    navigate('/update-password', { state: { email: username } });
-                    return;
-                }
+            login(accessToken, refreshToken, userInfo, finalAccessTokenExpiry, finalRefreshTokenExpiry);
 
-                // Nếu không phải lần đầu (loginCount > 0), đăng nhập bình thường
-                const userInfo: UserInfo = {
-                    fullName,
-                    email,
-                    userId,
-                    roleId,
-                    sub: userId
-                };
-
-                const finalAccessTokenExpiry = accessTokenExpiry || new Date(Date.now() + 30 * 60 * 1000).toISOString();
-                const finalRefreshTokenExpiry = refreshTokenExpiry || new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString();
-
-                login(accessToken, refreshToken, userInfo, finalAccessTokenExpiry, finalRefreshTokenExpiry);
-
-                setSnackbarMessage('Đăng nhập thành công!');
-                setShowSnackbarSuccess(true);
-
-            } catch (checkError) {
-                console.error('Check first login error:', checkError);
-                // Nếu API check-first-login lỗi, vẫn cho đăng nhập bình thường
-                const userInfo: UserInfo = {
-                    fullName,
-                    email,
-                    userId,
-                    roleId,
-                    sub: userId
-                };
-
-                const finalAccessTokenExpiry = accessTokenExpiry || new Date(Date.now() + 30 * 60 * 1000).toISOString();
-                const finalRefreshTokenExpiry = refreshTokenExpiry || new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString();
-
-                login(accessToken, refreshToken, userInfo, finalAccessTokenExpiry, finalRefreshTokenExpiry);
-
-                setSnackbarMessage('Đăng nhập thành công!');
-                setShowSnackbarSuccess(true);
-            }
+            setSnackbarMessage('Đăng nhập thành công!');
+            setShowSnackbarSuccess(true);
 
         } catch (error: unknown) {
             let errorMessage = 'Đăng nhập thất bại';
