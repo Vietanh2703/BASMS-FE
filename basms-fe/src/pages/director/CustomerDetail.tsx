@@ -906,13 +906,6 @@ const CustomerDetail = () => {
                                                     <span className={`cust-detail-contract-status cust-detail-status-${contract.status}`}>
                                                         {getStatusLabel(contract.status)}
                                                     </span>
-                                                    <button
-                                                        className="cust-detail-assign-manager-btn"
-                                                        onClick={() => handleOpenManagerModal(contract)}
-                                                        type="button"
-                                                    >
-                                                        Phân công quản lý
-                                                    </button>
                                                 </div>
                                             </div>
 
