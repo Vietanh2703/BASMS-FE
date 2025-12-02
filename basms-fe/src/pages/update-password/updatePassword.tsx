@@ -20,14 +20,6 @@ const UpdatePassword = () => {
     const [snackbarMessage, setSnackbarMessage] = useState('');
     const [isLoading, setIsLoading] = useState(false);
 
-    useEffect(() => {
-        const savedEmail = localStorage.getItem('resetPasswordEmail');
-        if (!savedEmail) {
-            navigate('/verify-email');
-            return;
-        }
-        setEmail(savedEmail);
-    }, [navigate]);
 
     useEffect(() => {
         // Lấy email từ state được truyền từ trang login
