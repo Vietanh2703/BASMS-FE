@@ -78,7 +78,7 @@ const UpdatePassword = () => {
 
         try {
             // Gọi API mới với endpoint /api/users/password/update
-            await axios.post(`${import.meta.env.VITE_API_BASE_URL}/api/users/password/update`, {
+            await axios.post(`${import.meta.env.VITE_API_BASE_URL}/users/password/update`, {
                 Email: email,
                 NewPassword: newPassword,
                 ConfirmPassword: confirmPassword
