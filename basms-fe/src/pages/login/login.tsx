@@ -65,22 +65,22 @@ const Login = () => {
         setIsLoading(true);
 
         try {
-            // BƯỚC 1: Check loginCount TRƯỚC khi gọi API login
+            // BƯỚC 1: Check isFirstLogin TRƯỚC khi gọi API login
             const checkFirstLoginResponse = await apiClient.post<CheckFirstLoginResponse>(
                 `${import.meta.env.VITE_API_BASE_URL}/users/check-first-login`,
                 { Email: username }
             );
 
-            const { loginCount } = checkFirstLoginResponse.data;
+            const { isFirstLogin } = checkFirstLoginResponse.data;
 
-            // Nếu loginCount === 0, redirect đến update-password KHÔNG GỌI API LOGIN
-            if (loginCount === 1) {
+            // Nếu isFirstLogin === true, redirect đến update-password KHÔNG GỌI API LOGIN
+            if (isFirstLogin === true) {
                 setIsLoading(false);
                 navigate('/update-password', { state: { email: username } });
                 return;
             }
 
-            // BƯỚC 2: Nếu loginCount > 0, tiến hành login bình thường
+            // BƯỚC 2: Nếu không phải lần đầu (isFirstLogin === false), tiến hành login bình thường
             const loginData: LoginRequest = {
                 Email: username,
                 Password: password,
