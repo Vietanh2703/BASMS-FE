@@ -1,5 +1,38 @@
 /* Guard List Specific Styles */
 
+/* Dashboard Header with Button */
+.manager-dashboard-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 24px;
+}
+
+/* Pending Button in Header */
+.mgr-guard-pending-btn {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 12px 20px;
+    background-color: #3b82f6;
+    color: white;
+    border: none;
+    border-radius: 8px;
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.mgr-guard-pending-btn:hover {
+    background-color: #1d4ed8;
+}
+
+.mgr-guard-pending-btn svg {
+    width: 20px;
+    height: 20px;
+}
+
 .mgr-guard-controls {
     background-color: #ffffff;
     border: 1px solid #e5e7eb;
@@ -315,6 +348,216 @@
     height: 16px;
 }
 
+/* Pending Guards Modal */
+.mgr-guard-modal-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: rgba(0, 0, 0, 0.5);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 2000;
+}
+
+.mgr-guard-modal-content {
+    background-color: #ffffff;
+    border-radius: 12px;
+    width: 90%;
+    max-width: 800px;
+    max-height: 85vh;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+}
+
+.mgr-guard-modal-header {
+    padding: 20px 24px;
+    border-bottom: 1px solid #e5e7eb;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
+
+.mgr-guard-modal-header h3 {
+    font-size: 18px;
+    font-weight: 600;
+    color: #1e40af;
+    margin: 0;
+}
+
+.mgr-guard-modal-close {
+    background: none;
+    border: none;
+    color: #6b7280;
+    cursor: pointer;
+    padding: 4px;
+    border-radius: 4px;
+    transition: all 0.2s ease;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.mgr-guard-modal-close:hover {
+    background-color: #f3f4f6;
+    color: #1e40af;
+}
+
+.mgr-guard-modal-close svg {
+    width: 24px;
+    height: 24px;
+}
+
+.mgr-guard-modal-body {
+    padding: 24px;
+    overflow-y: auto;
+    flex: 1;
+}
+
+.mgr-guard-pending-loading,
+.mgr-guard-pending-empty {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 48px 24px;
+    color: #6b7280;
+    text-align: center;
+}
+
+.mgr-guard-pending-empty svg {
+    width: 48px;
+    height: 48px;
+    margin-bottom: 16px;
+    opacity: 0.5;
+}
+
+.mgr-guard-pending-list {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+}
+
+.mgr-guard-pending-card {
+    background-color: #f9fafb;
+    border: 1px solid #e5e7eb;
+    border-radius: 8px;
+    padding: 16px;
+}
+
+.mgr-guard-pending-header {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 16px;
+    padding-bottom: 16px;
+    border-bottom: 1px solid #e5e7eb;
+}
+
+.mgr-guard-pending-avatar {
+    width: 50px;
+    height: 50px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, #3b82f6, #1d4ed8);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    font-size: 20px;
+    font-weight: 600;
+    flex-shrink: 0;
+}
+
+.mgr-guard-pending-info h4 {
+    font-size: 16px;
+    font-weight: 600;
+    color: #1f2937;
+    margin: 0 0 4px 0;
+}
+
+.mgr-guard-pending-info p {
+    font-size: 13px;
+    color: #6b7280;
+    margin: 0;
+}
+
+.mgr-guard-pending-details {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    margin-bottom: 16px;
+}
+
+.mgr-guard-pending-row {
+    display: flex;
+    gap: 8px;
+}
+
+.mgr-guard-pending-label {
+    font-size: 13px;
+    color: #6b7280;
+    font-weight: 500;
+    min-width: 120px;
+}
+
+.mgr-guard-pending-value {
+    font-size: 14px;
+    color: #1f2937;
+    font-weight: 500;
+}
+
+.mgr-guard-pending-capabilities {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+    margin-top: 8px;
+}
+
+.mgr-guard-pending-capability {
+    padding: 6px 12px;
+    border-radius: 6px;
+    font-size: 12px;
+    font-weight: 500;
+    border: 1px solid;
+}
+
+.mgr-guard-pending-capability.active {
+    background-color: #dcfce7;
+    border-color: #86efac;
+    color: #15803d;
+}
+
+.mgr-guard-pending-capability.inactive {
+    background-color: #f3f4f6;
+    border-color: #e5e7eb;
+    color: #6b7280;
+}
+
+.mgr-guard-pending-confirm-btn {
+    width: 100%;
+    padding: 10px 16px;
+    background-color: #10b981;
+    color: white;
+    border: none;
+    border-radius: 6px;
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.mgr-guard-pending-confirm-btn:hover:not(:disabled) {
+    background-color: #059669;
+}
+
+.mgr-guard-pending-confirm-btn:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+}
+
 /* Responsive */
 @media (max-width: 1200px) {
     .mgr-guard-list {
@@ -323,6 +566,17 @@
 }
 
 @media (max-width: 768px) {
+    .manager-dashboard-header {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 16px;
+    }
+
+    .mgr-guard-pending-btn {
+        width: 100%;
+        justify-content: center;
+    }
+
     .mgr-guard-controls {
         flex-direction: column;
         align-items: stretch;
@@ -353,5 +607,14 @@
 
     .mgr-guard-info-grid {
         grid-template-columns: 1fr;
+    }
+
+    .mgr-guard-modal-content {
+        width: 95%;
+        max-height: 90vh;
+    }
+
+    .mgr-guard-pending-label {
+        min-width: 100px;
     }
 }

@@ -32,6 +32,34 @@ interface Guard {
     updatedAt: string;
 }
 
+interface PendingGuard {
+    guardId: string;
+    employeeCode: string;
+    fullName: string;
+    email: string;
+    phoneNumber: string;
+    avatarUrl: string;
+    dateOfBirth: string;
+    gender: string;
+    employmentStatus: string;
+    hireDate: string;
+    contractType: string;
+    preferredShiftType: string | null;
+    canWorkOvertime: boolean;
+    canWorkWeekends: boolean;
+    canWorkHolidays: boolean;
+    currentAvailability: string;
+    totalShiftsWorked: number;
+    totalHoursWorked: number;
+    attendanceRate: number | null;
+    punctualityRate: number | null;
+    noShowCount: number;
+    violationCount: number;
+    commendationCount: number;
+    requestedAt: string;
+    createdAt: string;
+}
+
 const ManagerGuardList = () => {
     const [isMenuOpen, setIsMenuOpen] = useState(false);
     const [currentTime, setCurrentTime] = useState(new Date());
@@ -45,6 +73,10 @@ const ManagerGuardList = () => {
     const [error, setError] = useState<string | null>(null);
     const [managerId, setManagerId] = useState<string>('');
     const [searchTerm, setSearchTerm] = useState('');
+    const [showPendingModal, setShowPendingModal] = useState(false);
+    const [pendingGuards, setPendingGuards] = useState<PendingGuard[]>([]);
+    const [loadingPending, setLoadingPending] = useState(false);
+    const [confirmingGuardId, setConfirmingGuardId] = useState<string | null>(null);
 
     const profileRef = useRef<HTMLDivElement>(null);
 
@@ -259,6 +291,100 @@ const ManagerGuardList = () => {
         return new Date(dateString).toLocaleDateString('vi-VN');
     };
 
+    const handleOpenPendingModal = async () => {
+        setShowPendingModal(true);
+        await fetchPendingRequests();
+    };
+
+    const handleClosePendingModal = () => {
+        setShowPendingModal(false);
+    };
+
+    const fetchPendingRequests = async () => {
+        if (!managerId) return;
+
+        try {
+            setLoadingPending(true);
+            const userStr = localStorage.getItem('user');
+            let accessToken = localStorage.getItem('accessToken');
+
+            if (userStr && !accessToken) {
+                try {
+                    const userData = JSON.parse(userStr);
+                    accessToken = userData.accessToken;
+                } catch (e) {
+                    console.error('Error parsing user data:', e);
+                }
+            }
+
+            if (!accessToken) {
+                console.error('No access token found');
+                return;
+            }
+
+            const url = `${import.meta.env.VITE_API_SHIFTS_URL}/shifts/managers/${managerId}/guard-join-requests`;
+            const response = await fetch(url, {
+                headers: {
+                    'Authorization': `Bearer ${accessToken}`,
+                    'Content-Type': 'application/json',
+                }
+            });
+
+            if (!response.ok) {
+                throw new Error(`Failed to fetch pending requests: ${response.status}`);
+            }
+
+            const data = await response.json();
+            setPendingGuards(data.pendingRequests || []);
+        } catch (err) {
+            console.error('Error fetching pending requests:', err);
+        } finally {
+            setLoadingPending(false);
+        }
+    };
+
+    const handleConfirmGuard = async (guardId: string) => {
+        try {
+            setConfirmingGuardId(guardId);
+            const userStr = localStorage.getItem('user');
+            let accessToken = localStorage.getItem('accessToken');
+
+            if (userStr && !accessToken) {
+                try {
+                    const userData = JSON.parse(userStr);
+                    accessToken = userData.accessToken;
+                } catch (e) {
+                    console.error('Error parsing user data:', e);
+                }
+            }
+
+            if (!accessToken) {
+                console.error('No access token found');
+                return;
+            }
+
+            const url = `${import.meta.env.VITE_API_SHIFTS_URL}/shifts/guards/${guardId}/confirm-join`;
+            const response = await fetch(url, {
+                method: 'POST',
+                headers: {
+                    'Authorization': `Bearer ${accessToken}`,
+                    'Content-Type': 'application/json',
+                }
+            });
+
+            if (!response.ok) {
+                throw new Error(`Failed to confirm guard: ${response.status}`);
+            }
+
+            setPendingGuards(prev => prev.filter(g => g.guardId !== guardId));
+            await fetchGuards();
+        } catch (err) {
+            console.error('Error confirming guard:', err);
+        } finally {
+            setConfirmingGuardId(null);
+        }
+    };
+
     return (
         <div className="manager-dashboard-wrapper">
             <aside className={`manager-sidebar ${isMenuOpen ? 'manager-sidebar-open' : 'manager-sidebar-closed'}`}>
@@ -369,8 +495,16 @@ const ManagerGuardList = () => {
 
                 <main className="manager-dashboard-main">
                     <div className="manager-dashboard-header">
-                        <h1 className="manager-page-title">Quản lý nhân viên bảo vệ</h1>
-                        <p className="manager-page-subtitle">Danh sách nhân viên bảo vệ đang quản lý</p>
+                        <div>
+                            <h1 className="manager-page-title">Quản lý nhân viên bảo vệ</h1>
+                            <p className="manager-page-subtitle">Danh sách nhân viên bảo vệ đang quản lý</p>
+                        </div>
+                        <button className="mgr-guard-pending-btn" onClick={handleOpenPendingModal}>
+                            <svg viewBox="0 0 24 24" fill="currentColor">
+                                <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/>
+                            </svg>
+                            Xác nhận bảo vệ
+                        </button>
                     </div>
 
                     <div className="mgr-guard-controls">
@@ -539,6 +673,88 @@ const ManagerGuardList = () => {
                             <button className="manager-btn-confirm" onClick={confirmLogout}>
                                 Đăng xuất
                             </button>
+                        </div>
+                    </div>
+                </div>
+            )}
+
+            {showPendingModal && (
+                <div className="mgr-guard-modal-overlay" onClick={handleClosePendingModal}>
+                    <div className="mgr-guard-modal-content" onClick={(e) => e.stopPropagation()}>
+                        <div className="mgr-guard-modal-header">
+                            <h3>Yêu cầu tham gia từ bảo vệ</h3>
+                            <button className="mgr-guard-modal-close" onClick={handleClosePendingModal}>
+                                <svg viewBox="0 0 24 24" fill="currentColor">
+                                    <path d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/>
+                                </svg>
+                            </button>
+                        </div>
+                        <div className="mgr-guard-modal-body">
+                            {loadingPending ? (
+                                <div className="mgr-guard-pending-loading">
+                                    <div className="mgr-guard-spinner"></div>
+                                    <p>Đang tải danh sách...</p>
+                                </div>
+                            ) : pendingGuards.length === 0 ? (
+                                <div className="mgr-guard-pending-empty">
+                                    <svg viewBox="0 0 24 24" fill="currentColor">
+                                        <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-2h2v2zm0-4h-2V7h2v6z"/>
+                                    </svg>
+                                    <p>Không có yêu cầu nào</p>
+                                </div>
+                            ) : (
+                                <div className="mgr-guard-pending-list">
+                                    {pendingGuards.map(guard => (
+                                        <div key={guard.guardId} className="mgr-guard-pending-card">
+                                            <div className="mgr-guard-pending-header">
+                                                <div className="mgr-guard-pending-avatar">
+                                                    {guard.fullName.charAt(0).toUpperCase()}
+                                                </div>
+                                                <div className="mgr-guard-pending-info">
+                                                    <h4>{guard.fullName}</h4>
+                                                    <p>{guard.employeeCode}</p>
+                                                </div>
+                                            </div>
+                                            <div className="mgr-guard-pending-details">
+                                                <div className="mgr-guard-pending-row">
+                                                    <span className="mgr-guard-pending-label">Email:</span>
+                                                    <span className="mgr-guard-pending-value">{guard.email}</span>
+                                                </div>
+                                                <div className="mgr-guard-pending-row">
+                                                    <span className="mgr-guard-pending-label">Số điện thoại:</span>
+                                                    <span className="mgr-guard-pending-value">{guard.phoneNumber}</span>
+                                                </div>
+                                                <div className="mgr-guard-pending-row">
+                                                    <span className="mgr-guard-pending-label">Giới tính:</span>
+                                                    <span className="mgr-guard-pending-value">{guard.gender}</span>
+                                                </div>
+                                                <div className="mgr-guard-pending-row">
+                                                    <span className="mgr-guard-pending-label">Ngày yêu cầu:</span>
+                                                    <span className="mgr-guard-pending-value">{formatDate(guard.requestedAt)}</span>
+                                                </div>
+                                                <div className="mgr-guard-pending-capabilities">
+                                                    <div className={`mgr-guard-pending-capability ${guard.canWorkOvertime ? 'active' : 'inactive'}`}>
+                                                        Làm thêm giờ
+                                                    </div>
+                                                    <div className={`mgr-guard-pending-capability ${guard.canWorkWeekends ? 'active' : 'inactive'}`}>
+                                                        Làm cuối tuần
+                                                    </div>
+                                                    <div className={`mgr-guard-pending-capability ${guard.canWorkHolidays ? 'active' : 'inactive'}`}>
+                                                        Làm ngày lễ
+                                                    </div>
+                                                </div>
+                                            </div>
+                                            <button
+                                                className="mgr-guard-pending-confirm-btn"
+                                                onClick={() => handleConfirmGuard(guard.guardId)}
+                                                disabled={confirmingGuardId === guard.guardId}
+                                            >
+                                                {confirmingGuardId === guard.guardId ? 'Đang xử lý...' : 'Xác nhận'}
+                                            </button>
+                                        </div>
+                                    ))}
+                                </div>
+                            )}
                         </div>
                     </div>
                 </div>

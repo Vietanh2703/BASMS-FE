@@ -263,7 +263,7 @@ const EmployeeControl = () => {
                 throw new Error('Failed to assign guard to manager');
             }
 
-            setSnackbarMessage(`Da phan cong ${guard.fullName} cho ${manager.fullName}`);
+            setSnackbarMessage(`Đã phân công ${guard.fullName} cho ${manager.fullName}`);
             setSnackbarOpen(true);
 
             const updatedGuard = { ...guard, directManagerId: manager.id };
