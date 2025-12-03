@@ -19,6 +19,7 @@ import CustomerList from "./pages/director/CustomerList.tsx";
 import CustomerDetail from "./pages/director/CustomerDetail.tsx";
 import CustomerEdit from "./pages/director/CustomerEdit.tsx";
 import CustomerSchedule from "./pages/director/CustomerSchedule.tsx";
+import EmployeeControl from "./pages/director/EmployeeControl.tsx";
 import EContractLogin from './pages/eContract/eContractLogin';
 import EContractDashboard from './pages/eContract/eContractDashboard';
 import EContractList from "./pages/eContract/eContractList.tsx";
@@ -191,6 +192,11 @@ function App() {
                     <Route path="/director/customer/:customerId/view-shift-schedule" element={
                         <RoleBasedRoute allowedRoles={[ROLES.DIRECTOR]}>
                             <CustomerSchedule />
+                        </RoleBasedRoute>
+                    }/>
+                    <Route path="/director/employee-control" element={
+                        <RoleBasedRoute allowedRoles={[ROLES.DIRECTOR]}>
+                            <EmployeeControl />
                         </RoleBasedRoute>
                     }/>
 
