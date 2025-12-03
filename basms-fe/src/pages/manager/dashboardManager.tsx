@@ -1,6 +1,6 @@
 import {useState, useEffect, useRef} from 'react';
-import { useAuth } from '../../../hooks/useAuth';
-import ManagerInfoModal from "../../../components/managerInfoModal/managerInfoModal.tsx";
+import { useAuth } from '../../hooks/useAuth.ts';
+import ManagerInfoModal from "../../components/managerInfoModal/managerInfoModal.tsx";
 import './dashboardManager.css';
 
 const DashboardManager = () => {
@@ -11,6 +11,7 @@ const DashboardManager = () => {
     const [isLoggingOut, setIsLoggingOut] = useState(false);
     const [showLogoutModal, setShowLogoutModal] = useState(false);
     const [showManagerInfoModal, setShowManagerInfoModal] = useState(false);
+    const [pendingRequestsCount, setPendingRequestsCount] = useState<number>(0);
 
     const profileRef = useRef<HTMLDivElement>(null);
 
@@ -21,6 +22,88 @@ const DashboardManager = () => {
 
         return () => clearInterval(timer);
     }, []);
+
+    useEffect(() => {
+        fetchPendingRequestsCount();
+    }, []);
+
+    const fetchPendingRequestsCount = async () => {
+        try {
+            // Try to get email from useAuth hook first
+            const email = user?.email;
+            if (!email) return;
+
+            // Try to get accessToken from localStorage
+            const userStr = localStorage.getItem('user');
+            let accessToken = localStorage.getItem('accessToken');
+
+            if (userStr && !accessToken) {
+                try {
+                    const userData = JSON.parse(userStr);
+                    accessToken = userData.accessToken;
+                } catch (e) {
+                    console.error('Error parsing user data:', e);
+                }
+            }
+
+            if (!accessToken) return;
+
+            const managerResponse = await fetch(
+                `${import.meta.env.VITE_API_SHIFTS_URL}/shifts/managers/by-email?email=${email}`,
+                {
+                    headers: {
+                        'Authorization': `Bearer ${accessToken}`,
+                        'Content-Type': 'application/json',
+                    }
+                }
+            );
+
+            if (!managerResponse.ok) {
+                console.error('Manager API error:', managerResponse.status);
+                return;
+            }
+
+            const managerText = await managerResponse.text();
+            let managerData;
+            try {
+                managerData = JSON.parse(managerText);
+            } catch (e) {
+                console.error('Failed to parse manager response');
+                return;
+            }
+
+            const managerId = managerData.manager?.id;
+            if (!managerId) return;
+
+            const templatesResponse = await fetch(
+                `${import.meta.env.VITE_API_SHIFTS_URL}/shifts/shift-templates/pending/${managerId}`,
+                {
+                    headers: {
+                        'Authorization': `Bearer ${accessToken}`,
+                        'Content-Type': 'application/json',
+                    }
+                }
+            );
+
+            if (!templatesResponse.ok) {
+                console.error('Templates API error:', templatesResponse.status);
+                return;
+            }
+
+            const templatesText = await templatesResponse.text();
+            let templatesData;
+            try {
+                templatesData = JSON.parse(templatesText);
+            } catch (e) {
+                console.error('Failed to parse templates response');
+                return;
+            }
+
+            setPendingRequestsCount(templatesData.totalContracts || 0);
+        } catch (error) {
+            console.error('Error fetching pending requests count:', error);
+        }
+    };
 
     useEffect(() => {
         const handleClickOutside = (event: MouseEvent) => {
@@ -113,6 +196,19 @@ const DashboardManager = () => {
                                     <path d="M16 4c0-1.11.89-2 2-2s2 .89 2 2-.89 2-2 2-2-.89-2-2zm4 18v-6h2.5l-2.54-7.63A3.007 3.007 0 0 0 17.12 7H16.5c-.8 0-1.5.7-1.5 1.5v6c0 .8.7 1.5 1.5 1.5H18v4h2z"/>
                                 </svg>
                                 {isMenuOpen && <span>Quản lý nhân viên</span>}
+                            </a>
+                        </li>
+                        <li className="manager-nav-item">
+                            <a href="/manager/request" className="manager-nav-link">
+                                <div className="manager-nav-icon-wrapper">
+                                    <svg className="manager-nav-icon" viewBox="0 0 24 24" fill="currentColor">
+                                        <path d="M14 6V4h-4v2h4zM4 8v11h16V8H4zm16-2c1.11 0 2 .89 2 2v11c0 1.11-.89 2-2 2H4c-1.11 0-2-.89-2-2l.01-11c0-1.11.88-2 1.99-2h4V4c0-1.11.89-2 2-2h4c1.11 0 2 .89 2 2v2h4z"/>
+                                    </svg>
+                                    {pendingRequestsCount > 0 && (
+                                        <span className="manager-nav-badge">{pendingRequestsCount}</span>
+                                    )}
+                                </div>
+                                {isMenuOpen && <span>Yêu cầu phân công</span>}
                             </a>
                         </li>
                         <li className="manager-nav-item">
