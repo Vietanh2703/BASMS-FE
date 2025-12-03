@@ -97,6 +97,9 @@ const CustomerSchedule = () => {
     const [error, setError] = useState<string | null>(null);
     const [selectedWeekStart, setSelectedWeekStart] = useState<Date>(getMonday(new Date()));
     const [customerName, setCustomerName] = useState<string>('');
+    const [selectedShift, setSelectedShift] = useState<Shift | null>(null);
+    const [showShiftDetail, setShowShiftDetail] = useState(false);
+    const mapRef = useRef<HTMLDivElement>(null);
 
     useEffect(() => {
         const timer = setInterval(() => {
@@ -126,6 +129,12 @@ const CustomerSchedule = () => {
             fetchShifts();
         }
     }, [customerId, selectedWeekStart]);
+
+    useEffect(() => {
+        if (showShiftDetail && selectedShift && mapRef.current) {
+            initializeMap();
+        }
+    }, [showShiftDetail, selectedShift]);
 
     function getMonday(date: Date): Date {
         const d = new Date(date);
@@ -312,6 +321,75 @@ const CustomerSchedule = () => {
         if (shift.isUnderstaffed) return 'cust-schedule-understaffed';
         if (shift.isFullyStaffed) return 'cust-schedule-fully-staffed';
         return '';
+    };
+
+    const handleShiftClick = (shift: Shift) => {
+        setSelectedShift(shift);
+        setShowShiftDetail(true);
+    };
+
+    const closeShiftDetail = () => {
+        setShowShiftDetail(false);
+        setSelectedShift(null);
+    };
+
+    const initializeMap = () => {
+        if (!selectedShift || !mapRef.current) return;
+
+        // Clear previous map
+        mapRef.current.innerHTML = '';
+
+        // @ts-ignore - HERE Maps API
+        if (window.H) {
+            // @ts-ignore
+            const platform = new window.H.service.Platform({
+                apikey: import.meta.env.VITE_HERE_MAPS_API_KEY || 'YOUR_HERE_API_KEY'
+            });
+
+            const defaultLayers = platform.createDefaultLayers();
+
+            // @ts-ignore
+            const map = new window.H.Map(
+                mapRef.current,
+                defaultLayers.vector.normal.map,
+                {
+                    center: { lat: selectedShift.locationLatitude, lng: selectedShift.locationLongitude },
+                    zoom: 15,
+                    pixelRatio: window.devicePixelRatio || 1
+                }
+            );
+
+            // @ts-ignore
+            const behavior = new window.H.mapevents.Behavior(new window.H.mapevents.MapEvents(map));
+            // @ts-ignore
+            const ui = window.H.ui.UI.createDefault(map, defaultLayers);
+
+            // Add marker
+            // @ts-ignore
+            const marker = new window.H.map.Marker({
+                lat: selectedShift.locationLatitude,
+                lng: selectedShift.locationLongitude
+            });
+            map.addObject(marker);
+        }
+    };
+
+    const formatFullDate = (dateString: string): string => {
+        const date = new Date(dateString);
+        const day = date.getDate().toString().padStart(2, '0');
+        const month = (date.getMonth() + 1).toString().padStart(2, '0');
+        const year = date.getFullYear();
+        return `${day}/${month}/${year}`;
+    };
+
+    const getStatusLabel = (status: string): string => {
+        const statusMap: { [key: string]: string } = {
+            'Scheduled': 'Đã lên lịch',
+            'InProgress': 'Đang diễn ra',
+            'Completed': 'Hoàn thành',
+            'Cancelled': 'Đã hủy'
+        };
+        return statusMap[status] || status;
     };
     const weekDates = getWeekDates(selectedWeekStart);
     const dayLabels = ['Thứ 2', 'Thứ 3', 'Thứ 4', 'Thứ 5', 'Thứ 6', 'Thứ 7', 'Chủ nhật'];
@@ -504,6 +582,8 @@ const CustomerSchedule = () => {
                                                 <div
                                                     key={shift.id}
                                                     className={`cust-schedule-shift-card ${getShiftStatusClass(shift)}`}
+                                                    onClick={() => handleShiftClick(shift)}
+                                                    style={{ cursor: 'pointer' }}
                                                 >
                                                     <div className="cust-schedule-shift-type">
                                                         {getShiftTypeLabel(shift)}
@@ -549,6 +629,114 @@ const CustomerSchedule = () => {
                             <button className="cust-schedule-btn-confirm" onClick={confirmLogout}>
                                 Đăng xuất
                             </button>
+                        </div>
+                    </div>
+                </div>
+            )}
+
+            {showShiftDetail && selectedShift && (
+                <div className="cust-schedule-detail-overlay" onClick={closeShiftDetail}>
+                    <div className="cust-schedule-detail-box" onClick={(e) => e.stopPropagation()}>
+                        <div className="cust-schedule-detail-header">
+                            <h2>Chi tiết ca trực</h2>
+                            <button className="cust-schedule-close-btn" onClick={closeShiftDetail}>
+                                <svg viewBox="0 0 24 24" fill="currentColor">
+                                    <path d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/>
+                                </svg>
+                            </button>
+                        </div>
+
+                        <div className="cust-schedule-detail-content">
+                            <div className="cust-schedule-detail-section">
+                                <h3>Thông tin ca trực</h3>
+                                <div className="cust-schedule-detail-grid">
+                                    <div className="cust-schedule-detail-item">
+                                        <span className="cust-schedule-detail-label">Loại ca:</span>
+                                        <span className="cust-schedule-detail-value">{getShiftTypeLabel(selectedShift)}</span>
+                                    </div>
+                                    <div className="cust-schedule-detail-item">
+                                        <span className="cust-schedule-detail-label">Ngày:</span>
+                                        <span className="cust-schedule-detail-value">{formatFullDate(selectedShift.shiftDate)}</span>
+                                    </div>
+                                    <div className="cust-schedule-detail-item">
+                                        <span className="cust-schedule-detail-label">Giờ bắt đầu:</span>
+                                        <span className="cust-schedule-detail-value">{formatTime(selectedShift.shiftStart)}</span>
+                                    </div>
+                                    <div className="cust-schedule-detail-item">
+                                        <span className="cust-schedule-detail-label">Giờ kết thúc:</span>
+                                        <span className="cust-schedule-detail-value">{formatTime(selectedShift.shiftEnd)}</span>
+                                    </div>
+                                    <div className="cust-schedule-detail-item">
+                                        <span className="cust-schedule-detail-label">Tổng thời gian:</span>
+                                        <span className="cust-schedule-detail-value">{selectedShift.workDurationHours} giờ</span>
+                                    </div>
+                                    <div className="cust-schedule-detail-item">
+                                        <span className="cust-schedule-detail-label">Trạng thái:</span>
+                                        <span className="cust-schedule-detail-value">{getStatusLabel(selectedShift.status)}</span>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div className="cust-schedule-detail-section">
+                                <h3>Nhân sự</h3>
+                                <div className="cust-schedule-detail-grid">
+                                    <div className="cust-schedule-detail-item">
+                                        <span className="cust-schedule-detail-label">Yêu cầu:</span>
+                                        <span className="cust-schedule-detail-value">{selectedShift.requiredGuards} bảo vệ</span>
+                                    </div>
+                                    <div className="cust-schedule-detail-item">
+                                        <span className="cust-schedule-detail-label">Đã phân công:</span>
+                                        <span className="cust-schedule-detail-value">{selectedShift.assignedGuardsCount} bảo vệ</span>
+                                    </div>
+                                    <div className="cust-schedule-detail-item">
+                                        <span className="cust-schedule-detail-label">Đã xác nhận:</span>
+                                        <span className="cust-schedule-detail-value">{selectedShift.confirmedGuardsCount} bảo vệ</span>
+                                    </div>
+                                    <div className="cust-schedule-detail-item">
+                                        <span className="cust-schedule-detail-label">Tỷ lệ nhân sự:</span>
+                                        <span className="cust-schedule-detail-value">{selectedShift.staffingPercentage}%</span>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div className="cust-schedule-detail-section">
+                                <h3>Địa điểm</h3>
+                                <div className="cust-schedule-detail-location">
+                                    <div className="cust-schedule-detail-item">
+                                        <span className="cust-schedule-detail-label">Tên:</span>
+                                        <span className="cust-schedule-detail-value">{selectedShift.locationName}</span>
+                                    </div>
+                                    <div className="cust-schedule-detail-item">
+                                        <span className="cust-schedule-detail-label">Địa chỉ:</span>
+                                        <span className="cust-schedule-detail-value">{selectedShift.locationAddress}</span>
+                                    </div>
+                                    <div className="cust-schedule-detail-item">
+                                        <span className="cust-schedule-detail-label">Tọa độ:</span>
+                                        <span className="cust-schedule-detail-value">
+                                            {selectedShift.locationLatitude.toFixed(6)}, {selectedShift.locationLongitude.toFixed(6)}
+                                        </span>
+                                    </div>
+                                </div>
+                            </div>
+
+                            {selectedShift.description && (
+                                <div className="cust-schedule-detail-section">
+                                    <h3>Mô tả</h3>
+                                    <p className="cust-schedule-detail-description">{selectedShift.description}</p>
+                                </div>
+                            )}
+
+                            {selectedShift.specialInstructions && (
+                                <div className="cust-schedule-detail-section">
+                                    <h3>Hướng dẫn đặc biệt</h3>
+                                    <p className="cust-schedule-detail-description">{selectedShift.specialInstructions}</p>
+                                </div>
+                            )}
+
+                            <div className="cust-schedule-detail-section">
+                                <h3>Bản đồ</h3>
+                                <div ref={mapRef} className="cust-schedule-map-container"></div>
+                            </div>
                         </div>
                     </div>
                 </div>
