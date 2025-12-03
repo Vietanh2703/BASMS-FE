@@ -226,6 +226,10 @@ const CustomerList = () => {
         navigate(`/director/customer/${customerId}`);
     };
 
+    const handleViewSchedule = (customerId: string) => {
+        navigate(`/director/customer/${customerId}/view-shift-schedule`);
+    };
+
     const handleRefresh = () => {
         window.location.reload();
     };
@@ -469,6 +473,14 @@ const CustomerList = () => {
                                             </div>
                                         </div>
                                         <div className="dir-customers-item-actions">
+                                            {customer.status === 'active' && (
+                                                <button
+                                                    className="dir-customers-action-btn dir-customers-btn-schedule"
+                                                    onClick={() => handleViewSchedule(customer.id)}
+                                                >
+                                                    Xem ca trực
+                                                </button>
+                                            )}
                                             <button
                                                 className="dir-customers-action-btn dir-customers-btn-view"
                                                 onClick={() => handleViewCustomer(customer.id)}
