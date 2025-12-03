@@ -354,6 +354,58 @@ const ManagerRequest = () => {
                 throw new Error('Không tìm thấy access token');
             }
 
+            const contractId = selectedContractGroup.contractId;
+            console.log('Fetching contract customer for contractId:', contractId);
+
+            const contractCustomerUrl = `${import.meta.env.VITE_API_CONTRACT_URL}/contracts/${contractId}/customer`;
+            const contractCustomerResponse = await fetch(contractCustomerUrl, {
+                headers: {
+                    'Authorization': `Bearer ${accessToken}`,
+                    'Content-Type': 'application/json',
+                }
+            });
+
+            if (!contractCustomerResponse.ok) {
+                const errorText = await contractCustomerResponse.text();
+                console.error('Contract customer API error:', contractCustomerResponse.status, errorText);
+                throw new Error(`Lỗi khi lấy thông tin hợp đồng (${contractCustomerResponse.status})`);
+            }
+
+            const contractCustomerText = await contractCustomerResponse.text();
+            let contractCustomerData;
+            try {
+                contractCustomerData = JSON.parse(contractCustomerText);
+                console.log('Contract customer data:', contractCustomerData);
+            } catch (e) {
+                console.error('Failed to parse contract customer response:', contractCustomerText.substring(0, 200));
+                throw new Error('API trả về dữ liệu không hợp lệ');
+            }
+
+            const customerId = contractCustomerData.customerId;
+            if (!customerId) {
+                throw new Error('Không tìm thấy customer ID');
+            }
+
+            console.log('Activating customer:', customerId);
+
+            const activateCustomerUrl = `${import.meta.env.VITE_API_CONTRACT_URL}/contracts/customers/${customerId}/activate`;
+            const activateCustomerResponse = await fetch(activateCustomerUrl, {
+                method: 'POST',
+                headers: {
+                    'Authorization': `Bearer ${accessToken}`,
+                    'Content-Type': 'application/json',
+                }
+            });
+
+            if (!activateCustomerResponse.ok) {
+                const errorText = await activateCustomerResponse.text();
+                console.error('Activate customer API error:', activateCustomerResponse.status, errorText);
+                throw new Error(`Lỗi khi kích hoạt khách hàng (${activateCustomerResponse.status})`);
+            }
+
+            await activateCustomerResponse.text();
+            console.log('Customer activated successfully');
+
             const firstTemplate = selectedContractGroup.templates[0];
             const shiftTemplateIds = selectedContractGroup.templates.map(t => t.id);
             const generateDays = calculateGenerateDays(firstTemplate.effectiveFrom, firstTemplate.effectiveTo);
@@ -364,6 +416,8 @@ const ManagerRequest = () => {
                 generateFromDate: firstTemplate.effectiveFrom,
                 generateDays: generateDays
             };
+
+            console.log('Generating shifts with request:', requestBody);
 
             const response = await fetch(
                 `${import.meta.env.VITE_API_SHIFTS_URL}/shifts/generate`,
@@ -378,14 +432,19 @@ const ManagerRequest = () => {
             );
 
             if (!response.ok) {
-                await response.text();
+                const errorText = await response.text();
+                console.error('Generate shifts API error:', response.status, errorText);
                 throw new Error(`Lỗi khi tạo ca trực (${response.status})`);
             }
+
             await response.text();
+            console.log('Shifts generated successfully');
+
             setShowConfirmModal(false);
             setSelectedContractGroup(null);
             setSnackbarChecked({ isOpen: true, message: 'Tạo ca trực thành công' });
         } catch (err) {
+            console.error('Error in shift creation flow:', err);
             setShowConfirmModal(false);
             setSelectedContractGroup(null);
             setSnackbarFailed({
