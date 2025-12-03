@@ -1,6 +1,8 @@
 import {useState, useEffect, useRef} from 'react';
 import { useAuth } from '../../hooks/useAuth.ts';
 import ManagerInfoModal from "../../components/managerInfoModal/managerInfoModal.tsx";
+import SnackbarChecked from "../../components/snackbar/snackbarChecked.tsx";
+import SnackbarFailed from "../../components/snackbar/snackbarFailed.tsx";
 import './managerRequest.css';
 
 interface DaysOfWeek {
@@ -72,6 +74,12 @@ const ManagerRequest = () => {
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
     const [totalTemplates, setTotalTemplates] = useState<number>(0);
+    const [showConfirmModal, setShowConfirmModal] = useState(false);
+    const [selectedContractGroup, setSelectedContractGroup] = useState<ContractGroup | null>(null);
+    const [isSubmitting, setIsSubmitting] = useState(false);
+    const [snackbarChecked, setSnackbarChecked] = useState({ isOpen: false, message: '' });
+    const [snackbarFailed, setSnackbarFailed] = useState({ isOpen: false, message: '' });
+    const [managerId, setManagerId] = useState<string>('');
 
     const profileRef = useRef<HTMLDivElement>(null);
 
@@ -107,10 +115,7 @@ const ManagerRequest = () => {
         try {
             setLoading(true);
             setError(null);
-
-            // Get email from useAuth hook
             const email = user?.email;
-            console.log('User email:', email);
 
             if (!email) {
                 setError('Không tìm thấy thông tin người dùng');
@@ -130,10 +135,6 @@ const ManagerRequest = () => {
                     console.error('Error parsing user data:', e);
                 }
             }
-
-            console.log('Access token exists:', !!accessToken);
-            console.log('API URL:', import.meta.env.VITE_API_SHIFTS_URL);
-
             if (!accessToken) {
                 setError('Không tìm thấy access token');
                 setLoading(false);
@@ -141,7 +142,6 @@ const ManagerRequest = () => {
             }
 
             const managerUrl = `${import.meta.env.VITE_API_SHIFTS_URL}/shifts/managers/by-email?email=${encodeURIComponent(email)}`;
-            console.log('Fetching manager data from:', managerUrl);
 
             const managerResponse = await fetch(managerUrl,
                 {
@@ -159,26 +159,23 @@ const ManagerRequest = () => {
             }
 
             const managerText = await managerResponse.text();
-            console.log('Manager response preview:', managerText.substring(0, 100));
-
             let managerData;
             try {
                 managerData = JSON.parse(managerText);
-                console.log('Manager data:', managerData);
             } catch (e) {
                 console.error('Failed to parse manager response:', managerText.substring(0, 200));
                 throw new Error(`API trả về dữ liệu không hợp lệ. URL: ${managerUrl}`);
             }
 
-            const managerId = managerData.manager?.id;
-            console.log('Manager ID:', managerId);
+            const fetchedManagerId = managerData.manager?.id;
 
-            if (!managerId) {
+            if (!fetchedManagerId) {
                 throw new Error('Không tìm thấy manager ID trong response');
             }
 
-            const templatesUrl = `${import.meta.env.VITE_API_SHIFTS_URL}/shifts/shift-templates/pending/${managerId}`;
-            console.log('Fetching templates from:', templatesUrl);
+            setManagerId(fetchedManagerId);
+
+            const templatesUrl = `${import.meta.env.VITE_API_SHIFTS_URL}/shifts/shift-templates/pending/${fetchedManagerId}`;
 
             const templatesResponse = await fetch(templatesUrl,
                 {
@@ -312,6 +309,102 @@ const ManagerRequest = () => {
         e.stopPropagation();
         setShowManagerInfoModal(true);
         setIsProfileDropdownOpen(false);
+    };
+
+    const calculateGenerateDays = (effectiveFrom: string, effectiveTo: string): number => {
+        const fromDate = new Date(effectiveFrom);
+        const toDate = new Date(effectiveTo);
+        const diffTime = Math.abs(toDate.getTime() - fromDate.getTime());
+        const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+
+        // If >= 1 month (30 days), return 30, otherwise return actual days
+        return diffDays >= 30 ? 30 : diffDays;
+    };
+
+    const handleConfirmCreateShifts = (group: ContractGroup, e: React.MouseEvent) => {
+        e.stopPropagation();
+        setSelectedContractGroup(group);
+        setShowConfirmModal(true);
+    };
+
+    const handleCancelConfirm = () => {
+        setShowConfirmModal(false);
+        setSelectedContractGroup(null);
+    };
+
+    const handleSubmitCreateShifts = async () => {
+        if (!selectedContractGroup || !managerId) return;
+
+        setIsSubmitting(true);
+
+        try {
+            const userStr = localStorage.getItem('user');
+            let accessToken = localStorage.getItem('accessToken');
+
+            if (userStr && !accessToken) {
+                try {
+                    const userData = JSON.parse(userStr);
+                    accessToken = userData.accessToken;
+                } catch (e) {
+                    console.error('Error parsing user data:', e);
+                }
+            }
+
+            if (!accessToken) {
+                throw new Error('Không tìm thấy access token');
+            }
+
+            const firstTemplate = selectedContractGroup.templates[0];
+            const shiftTemplateIds = selectedContractGroup.templates.map(t => t.id);
+            const generateDays = calculateGenerateDays(firstTemplate.effectiveFrom, firstTemplate.effectiveTo);
+
+            const requestBody = {
+                managerId: managerId,
+                shiftTemplateIds: shiftTemplateIds,
+                generateFromDate: firstTemplate.effectiveFrom,
+                generateDays: generateDays
+            };
+
+            const response = await fetch(
+                `${import.meta.env.VITE_API_SHIFTS_URL}/shifts/generate`,
+                {
+                    method: 'POST',
+                    headers: {
+                        'Authorization': `Bearer ${accessToken}`,
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify(requestBody)
+                }
+            );
+
+            if (!response.ok) {
+                await response.text();
+                throw new Error(`Lỗi khi tạo ca trực (${response.status})`);
+            }
+            await response.text();
+            setShowConfirmModal(false);
+            setSelectedContractGroup(null);
+            setSnackbarChecked({ isOpen: true, message: 'Tạo ca trực thành công' });
+        } catch (err) {
+            setShowConfirmModal(false);
+            setSelectedContractGroup(null);
+            setSnackbarFailed({
+                isOpen: true,
+                message: err instanceof Error ? err.message : 'Lỗi khi tạo ca trực'
+            });
+        } finally {
+            setIsSubmitting(false);
+        }
+    };
+
+    const handleSnackbarCheckedClose = () => {
+        setSnackbarChecked({ isOpen: false, message: '' });
+        // Reload page after snackbar closes
+        window.location.reload();
+    };
+
+    const handleSnackbarFailedClose = () => {
+        setSnackbarFailed({ isOpen: false, message: '' });
     };
 
     return (
@@ -462,6 +555,7 @@ const ManagerRequest = () => {
                                     >
                                         <div className="mgr-request-header-left">
                                             <div className="mgr-request-contract-name">{group.locationNames}</div>
+
                                             <div className="mgr-request-summary">
                                                 <span className="mgr-request-badge mgr-request-badge-primary">
                                                     {group.templateCount} ca
@@ -472,6 +566,16 @@ const ManagerRequest = () => {
                                             </div>
                                         </div>
                                         <div className="mgr-request-header-right">
+                                            <button
+                                                className="mgr-request-confirm-btn"
+                                                onClick={(e) => handleConfirmCreateShifts(group, e)}
+                                                disabled={isSubmitting}
+                                            >
+                                                <svg viewBox="0 0 24 24" fill="currentColor">
+                                                    <path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/>
+                                                </svg>
+                                                Xác nhận tạo ca
+                                            </button>
                                             <svg
                                                 className={`mgr-request-chevron ${expandedContracts.has(group.contractId) ? 'mgr-request-chevron-expanded' : ''}`}
                                                 viewBox="0 0 24 24"
@@ -491,6 +595,7 @@ const ManagerRequest = () => {
                                                             <div className="mgr-request-shift-title">
                                                                 <span className="mgr-request-shift-type">{getShiftTypeLabel(template.startTime)}</span>
                                                                 <span className="mgr-request-shift-name">{template.templateName}</span>
+
                                                             </div>
                                                             <div className="mgr-request-shift-time">
                                                                 {template.startTime} - {template.endTime}
@@ -570,6 +675,68 @@ const ManagerRequest = () => {
                 isOpen={showManagerInfoModal}
                 onClose={() => setShowManagerInfoModal(false)}
                 managerId={user?.userId || ''}
+            />
+
+            {/* Confirmation Modal */}
+            {showConfirmModal && (
+                <div className="manager-modal-overlay" onClick={handleCancelConfirm}>
+                    <div className="manager-modal-content" onClick={(e) => e.stopPropagation()}>
+                        <div className="manager-modal-header">
+                            <h3>Xác nhận tạo ca trực</h3>
+                        </div>
+                        <div className="manager-modal-body">
+                            <p>Bạn có chắc chắn muốn xác nhận tạo {selectedContractGroup?.templateCount} ca trực cho địa điểm <strong>{selectedContractGroup?.locationNames.join(', ')}</strong>?</p>
+                            {selectedContractGroup && (
+                                <div style={{ marginTop: '12px', fontSize: '14px', color: '#6b7280' }}>
+                                    <p>• Số bảo vệ cần thiết: {selectedContractGroup.totalMinGuardsRequired} người</p>
+                                    <p>• Thời gian: {new Date(selectedContractGroup.templates[0].effectiveFrom).toLocaleDateString('vi-VN')} - {new Date(selectedContractGroup.templates[0].effectiveTo).toLocaleDateString('vi-VN')}</p>
+                                </div>
+                            )}
+                        </div>
+                        <div className="manager-modal-footer">
+                            <button
+                                className="manager-btn-cancel"
+                                onClick={handleCancelConfirm}
+                                disabled={isSubmitting}
+                            >
+                                Không
+                            </button>
+                            <button
+                                className="manager-btn-confirm"
+                                onClick={handleSubmitCreateShifts}
+                                disabled={isSubmitting}
+                                style={{
+                                    backgroundColor: '#10b981',
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    gap: '8px'
+                                }}
+                            >
+                                {isSubmitting ? (
+                                    <>
+                                        <div className="mgr-request-btn-spinner"></div>
+                                        Đang xử lý...
+                                    </>
+                                ) : (
+                                    'Xác nhận'
+                                )}
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
+
+            {/* Snackbar Notifications */}
+            <SnackbarChecked
+                isOpen={snackbarChecked.isOpen}
+                message={snackbarChecked.message}
+                onClose={handleSnackbarCheckedClose}
+            />
+
+            <SnackbarFailed
+                isOpen={snackbarFailed.isOpen}
+                message={snackbarFailed.message}
+                onClose={handleSnackbarFailedClose}
             />
         </div>
     );
