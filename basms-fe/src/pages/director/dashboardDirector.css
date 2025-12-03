@@ -4,7 +4,7 @@
 .dd-container {
     display: flex;
     min-height: 100vh;
-    background-color: #ffffff;
+    background-color: #f9fafb;
     font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
 }
 
@@ -49,7 +49,7 @@
 }
 
 .dd-logo-text {
-    color: #1e40af;
+    color: #3b82f6;
     font-size: 20px;
     font-weight: 700;
     white-space: nowrap;
@@ -82,12 +82,12 @@
 
 .dd-nav-link:hover {
     background-color: #f8fafc;
-    color: #1e40af;
+    color: #3b82f6;
 }
 
 .dd-nav-active .dd-nav-link {
     background-color: #eff6ff;
-    color: #1e40af;
+    color: #3b82f6;
     font-weight: 500;
 }
 
@@ -149,7 +149,7 @@
 
 .dd-menu-toggle:hover {
     background-color: #f3f4f6;
-    color: #1e40af;
+    color: #3b82f6;
 }
 
 .dd-menu-toggle svg {
@@ -160,11 +160,11 @@
 .dd-datetime {
     font-size: 14px;
     font-weight: 500;
-    color: #1e40af;
+    color: #3b82f6;
     background-color: #eff6ff;
     padding: 8px 16px;
     border-radius: 6px;
-    border: 1px solid #dbeafe;
+    border: 1px solid #bfdbfe;
 }
 
 .dd-notification-btn {
@@ -180,7 +180,7 @@
 
 .dd-notification-btn:hover {
     background-color: #f3f4f6;
-    color: #1e40af;
+    color: #3b82f6;
 }
 
 .dd-notification-btn svg {
@@ -1032,6 +1032,100 @@
     .dd-section {
         padding: 16px;
     }
+}
+
+/* Logout Modal Styles */
+.dd-modal-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: rgba(0, 0, 0, 0.5);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 2000;
+}
+
+.dd-modal-content {
+    background-color: #ffffff;
+    border-radius: 12px;
+    width: 90%;
+    max-width: 400px;
+    overflow: hidden;
+}
+
+.dd-modal-header {
+    padding: 20px 24px;
+    border-bottom: 1px solid #e5e7eb;
+}
+
+.dd-modal-header h3 {
+    font-size: 18px;
+    font-weight: 600;
+    color: #1f2937;
+    margin: 0;
+}
+
+.dd-modal-body {
+    padding: 24px;
+}
+
+.dd-modal-body p {
+    font-size: 14px;
+    color: #6b7280;
+    margin: 0;
+    line-height: 1.5;
+}
+
+.dd-modal-footer {
+    padding: 16px 24px;
+    background-color: #f9fafb;
+    display: flex;
+    gap: 12px;
+    justify-content: flex-end;
+}
+
+.dd-btn-cancel-modal,
+.dd-btn-confirm-modal {
+    font-size: 14px;
+    font-weight: 500;
+    padding: 10px 20px;
+    border-radius: 6px;
+    border: none;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    font-family: 'Inter', sans-serif;
+}
+
+.dd-btn-cancel-modal {
+    background-color: #ffffff;
+    color: #374151;
+    border: 1px solid #d1d5db;
+}
+
+.dd-btn-cancel-modal:hover {
+    background-color: #f3f4f6;
+}
+
+.dd-btn-confirm-modal {
+    background-color: #ef4444;
+    color: #ffffff;
+}
+
+.dd-btn-confirm-modal:hover {
+    background-color: #dc2626;
+}
+
+/* Dropdown Disabled State */
+.dd-disabled {
+    pointer-events: none;
+}
+
+.dd-logout-item:hover {
+    color: #ef4444;
+    background-color: #fef2f2;
 }
 
 /* Print Styles */
