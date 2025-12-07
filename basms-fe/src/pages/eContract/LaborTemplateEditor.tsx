@@ -20,6 +20,23 @@ interface FormData {
     [key: string]: FormField;
 }
 
+interface WageRate {
+    id: string;
+    certificationLevel: string;
+    minWage: number;
+    maxWage: number;
+    standardWage: number;
+    standardWageInWords: string;
+    currency: string;
+    description: string;
+    effectiveFrom: string;
+    effectiveTo: string | null;
+    notes: string;
+    isActive: boolean;
+    createdAt: string;
+    updatedAt: string | null;
+}
+
 const LaborTemplateEditor = () => {
     const navigate = useNavigate();
     const { user, logout } = useEContractAuth();
@@ -52,10 +69,16 @@ const LaborTemplateEditor = () => {
         EmployeeEmail: { fieldName: 'Email', value: '', formatting: { bold: false, italic: false, underline: false } },
         ContractStartDate: { fieldName: 'Ngày bắt đầu HĐ', value: '', formatting: { bold: false, italic: false, underline: false } },
         ContractEndDate: { fieldName: 'Ngày kết thúc HĐ', value: '', formatting: { bold: false, italic: false, underline: false } },
+        CertificationLevel: { fieldName: 'Cấp bậc', value: '', formatting: { bold: false, italic: false, underline: false } },
+        StandardWage: { fieldName: 'Lương cơ bản', value: '', formatting: { bold: false, italic: false, underline: false } },
     });
 
     const [activeField, setActiveField] = useState<string | null>(null);
     const [isDataLoaded, setIsDataLoaded] = useState(false);
+
+    // Wage rates state
+    const [wageRates, setWageRates] = useState<WageRate[]>([]);
+    const [isLoadingWageRates, setIsLoadingWageRates] = useState(false);
 
     // Validation states
     const [fieldErrors, setFieldErrors] = useState<{ [key: string]: string }>({});
@@ -75,7 +98,16 @@ const LaborTemplateEditor = () => {
                 const data = JSON.parse(savedData);
                 // Check if the templateId matches current template
                 if (data.templateId === templateId && data.formData) {
-                    setFormData(data.formData);
+                    // Merge saved data with default formData to ensure all fields exist
+                    setFormData(prev => {
+                        const merged = { ...prev };
+                        Object.keys(data.formData).forEach(key => {
+                            if (merged[key]) {
+                                merged[key] = data.formData[key];
+                            }
+                        });
+                        return merged;
+                    });
                 }
             } catch (error) {
                 console.error('Error loading saved data:', error);
@@ -117,6 +149,47 @@ const LaborTemplateEditor = () => {
             document.removeEventListener('mousedown', handleClickOutside);
         };
     }, [isProfileDropdownOpen]);
+
+    // Fetch wage rates from API
+    useEffect(() => {
+        const fetchWageRates = async () => {
+            setIsLoadingWageRates(true);
+            try {
+                const apiUrl = import.meta.env.VITE_API_BASE_URL;
+                const token = localStorage.getItem('eContractAccessToken');
+
+                if (!token) {
+                    navigate('/econtract/login');
+                    return;
+                }
+
+                const response = await fetch(`${apiUrl}/shifts/wage-rates`, {
+                    method: 'GET',
+                    headers: {
+                        'Authorization': `Bearer ${token}`,
+                        'Content-Type': 'application/json',
+                    },
+                });
+
+                if (!response.ok) {
+                    throw new Error('Failed to fetch wage rates');
+                }
+
+                const data = await response.json();
+                if (data && data.wageRates) {
+                    setWageRates(data.wageRates);
+                }
+            } catch (error) {
+                console.error('Error fetching wage rates:', error);
+                setSnackbarMessage('Không thể tải danh sách cấp bậc lương');
+                setShowSnackbarWarning(true);
+            } finally {
+                setIsLoadingWageRates(false);
+            }
+        };
+
+        fetchWageRates();
+    }, [navigate]);
 
     const formatDateTime = (date: Date) => {
         const days = ['Chủ nhật', 'Thứ hai', 'Thứ ba', 'Thứ tư', 'Thứ năm', 'Thứ sáu', 'Thứ bảy'];
@@ -168,21 +241,54 @@ const LaborTemplateEditor = () => {
         }));
     };
 
-    const toggleFormatting = (fieldKey: string, formatType: 'bold' | 'italic' | 'underline') => {
-        setFormData(prev => ({
-            ...prev,
-            [fieldKey]: {
-                ...prev[fieldKey],
-                formatting: {
-                    ...prev[fieldKey].formatting,
-                    [formatType]: !prev[fieldKey].formatting[formatType]
+    const handleCertificationLevelChange = (certificationLevel: string) => {
+        // Find the wage rate for the selected certification level
+        const selectedWageRate = wageRates.find(
+            rate => rate.certificationLevel === certificationLevel
+        );
+
+        if (selectedWageRate) {
+            // Update both CertificationLevel and StandardWage
+            setFormData(prev => ({
+                ...prev,
+                CertificationLevel: {
+                    ...prev.CertificationLevel,
+                    value: certificationLevel
+                },
+                StandardWage: {
+                    ...prev.StandardWage,
+                    value: selectedWageRate.standardWage.toLocaleString('vi-VN')
                 }
-            }
-        }));
+            }));
+        }
+    };
+
+    const toggleFormatting = (fieldKey: string, formatType: 'bold' | 'italic' | 'underline') => {
+        setFormData(prev => {
+            if (!prev[fieldKey]) return prev;
+            return {
+                ...prev,
+                [fieldKey]: {
+                    ...prev[fieldKey],
+                    formatting: {
+                        ...prev[fieldKey].formatting,
+                        [formatType]: !prev[fieldKey].formatting[formatType]
+                    }
+                }
+            };
+        });
     };
 
     const getFieldStyle = (fieldKey: string): React.CSSProperties => {
-        const formatting = formData[fieldKey].formatting;
+        const field = formData[fieldKey];
+        if (!field || !field.formatting) {
+            return {
+                fontWeight: 'normal',
+                fontStyle: 'normal',
+                textDecoration: 'none'
+            };
+        }
+        const formatting = field.formatting;
         return {
             fontWeight: formatting.bold ? 'bold' : 'normal',
             fontStyle: formatting.italic ? 'italic' : 'normal',
@@ -192,7 +298,7 @@ const LaborTemplateEditor = () => {
 
     const renderFieldValue = (fieldKey: string) => {
         const field = formData[fieldKey];
-        if (!field.value) {
+        if (!field || !field.value) {
             return <span className="lted-field-placeholder">.....................</span>;
         }
         return <span style={getFieldStyle(fieldKey)}>{field.value}</span>;
@@ -500,42 +606,78 @@ const LaborTemplateEditor = () => {
                                             {fieldKey !== 'EmployeeCurrentAddress' && <span className="lted-required-mark"> *</span>}
                                         </label>
                                         <div className="lted-field-input-wrapper">
-                                            <input
-                                                type="text"
-                                                className={`lted-field-input ${activeField === fieldKey ? 'lted-field-active' : ''} ${fieldErrors[fieldKey] ? 'lted-field-error' : ''}`}
-                                                value={formData[fieldKey].value}
-                                                onChange={(e) => handleInputChange(fieldKey, e.target.value)}
-                                                onFocus={() => setActiveField(fieldKey)}
-                                                onBlur={() => setActiveField(null)}
-                                                placeholder={`Nhập ${formData[fieldKey].fieldName.toLowerCase()}...`}
-                                                style={getFieldStyle(fieldKey)}
-                                            />
+                                            {fieldKey === 'CertificationLevel' ? (
+                                                // Dropdown for CertificationLevel (only IV, V)
+                                                <select
+                                                    className={`lted-field-input ${activeField === fieldKey ? 'lted-field-active' : ''} ${fieldErrors[fieldKey] ? 'lted-field-error' : ''}`}
+                                                    value={formData[fieldKey].value}
+                                                    onChange={(e) => handleCertificationLevelChange(e.target.value)}
+                                                    onFocus={() => setActiveField(fieldKey)}
+                                                    onBlur={() => setActiveField(null)}
+                                                    disabled={isLoadingWageRates}
+                                                >
+                                                    <option value="">
+                                                        {isLoadingWageRates ? 'Đang tải...' : 'Chọn cấp bậc'}
+                                                    </option>
+                                                    {wageRates
+                                                        .filter(rate => ['IV', 'V'].includes(rate.certificationLevel))
+                                                        .map((rate) => (
+                                                            <option key={rate.id} value={rate.certificationLevel}>
+                                                                {rate.certificationLevel} - {rate.description}
+                                                            </option>
+                                                        ))}
+                                                </select>
+                                            ) : fieldKey === 'StandardWage' ? (
+                                                // Read-only input for StandardWage
+                                                <input
+                                                    type="text"
+                                                    className={`lted-field-input ${activeField === fieldKey ? 'lted-field-active' : ''} ${fieldErrors[fieldKey] ? 'lted-field-error' : ''}`}
+                                                    value={formData[fieldKey].value}
+                                                    readOnly
+                                                    placeholder="Sẽ tự động điền khi chọn cấp bậc"
+                                                    style={{ backgroundColor: '#f5f5f5', cursor: 'not-allowed' }}
+                                                />
+                                            ) : (
+                                                // Regular input for other fields
+                                                <input
+                                                    type="text"
+                                                    className={`lted-field-input ${activeField === fieldKey ? 'lted-field-active' : ''} ${fieldErrors[fieldKey] ? 'lted-field-error' : ''}`}
+                                                    value={formData[fieldKey].value}
+                                                    onChange={(e) => handleInputChange(fieldKey, e.target.value)}
+                                                    onFocus={() => setActiveField(fieldKey)}
+                                                    onBlur={() => setActiveField(null)}
+                                                    placeholder={`Nhập ${formData[fieldKey].fieldName.toLowerCase()}...`}
+                                                    style={getFieldStyle(fieldKey)}
+                                                />
+                                            )}
                                             {fieldErrors[fieldKey] && (
                                                 <div className="lted-field-error-message">{fieldErrors[fieldKey]}</div>
                                             )}
-                                            <div className="lted-formatting-toolbar">
-                                                <button
-                                                    className={`lted-format-btn ${formData[fieldKey].formatting.bold ? 'lted-format-active' : ''}`}
-                                                    onClick={() => toggleFormatting(fieldKey, 'bold')}
-                                                    title="Bold"
-                                                >
-                                                    <strong>B</strong>
-                                                </button>
-                                                <button
-                                                    className={`lted-format-btn ${formData[fieldKey].formatting.italic ? 'lted-format-active' : ''}`}
-                                                    onClick={() => toggleFormatting(fieldKey, 'italic')}
-                                                    title="Italic"
-                                                >
-                                                    <em>I</em>
-                                                </button>
-                                                <button
-                                                    className={`lted-format-btn ${formData[fieldKey].formatting.underline ? 'lted-format-active' : ''}`}
-                                                    onClick={() => toggleFormatting(fieldKey, 'underline')}
-                                                    title="Underline"
-                                                >
-                                                    <u>U</u>
-                                                </button>
-                                            </div>
+                                            {fieldKey !== 'StandardWage' && (
+                                                <div className="lted-formatting-toolbar">
+                                                    <button
+                                                        className={`lted-format-btn ${formData[fieldKey].formatting.bold ? 'lted-format-active' : ''}`}
+                                                        onClick={() => toggleFormatting(fieldKey, 'bold')}
+                                                        title="Bold"
+                                                    >
+                                                        <strong>B</strong>
+                                                    </button>
+                                                    <button
+                                                        className={`lted-format-btn ${formData[fieldKey].formatting.italic ? 'lted-format-active' : ''}`}
+                                                        onClick={() => toggleFormatting(fieldKey, 'italic')}
+                                                        title="Italic"
+                                                    >
+                                                        <em>I</em>
+                                                    </button>
+                                                    <button
+                                                        className={`lted-format-btn ${formData[fieldKey].formatting.underline ? 'lted-format-active' : ''}`}
+                                                        onClick={() => toggleFormatting(fieldKey, 'underline')}
+                                                        title="Underline"
+                                                    >
+                                                        <u>U</u>
+                                                    </button>
+                                                </div>
+                                            )}
                                         </div>
                                     </div>
                                 ))}
@@ -550,18 +692,20 @@ const LaborTemplateEditor = () => {
                             </div>
 
                             <div className="lted-preview-content">
-                                <div className="lted-template-document">
-                                    <div className="lted-doc-header">
-                                        <p>CỘNG HÒA XÃ HỘI CHỦ NGHĨA VIỆT NAM</p>
-                                        <p>Độc lập – Tự do – Hạnh phúc</p>
-                                    </div>
+                                <div className="lted-preview-template-document">
+                                    {/* Page 1 */}
+                                    <div className="lted-preview-a4-page">
+                                        <div className="lted-preview-doc-header">
+                                            <p>CỘNG HÒA XÃ HỘI CHỦ NGHĨA VIỆT NAM</p>
+                                            <p>Độc lập – Tự do – Hạnh phúc</p>
+                                        </div>
 
-                                    <h2 className="lted-doc-title">HỢP ĐỒNG LAO ĐỘNG</h2>
-                                    <p className="lted-doc-subtitle">
-                                        Số: {renderFieldValue('ContractNumber')}/HĐLĐ
-                                    </p>
+                                        <h2 className="lted-preview-doc-title">HỢP ĐỒNG LAO ĐỘNG</h2>
+                                        <p className="lted-preview-doc-subtitle">
+                                            Số: {renderFieldValue('ContractNumber')}/HĐLĐ
+                                        </p>
 
-                                    <div className="lted-doc-body">
+                                        <div className="lted-preview-doc-body">
                                         <p>- Căn cứ Bộ luật dân sự 2015 và Bộ luật lao động 2019;</p>
                                         <p>- Căn cứ vào nhu cầu và khả năng của hai bên.</p>
                                         <p>
@@ -569,7 +713,7 @@ const LaborTemplateEditor = () => {
                                         </p>
                                         <p>Chúng tôi gồm có:</p>
 
-                                        <p className="lted-section-title">Bên A (Người sử dụng lao động):</p>
+                                        <p className="lted-preview-section-title">Bên A (Người sử dụng lao động):</p>
                                         <p>– Tên công ty: Công ty THHH An ninh Con Hổ</p>
                                         <p>– Địa chỉ trụ sở chính: Quận Phú Nhuận, TPHCM</p>
                                         <p>– Đại diện là: Ông/Bà C &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Chức vụ: Giám đốc</p>
@@ -577,7 +721,7 @@ const LaborTemplateEditor = () => {
                                         <p>– Mã số thuế / Giấy phép kinh doanh: 0123456789</p>
                                         <p>– Điện thoại: 0346666577 &nbsp;&nbsp;&nbsp;&nbsp; Email: anh.aty2732004@gmail.com</p>
 
-                                        <p className="lted-section-title">Bên B (Người lao động):</p>
+                                        <p className="lted-preview-section-title">Bên B (Người lao động):</p>
                                         <p>– Họ và tên: {renderFieldValue('EmployeeName')}</p>
                                         <p>
                                             – Sinh ngày: {renderFieldValue('EmployeeDateOfBirth')} &nbsp;&nbsp;&nbsp;&nbsp;&nbsp; tại: {renderFieldValue('EmployeeBirthPlace')}
@@ -592,7 +736,7 @@ const LaborTemplateEditor = () => {
 
                                         <p>Hai bên thống nhất ký kết hợp đồng lao động với các điều khoản sau:</p>
 
-                                        <p className="lted-section-title">Điều 1. Loại hợp đồng & thời hạn</p>
+                                        <p className="lted-preview-section-title">Điều 1. Loại hợp đồng & thời hạn</p>
                                         <p>
                                             Hợp đồng này là Hợp đồng lao động xác định thời hạn / Hợp đồng lao động không xác định thời hạn (xem chọn 1).
                                         </p>
@@ -603,20 +747,90 @@ const LaborTemplateEditor = () => {
                                             Mọi thay đổi về vị trí, địa điểm, ca trực hoặc phần mềm quản lý sẽ được lập Phụ lục hợp đồng.
                                         </p>
 
-                                        <p className="lted-doc-notice">
-                                            [Các điều khoản tiếp theo của hợp đồng sẽ được hiển thị đầy đủ sau khi tạo...]
-                                        </p>
+                                        <p className="lted-preview-section-title">Điều 2. Công việc, địa điểm làm việc</p>
+                                        <p>Bên B sẽ làm vị trí: Nhân viên bảo vệ – chịu sự quản lý của Bên A.</p>
+                                        <p>Cấp bậc: {renderFieldValue('CertificationLevel')}</p>
+                                        <p>Công việc chính gồm:</p>
+                                        <p>– Thực hiện nhiệm vụ bảo vệ an ninh, giám sát mục tiêu, tuần tra, kiểm soát ra/vào theo phân công.</p>
+                                        <p>– Sử dụng phần mềm quản lý và chấm công của Bên A (tên phần mềm: Biometric & shift management system) để khai báo ca trực, đăng nhập khi bắt đầu ca, kết thúc ca và báo cáo theo yêu cầu.</p>
+                                        <p>– Khi Bên A giao địa điểm trực với khách hàng (sau khi ký ca trực với khách) thì Bên B sẽ tới địa điểm đó để bắt đầu ca – ghi nhận bằng phần mềm và thực hiện nhiệm vụ tại địa điểm đó.</p>
+                                        <p>– Làm các nhiệm vụ khác được giao phù hợp với vị trí bảo vệ và theo chỉ đạo của Bên A hoặc khách hàng (nếu có).</p>
+                                        <p>Địa điểm làm việc chính hiện tại là: ………………………………………………</p>
+                                        <p>Trong tương lai, Bên A có thể bố trí địa điểm trực thay đổi trong khu vực …………………………, Bên A sẽ thông báo cho Bên B ít nhất … ngày trước khi bắt đầu ca mới.</p>
+                                        <p>Bên B cam kết thực hiện công việc tại địa điểm được giao và sử dụng phần mềm đúng quy định.</p>
+
+                                        <p className="lted-preview-section-title">Điều 3. Thời giờ làm việc & ca trực</p>
+                                        <p>Thời giờ làm việc theo ca:</p>
+                                        <p>– Ca A: từ … giờ … phút đến … giờ … phút</p>
+                                        <p>– Ca B: từ … giờ … phút đến … giờ … phút</p>
+                                        <p>(Hai bên có thể thỏa thuận hoặc bổ sung chi tiết vào Phụ lục ca trực)</p>
+                                        <p>Bên B phải đăng nhập phần mềm quản lý/chấm công của Bên A ngay khi bắt đầu ca trực tại địa điểm được giao và đăng xuất khi kết thúc ca trực. Việc đăng nhập/trễ ca hoặc chấm công không đúng có thể ảnh hưởng tới quyền lợi lương/nhận ca.</p>
+                                        <p>Thời gian làm việc, nghỉ ngơi tuân theo luật lao động hiện hành: không quá … giờ/ngày, … giờ/tuần, làm thêm giờ, ca đêm, nghỉ lễ theo pháp luật và theo nội quy của Bên A.</p>
+                                        <p>Đối với ca đêm, tuần tra hoặc mục tiêu đặc biệt, Bên B sẽ được phụ cấp theo quy định của Bên A (nêu rõ tại Điều 4).</p>
+
+                                        <p className="lted-preview-section-title">Điều 4. Tiền lương, phụ cấp và hình thức thanh toán</p>
+                                        <p>Mức lương cơ bản: {renderFieldValue('StandardWage')} VNĐ/tháng được thanh toán vào ngày … hàng tháng bằng hình thức chuyển khoản hoặc tiền mặt (thỏa thuận).</p>
+                                        <p>Điều kiện để được thanh toán lương và phụ cấp: Bên B phải đăng nhập phần mềm chấm công, hoàn thành ca trực đúng giờ, tuân thủ quy định của Bên A. Trường hợp không chấm công, bỏ ca, trễ ca, vi phạm nội quy thì Bên A có quyền khấu trừ hoặc không thanh toán phụ cấp.</p>
+                                        <p>Bên A chịu trách nhiệm đóng bảo hiểm xã hội, bảo hiểm y tế, bảo hiểm thất nghiệp cho Bên B theo quy định pháp luật.</p>
+                                        <p>Phương thức thanh toán và nhận lương ……………………………………………………</p>
+                                        <p>Ngày trả lương: …….. hàng tháng.</p>
+                                        </div>
                                     </div>
 
-                                    <div className="lted-doc-footer">
-                                        <div className="lted-signature-section">
-                                            <div className="lted-signature-box">
-                                                <p className="lted-signature-title">ĐẠI DIỆN BÊN A</p>
-                                                <p className="lted-signature-subtitle">(Ký, ghi rõ họ tên, đóng dấu)</p>
-                                            </div>
-                                            <div className="lted-signature-box">
-                                                <p className="lted-signature-title">BÊN B – Người lao động</p>
-                                                <p className="lted-signature-subtitle">(Ký, ghi rõ họ tên)</p>
+                                    {/* Page 2 */}
+                                    <div className="lted-preview-a4-page">
+                                        <div className="lted-preview-doc-body">
+                                        <p className="lted-preview-section-title">Điều 5. Quyền lợi & nghĩa vụ</p>
+                                        <p className="lted-preview-section-title">5.1 Nghĩa vụ của Bên B:</p>
+                                        <p>– Thực hiện đúng chức trách vị trí bảo vệ được giao; tuần tra, giám sát, kiểm soát ra/vào, bảo vệ tài sản và người theo phân công.</p>
+                                        <p>– Sử dụng phần mềm quản lý/chấm công đúng cách: đăng nhập/đăng xuất theo ca, báo cáo theo yêu cầu.</p>
+                                        <p>– Chấp hành nội quy, quy định của Bên A, quy trình ca trực, an toàn lao động, phòng cháy chữa cháy (PCCC).</p>
+                                        <p>– Bảo mật thông tin khách hàng, mục tiêu trực, dữ liệu phần mềm quản lý theo yêu cầu nếu có.</p>
+                                        <p>– Báo cáo kịp thời cho Bên A hoặc khách hàng khi có sự cố an ninh, mất dữ liệu, vi phạm ca trực.</p>
+
+                                        <p className="lted-preview-section-title">5.2 Nghĩa vụ của Bên A:</p>
+                                        <p>– Cung cấp cho Bên B đầy đủ thiết bị cần thiết (đồng phục, thẻ, thiết bị phần mềm, máy quét nếu có) để Bên B thực hiện công việc.</p>
+                                        <p>– Cung cấp thông tin ca trực, địa điểm trực, phần mềm quản lý/chấm công để Bên B thực hiện đăng nhập.</p>
+                                        <p>– Thanh toán lương và phụ cấp đúng hạn; đóng bảo hiểm theo quy định; đảm bảo điều kiện làm việc an toàn.</p>
+                                        <p>– Thông báo cho Bên B về việc thay đổi địa điểm, ca, phần mềm ít nhất … ngày trước khi bắt đầu áp dụng.</p>
+
+                                        <p className="lted-preview-section-title">5.3 Quyền lợi của Bên B:</p>
+                                        <p>– Được hưởng lương, phụ cấp, bảo hiểm, quyền nghỉ phép, nghỉ lễ theo quy định của pháp luật và nội quy Bên A.</p>
+                                        <p>– Được đào tạo nghiệp vụ bảo vệ, sử dụng phần mềm quản lý, và được hỗ trợ khi làm ca trực mới tại khách hàng.</p>
+                                        <p>– Được làm việc trong môi trường đảm bảo an toàn lao động và theo đúng ca trực đã ký kết.</p>
+
+                                        <p className="lted-preview-section-title">Điều 6. Thay đổi – Chấm dứt hợp đồng</p>
+                                        <p>Hai bên có thể ký Phụ lục hợp đồng khi có thay đổi về công việc, vị trí, địa điểm, ca trực, phần mềm quản lý hoặc lương, phụ cấp.</p>
+                                        <p>Hợp đồng này chấm dứt khi:</p>
+                                        <p>– Hết thời hạn hợp đồng (nếu là HĐ xác định thời hạn).</p>
+                                        <p>– Hai bên thỏa thuận chấm dứt hợp đồng.</p>
+                                        <p>– Một bên đơn phương chấm dứt theo quy định của pháp luật (ví dụ: Bên B vi phạm nội quy nghiêm trọng, Bên A không cung cấp điều kiện làm việc theo hợp đồng).</p>
+                                        <p>Trong trường hợp Bên B vi phạm hợp đồng (không đăng nhập phần mềm, trễ/không thực hiện ca trực, gây mất ca, vi phạm an ninh) thì Bên A có quyền kỷ luật, chấm dứt hợp đồng hoặc khấu trừ thiệt hại theo nội quy và hợp đồng.</p>
+                                        <p>Sau khi chấm dứt, Bên A phải hoàn tất thanh toán lương, phụ cấp, đóng bảo hiểm, bàn giao thiết bị (nếu có) và hai bên thực hiện thủ tục thanh lý hợp đồng.</p>
+
+                                        <p className="lted-preview-section-title">Điều 7. Giải quyết tranh chấp</p>
+                                        <p>Hai bên cam kết giải quyết các tranh chấp phát sinh từ hợp đồng này bằng thương lượng.</p>
+                                        <p>Nếu không thương lượng được, tranh chấp sẽ được giải quyết tại:</p>
+                                        <p>– Hội đồng hòa giải lao động hoặc</p>
+                                        <p>– Tòa án nhân dân có thẩm quyền theo pháp luật Việt Nam.</p>
+                                        <p>Áp dụng pháp luật Việt Nam để điều chỉnh hợp đồng và giải quyết tranh chấp.</p>
+
+                                        <p className="lted-preview-section-title">Điều 8. Hiệu lực hợp đồng</p>
+                                        <p>Hợp đồng này có hiệu lực kể từ ngày ký.</p>
+                                        <p>Hợp đồng này gồm 03 (ba) tờ. Hai bên mỗi bên giữ 01 (một) bản có giá trị pháp lý như nhau.</p>
+                                        <p>Mọi sửa đổi, bổ sung hợp đồng phải được lập thành Phụ lục hợp đồng, có chữ ký của hai bên mới có hiệu lực.</p>
+                                        </div>
+
+                                        <div className="lted-preview-doc-footer">
+                                            <div className="lted-preview-signature-section">
+                                                <div className="lted-preview-signature-box">
+                                                    <p className="lted-preview-signature-title">ĐẠI DIỆN BÊN A</p>
+                                                    <p className="lted-preview-signature-subtitle">(Ký, ghi rõ họ tên, đóng dấu)</p>
+                                                </div>
+                                                <div className="lted-preview-signature-box">
+                                                    <p className="lted-preview-signature-title">BÊN B – Người lao động</p>
+                                                    <p className="lted-preview-signature-subtitle">(Ký, ghi rõ họ tên)</p>
+                                                </div>
                                             </div>
                                         </div>
                                     </div>

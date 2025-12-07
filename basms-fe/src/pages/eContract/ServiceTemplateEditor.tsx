@@ -88,7 +88,6 @@ const ServiceTemplateEditor = () => {
         setIsDataLoaded(true);
     }, [templateId]);
 
-    // Auto-save formData to localStorage whenever it changes (after initial load)
     useEffect(() => {
         if (isDataLoaded && templateId) {
             const contractData = {
