@@ -330,6 +330,30 @@
     color: #1f2937;
 }
 
+.dir-customers-header-actions {
+    display: flex;
+    gap: 12px;
+    align-items: center;
+}
+
+.dir-customers-create-btn {
+    background: #3b82f6;
+    border: none;
+    color: white;
+    cursor: pointer;
+    padding: 10px 20px;
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 14px;
+    font-weight: 500;
+}
+
+.dir-customers-create-btn:hover {
+    background: #2563eb;
+}
+
 .dir-customers-refresh-btn {
     background: transparent;
     border: none;
@@ -880,6 +904,19 @@
         gap: 16px;
     }
 
+    .dir-customers-header-actions {
+        width: 100%;
+        justify-content: flex-end;
+    }
+
+    .dir-customers-create-btn span {
+        display: none;
+    }
+
+    .dir-customers-create-btn {
+        padding: 10px;
+    }
+
     .dir-customers-filters-section {
         padding: 16px;
     }
@@ -935,5 +972,235 @@
 
     .dir-customers-sort-group {
         width: 100%;
+    }
+}
+
+/* Create Customer Modal */
+.custlist-create-modal-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: rgba(0, 0, 0, 0.5);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 2000;
+}
+
+.custlist-create-modal-container {
+    background: white;
+    border-radius: 8px;
+    width: 90%;
+    max-width: 900px;
+    max-height: 90vh;
+    overflow-y: auto;
+    padding: 24px;
+}
+
+.custlist-create-modal-header {
+    margin-bottom: 24px;
+    border-bottom: 1px solid #e5e7eb;
+    padding-bottom: 16px;
+}
+
+.custlist-create-modal-title {
+    font-size: 20px;
+    font-weight: 600;
+    color: #1f2937;
+}
+
+.custlist-create-form {
+    display: grid;
+    grid-template-columns: 1fr 2fr;
+    gap: 24px;
+}
+
+.custlist-form-column-left {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+}
+
+.custlist-form-column-right {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+}
+
+.custlist-form-group {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.custlist-form-label {
+    font-size: 14px;
+    font-weight: 500;
+    color: #374151;
+}
+
+.custlist-form-input {
+    padding: 10px 12px;
+    border: 1px solid #d1d5db;
+    border-radius: 6px;
+    font-size: 14px;
+    color: #1f2937;
+}
+
+.custlist-form-input:focus {
+    outline: none;
+    border-color: #3b82f6;
+}
+
+.custlist-password-input-wrapper {
+    display: flex;
+    gap: 8px;
+}
+
+.custlist-password-input-wrapper .custlist-form-input {
+    flex: 1;
+}
+
+.custlist-generate-password-btn {
+    padding: 10px 16px;
+    background: #10b981;
+    border: none;
+    border-radius: 6px;
+    font-size: 14px;
+    font-weight: 500;
+    color: white;
+    cursor: pointer;
+    white-space: nowrap;
+}
+
+.custlist-generate-password-btn:hover {
+    background: #059669;
+}
+
+.custlist-form-row {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 12px;
+}
+
+.custlist-form-select {
+    padding: 10px 12px;
+    border: 1px solid #d1d5db;
+    border-radius: 6px;
+    font-size: 14px;
+    color: #1f2937;
+    background-color: white;
+}
+
+.custlist-form-select:focus {
+    outline: none;
+    border-color: #3b82f6;
+}
+
+.custlist-avatar-preview-container {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 12px;
+    padding: 16px;
+    border: 1px solid #e5e7eb;
+    border-radius: 8px;
+    background-color: #f9fafb;
+}
+
+.custlist-avatar-preview {
+    width: 120px;
+    height: 120px;
+    border-radius: 50%;
+    background-color: #e5e7eb;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden;
+}
+
+.custlist-avatar-preview img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.custlist-avatar-placeholder {
+    font-size: 48px;
+    color: #9ca3af;
+}
+
+.custlist-form-actions {
+    grid-column: 1 / -1;
+    display: flex;
+    gap: 12px;
+    justify-content: flex-end;
+    margin-top: 8px;
+    padding-top: 16px;
+    border-top: 1px solid #e5e7eb;
+}
+
+.custlist-btn-cancel {
+    padding: 10px 20px;
+    background: #f3f4f6;
+    border: none;
+    border-radius: 6px;
+    font-size: 14px;
+    font-weight: 500;
+    color: #374151;
+    cursor: pointer;
+}
+
+.custlist-btn-cancel:hover {
+    background: #e5e7eb;
+}
+
+.custlist-btn-submit {
+    padding: 10px 20px;
+    background: #3b82f6;
+    border: none;
+    border-radius: 6px;
+    font-size: 14px;
+    font-weight: 500;
+    color: white;
+    cursor: pointer;
+}
+
+.custlist-btn-submit:hover {
+    background: #2563eb;
+}
+
+.custlist-btn-submit:disabled {
+    background: #9ca3af;
+    cursor: not-allowed;
+}
+
+.custlist-form-error {
+    background: #fef2f2;
+    border: 1px solid #fecaca;
+    border-radius: 6px;
+    padding: 12px;
+    margin-bottom: 16px;
+}
+
+.custlist-form-error-text {
+    color: #dc2626;
+    font-size: 14px;
+}
+
+@media (max-width: 768px) {
+    .custlist-create-modal-container {
+        width: 95%;
+        padding: 16px;
+    }
+
+    .custlist-create-form {
+        grid-template-columns: 1fr;
+    }
+
+    .custlist-form-row {
+        grid-template-columns: 1fr;
     }
 }

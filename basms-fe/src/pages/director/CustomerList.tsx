@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '../../hooks/useAuth';
+import SnackbarChecked from '../../components/snackbar/snackbarChecked';
 import './CustomerList.css';
 
 interface Customer {
@@ -53,6 +54,29 @@ const CustomerList = () => {
     const [allCustomers, setAllCustomers] = useState<Customer[]>([]);
     const [isLoading, setIsLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
+
+    // Create customer modal states
+    const [showCreateModal, setShowCreateModal] = useState(false);
+    const [isCreating, setIsCreating] = useState(false);
+    const [createError, setCreateError] = useState<string | null>(null);
+    const [showSuccessSnackbar, setShowSuccessSnackbar] = useState(false);
+    const [formData, setFormData] = useState({
+        IdentityNumber: '',
+        IdentityIssueDate: '',
+        IdentityIssuePlace: '',
+        Email: '',
+        Password: '',
+        FullName: '',
+        Phone: '',
+        Gender: 'Nam',
+        Address: '',
+        BirthDay: '',
+        BirthMonth: '',
+        BirthYear: '',
+        AvatarUrl: '',
+        RoleId: 'ddbd630a-ba6e-11f0-bcac-00155dca8f48',
+        AuthProvider: 'email'
+    });
 
     const sortOptions = [
         { value: 'companyName', label: 'Tên công ty (A-Z)' },
@@ -234,6 +258,125 @@ const CustomerList = () => {
         window.location.reload();
     };
 
+    const handleCreateCustomer = () => {
+        setShowCreateModal(true);
+        setCreateError(null);
+    };
+
+    const handleCloseModal = () => {
+        setShowCreateModal(false);
+        setCreateError(null);
+        setFormData({
+            IdentityNumber: '',
+            IdentityIssueDate: '',
+            IdentityIssuePlace: '',
+            Email: '',
+            Password: '',
+            FullName: '',
+            Phone: '',
+            Gender: 'Nam',
+            Address: '',
+            BirthDay: '',
+            BirthMonth: '',
+            BirthYear: '',
+            AvatarUrl: '',
+            RoleId: 'ddbd630a-ba6e-11f0-bcac-00155dca8f48',
+            AuthProvider: 'email'
+        });
+    };
+
+    const handleFormChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
+        const { name, value } = e.target;
+        setFormData(prev => ({
+            ...prev,
+            [name]: value
+        }));
+    };
+
+    const generateRandomPassword = () => {
+        const uppercaseChars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
+        const lowercaseChars = 'abcdefghijklmnopqrstuvwxyz';
+        const numberChars = '0123456789';
+        const specialChars = '!@#$%^&*';
+
+        // Ensure at least 1 uppercase, 1 number, 1 special character
+        let password = '';
+        password += uppercaseChars[Math.floor(Math.random() * uppercaseChars.length)];
+        password += numberChars[Math.floor(Math.random() * numberChars.length)];
+        password += specialChars[Math.floor(Math.random() * specialChars.length)];
+
+        // Fill remaining 5 characters with random mix
+        const allChars = uppercaseChars + lowercaseChars + numberChars + specialChars;
+        for (let i = 0; i < 5; i++) {
+            password += allChars[Math.floor(Math.random() * allChars.length)];
+        }
+
+        // Shuffle the password to randomize position of required characters
+        password = password.split('').sort(() => Math.random() - 0.5).join('');
+
+        setFormData(prev => ({
+            ...prev,
+            Password: password
+        }));
+    };
+
+    const handleSubmitCreate = async (e: React.FormEvent) => {
+        e.preventDefault();
+        setIsCreating(true);
+        setCreateError(null);
+
+        try {
+            const apiUrl = import.meta.env.VITE_API_CONTRACT_URL;
+            const token = localStorage.getItem('accessToken');
+
+            if (!token) {
+                throw new Error('Không tìm thấy token xác thực. Vui lòng đăng nhập lại.');
+            }
+
+            // Process phone number: replace leading 0 with +84
+            let processedPhone = formData.Phone.trim();
+            if (processedPhone.startsWith('0')) {
+                processedPhone = '+84' + processedPhone.substring(1);
+            }
+
+            // Convert BirthDay, BirthMonth, BirthYear to numbers
+            const requestData = {
+                ...formData,
+                Phone: processedPhone,
+                BirthDay: parseInt(formData.BirthDay),
+                BirthMonth: parseInt(formData.BirthMonth),
+                BirthYear: parseInt(formData.BirthYear)
+            };
+
+            const response = await fetch(`${apiUrl}/users/create`, {
+                method: 'POST',
+                headers: {
+                    'Authorization': `Bearer ${token}`,
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify(requestData),
+            });
+
+            if (!response.ok) {
+                const errorData = await response.json();
+                throw new Error(errorData.errorMessage || 'Không thể tạo khách hàng');
+            }
+
+            // Success - close modal, show success message, and refresh list
+            handleCloseModal();
+            setShowSuccessSnackbar(true);
+
+            // Reload page after showing success message
+            setTimeout(() => {
+                window.location.reload();
+            }, 2000);
+        } catch (err: any) {
+            setCreateError(err.message || 'Có lỗi xảy ra khi tạo khách hàng. Vui lòng thử lại.');
+        } finally {
+            setIsCreating(false);
+        }
+    };
+
     return (
         <div className="dir-customers-container">
             <aside className={`dir-customers-sidebar ${isMenuOpen ? 'dir-customers-sidebar-open' : 'dir-customers-sidebar-closed'}`}>
@@ -353,11 +496,19 @@ const CustomerList = () => {
                 <main className="dir-customers-main">
                     <div className="dir-customers-page-header">
                         <h1 className="dir-customers-page-title">Quản lý khách hàng</h1>
-                        <button className="dir-customers-refresh-btn" onClick={handleRefresh} title="Làm mới danh sách">
-                            <svg viewBox="0 0 24 24" fill="currentColor" width="20" height="20">
-                                <path d="M17.65 6.35C16.2 4.9 14.21 4 12 4c-4.42 0-7.99 3.58-7.99 8s3.57 8 7.99 8c3.73 0 6.84-2.55 7.73-6h-2.08c-.82 2.33-3.04 4-5.65 4-3.31 0-6-2.69-6-6s2.69-6 6-6c1.66 0 3.14.69 4.22 1.78L13 11h7V4l-2.35 2.35z"/>
-                            </svg>
-                        </button>
+                        <div className="dir-customers-header-actions">
+                            <button className="dir-customers-create-btn" onClick={handleCreateCustomer} title="Tạo khách hàng mới">
+                                <svg viewBox="0 0 24 24" fill="currentColor" width="20" height="20">
+                                    <path d="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z"/>
+                                </svg>
+                                <span>Tạo mới</span>
+                            </button>
+                            <button className="dir-customers-refresh-btn" onClick={handleRefresh} title="Làm mới danh sách">
+                                <svg viewBox="0 0 24 24" fill="currentColor" width="20" height="20">
+                                    <path d="M17.65 6.35C16.2 4.9 14.21 4 12 4c-4.42 0-7.99 3.58-7.99 8s3.57 8 7.99 8c3.73 0 6.84-2.55 7.73-6h-2.08c-.82 2.33-3.04 4-5.65 4-3.31 0-6-2.69-6-6s2.69-6 6-6c1.66 0 3.14.69 4.22 1.78L13 11h7V4l-2.35 2.35z"/>
+                                </svg>
+                            </button>
+                        </div>
                     </div>
 
                     {/* Search and Sort */}
@@ -535,6 +686,228 @@ const CustomerList = () => {
                 </main>
             </div>
 
+            {showCreateModal && (
+                <div className="custlist-create-modal-overlay" onClick={handleCloseModal}>
+                    <div className="custlist-create-modal-container" onClick={(e) => e.stopPropagation()}>
+                        <div className="custlist-create-modal-header">
+                            <h2 className="custlist-create-modal-title">Tạo khách hàng mới</h2>
+                        </div>
+
+                        {createError && (
+                            <div className="custlist-form-error">
+                                <div className="custlist-form-error-text">{createError}</div>
+                            </div>
+                        )}
+
+                        <form className="custlist-create-form" onSubmit={handleSubmitCreate}>
+                            {/* Column 1: Avatar, Email, Password */}
+                            <div className="custlist-form-column-left">
+                                <div className="custlist-avatar-preview-container">
+                                    <div className="custlist-avatar-preview">
+                                        {formData.AvatarUrl ? (
+                                            <img src={formData.AvatarUrl} alt="Avatar" />
+                                        ) : (
+                                            <span className="custlist-avatar-placeholder">?</span>
+                                        )}
+                                    </div>
+                                    <div className="custlist-form-group">
+                                        <label className="custlist-form-label">URL Avatar</label>
+                                        <input
+                                            type="text"
+                                            name="AvatarUrl"
+                                            className="custlist-form-input"
+                                            placeholder="https://..."
+                                            value={formData.AvatarUrl}
+                                            onChange={handleFormChange}
+                                        />
+                                    </div>
+                                </div>
+
+                                <div className="custlist-form-group">
+                                    <label className="custlist-form-label">Email *</label>
+                                    <input
+                                        type="email"
+                                        name="Email"
+                                        className="custlist-form-input"
+                                        value={formData.Email}
+                                        onChange={handleFormChange}
+                                        required
+                                    />
+                                </div>
+
+                                <div className="custlist-form-group">
+                                    <label className="custlist-form-label">Mật khẩu *</label>
+                                    <div className="custlist-password-input-wrapper">
+                                        <input
+                                            type="password"
+                                            name="Password"
+                                            className="custlist-form-input"
+                                            value={formData.Password}
+                                            onChange={handleFormChange}
+                                            required
+                                        />
+                                        <button
+                                            type="button"
+                                            className="custlist-generate-password-btn"
+                                            onClick={generateRandomPassword}
+                                            title="Tạo mật khẩu ngẫu nhiên"
+                                        >
+                                            Tạo
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+
+                            {/* Column 2: All other fields */}
+                            <div className="custlist-form-column-right">
+                                <div className="custlist-form-group">
+                                    <label className="custlist-form-label">Họ và tên *</label>
+                                    <input
+                                        type="text"
+                                        name="FullName"
+                                        className="custlist-form-input"
+                                        value={formData.FullName}
+                                        onChange={handleFormChange}
+                                        required
+                                    />
+                                </div>
+
+                                <div className="custlist-form-group">
+                                    <label className="custlist-form-label">Số điện thoại *</label>
+                                    <input
+                                        type="tel"
+                                        name="Phone"
+                                        className="custlist-form-input"
+                                        value={formData.Phone}
+                                        onChange={handleFormChange}
+                                        required
+                                    />
+                                </div>
+
+                                <div className="custlist-form-group">
+                                    <label className="custlist-form-label">Giới tính *</label>
+                                    <select
+                                        name="Gender"
+                                        className="custlist-form-select"
+                                        value={formData.Gender}
+                                        onChange={handleFormChange}
+                                        required
+                                    >
+                                        <option value="Nam">Nam</option>
+                                        <option value="Nữ">Nữ</option>
+                                    </select>
+                                </div>
+
+                                <div className="custlist-form-group">
+                                    <label className="custlist-form-label">Ngày sinh *</label>
+                                    <div className="custlist-form-row">
+                                        <input
+                                            type="number"
+                                            name="BirthDay"
+                                            className="custlist-form-input"
+                                            placeholder="Ngày"
+                                            min="1"
+                                            max="31"
+                                            value={formData.BirthDay}
+                                            onChange={handleFormChange}
+                                            required
+                                        />
+                                        <input
+                                            type="number"
+                                            name="BirthMonth"
+                                            className="custlist-form-input"
+                                            placeholder="Tháng"
+                                            min="1"
+                                            max="12"
+                                            value={formData.BirthMonth}
+                                            onChange={handleFormChange}
+                                            required
+                                        />
+                                        <input
+                                            type="number"
+                                            name="BirthYear"
+                                            className="custlist-form-input"
+                                            placeholder="Năm"
+                                            min="1900"
+                                            max="2100"
+                                            value={formData.BirthYear}
+                                            onChange={handleFormChange}
+                                            required
+                                        />
+                                    </div>
+                                </div>
+
+                                <div className="custlist-form-group">
+                                    <label className="custlist-form-label">Số CMND/CCCD *</label>
+                                    <input
+                                        type="text"
+                                        name="IdentityNumber"
+                                        className="custlist-form-input"
+                                        value={formData.IdentityNumber}
+                                        onChange={handleFormChange}
+                                        required
+                                    />
+                                </div>
+
+                                <div className="custlist-form-group">
+                                    <label className="custlist-form-label">Ngày cấp *</label>
+                                    <input
+                                        type="date"
+                                        name="IdentityIssueDate"
+                                        className="custlist-form-input"
+                                        value={formData.IdentityIssueDate}
+                                        onChange={handleFormChange}
+                                        required
+                                    />
+                                </div>
+
+                                <div className="custlist-form-group">
+                                    <label className="custlist-form-label">Nơi cấp *</label>
+                                    <input
+                                        type="text"
+                                        name="IdentityIssuePlace"
+                                        className="custlist-form-input"
+                                        value={formData.IdentityIssuePlace}
+                                        onChange={handleFormChange}
+                                        required
+                                    />
+                                </div>
+
+                                <div className="custlist-form-group">
+                                    <label className="custlist-form-label">Địa chỉ *</label>
+                                    <input
+                                        type="text"
+                                        name="Address"
+                                        className="custlist-form-input"
+                                        value={formData.Address}
+                                        onChange={handleFormChange}
+                                        required
+                                    />
+                                </div>
+                            </div>
+
+                            <div className="custlist-form-actions">
+                                <button
+                                    type="button"
+                                    className="custlist-btn-cancel"
+                                    onClick={handleCloseModal}
+                                    disabled={isCreating}
+                                >
+                                    Quay lại
+                                </button>
+                                <button
+                                    type="submit"
+                                    className="custlist-btn-submit"
+                                    disabled={isCreating}
+                                >
+                                    {isCreating ? 'Đang tạo...' : 'Xác nhận'}
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            )}
+
             {showLogoutModal && (
                 <div className="dir-customers-modal-overlay" onClick={cancelLogout}>
                     <div className="dir-customers-modal-content" onClick={(e) => e.stopPropagation()}>
@@ -555,6 +928,13 @@ const CustomerList = () => {
                     </div>
                 </div>
             )}
+
+            <SnackbarChecked
+                message="Đã tạo thông tin khách hàng mới thành công"
+                isOpen={showSuccessSnackbar}
+                duration={2000}
+                onClose={() => setShowSuccessSnackbar(false)}
+            />
         </div>
     );
 };

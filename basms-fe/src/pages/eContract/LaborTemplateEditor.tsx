@@ -71,6 +71,7 @@ const LaborTemplateEditor = () => {
         ContractEndDate: { fieldName: 'Ngày kết thúc HĐ', value: '', formatting: { bold: false, italic: false, underline: false } },
         CertificationLevel: { fieldName: 'Cấp bậc', value: '', formatting: { bold: false, italic: false, underline: false } },
         StandardWage: { fieldName: 'Lương cơ bản', value: '', formatting: { bold: false, italic: false, underline: false } },
+        TotalGuardsSupervised: { fieldName: 'Tổng số nhân viên bảo vệ được giao quản lý/phụ trách', value: '', formatting: { bold: false, italic: false, underline: false } },
     });
 
     const [activeField, setActiveField] = useState<string | null>(null);
@@ -750,6 +751,8 @@ const LaborTemplateEditor = () => {
                                         <p className="lted-preview-section-title">Điều 2. Công việc, địa điểm làm việc</p>
                                         <p>Bên B sẽ làm vị trí: Nhân viên bảo vệ – chịu sự quản lý của Bên A.</p>
                                         <p>Cấp bậc: {renderFieldValue('CertificationLevel')}</p>
+                                        <p>Tổng số nhân viên bảo vệ được giao quản lý/phụ trách: {renderFieldValue('TotalGuardsSupervised')} người</p>
+                                        <p>(số lượng này có thể thay đổi theo nhu cầu của Bên A và sẽ được thông báo hoặc điều chỉnh bằng Phụ lục hợp đồng hoặc trên phần mềm quản lý).</p>
                                         <p>Công việc chính gồm:</p>
                                         <p>– Thực hiện nhiệm vụ bảo vệ an ninh, giám sát mục tiêu, tuần tra, kiểm soát ra/vào theo phân công.</p>
                                         <p>– Sử dụng phần mềm quản lý và chấm công của Bên A (tên phần mềm: Biometric & shift management system) để khai báo ca trực, đăng nhập khi bắt đầu ca, kết thúc ca và báo cáo theo yêu cầu.</p>
