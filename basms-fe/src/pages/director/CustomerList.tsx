@@ -47,6 +47,7 @@ const CustomerList = () => {
     const [searchTerm, setSearchTerm] = useState('');
     const [sortBy, setSortBy] = useState<'companyName' | 'customerSince'>('companyName');
     const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('asc');
+    const [statusFilter, setStatusFilter] = useState<string>('all');
     const [currentPage, setCurrentPage] = useState(1);
     const itemsPerPage = 10;
 
@@ -199,6 +200,7 @@ const CustomerList = () => {
         const statusMap: { [key: string]: string } = {
             active: 'Đang hoạt động',
             inactive: 'Không hoạt động',
+            'in-active': 'Chưa hoạt động',
             assigning_manager: 'Phân công quản lý',
             schedule_shifts: 'Phân công ca trực',
             Cancelled: 'Đã hủy',
@@ -213,14 +215,21 @@ const CustomerList = () => {
             // Search filter
             if (searchTerm) {
                 const searchLower = searchTerm.toLowerCase();
-                return (
+                const matchesSearch = (
                     customer.companyName.toLowerCase().includes(searchLower) ||
                     customer.contactPersonName.toLowerCase().includes(searchLower) ||
                     customer.customerCode.toLowerCase().includes(searchLower) ||
                     customer.email.toLowerCase().includes(searchLower) ||
                     customer.phone.includes(searchTerm)
                 );
+                if (!matchesSearch) return false;
             }
+
+            // Status filter
+            if (statusFilter !== 'all' && customer.status !== statusFilter) {
+                return false;
+            }
+
             return true;
         })
         .sort((a, b) => {
@@ -527,6 +536,26 @@ const CustomerList = () => {
                                     setCurrentPage(1);
                                 }}
                             />
+                        </div>
+
+                        <div className="dir-customers-status-filter">
+                            <select
+                                className="dir-customers-sort-select"
+                                value={statusFilter}
+                                onChange={(e) => {
+                                    setStatusFilter(e.target.value);
+                                    setCurrentPage(1);
+                                }}
+                            >
+                                <option value="all">Tất cả trạng thái</option>
+                                <option value="active">Đang hoạt động</option>
+                                <option value="inactive">Không hoạt động</option>
+                                <option value="in-active">Chưa hoạt động</option>
+                                <option value="assigning_manager">Phân công quản lý</option>
+                                <option value="schedule_shifts">Phân công ca trực</option>
+                                <option value="Cancelled">Đã hủy</option>
+                                <option value="Expired">Hết hạn</option>
+                            </select>
                         </div>
 
                         <div className="dir-customers-sort-group">

@@ -428,6 +428,11 @@
     color: #9ca3af;
 }
 
+.dir-customers-status-filter {
+    display: flex;
+    align-items: center;
+}
+
 .dir-customers-sort-group {
     display: flex;
     gap: 8px;
@@ -567,6 +572,11 @@
 .dir-customers-status-inactive {
     background-color: #f3f4f6;
     color: #6b7280;
+}
+
+.dir-customers-status-in-active {
+    background-color: #fef9c3;
+    color: #ca8a04;
 }
 
 .dir-customers-status-assigning_manager {
@@ -925,6 +935,10 @@
         min-width: 100%;
     }
 
+    .dir-customers-status-filter {
+        width: 100%;
+    }
+
     .dir-customers-sort-group {
         width: 100%;
     }
@@ -967,6 +981,10 @@
     }
 
     .dir-customers-search-box {
+        width: 100%;
+    }
+
+    .dir-customers-status-filter {
         width: 100%;
     }
 
