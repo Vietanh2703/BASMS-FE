@@ -345,56 +345,6 @@ const ManagerRequest = () => {
 
             const contractId = selectedContractGroup.contractId;
 
-            const contractCustomerUrl = `${import.meta.env.VITE_API_CONTRACT_URL}/contracts/${contractId}/customer`;
-            const contractCustomerResponse = await fetch(contractCustomerUrl, {
-                headers: {
-                    'Authorization': `Bearer ${accessToken}`,
-                    'Content-Type': 'application/json',
-                }
-            });
-
-            const contractCustomerText = await contractCustomerResponse.text();
-            let contractCustomerData;
-            try {
-                contractCustomerData = JSON.parse(contractCustomerText);
-            } catch (e) {
-                throw new Error('API trả về dữ liệu không hợp lệ');
-            }
-
-            const customerId = contractCustomerData.customerId;
-            if (!customerId) {
-                throw new Error('Không tìm thấy customer ID');
-            }
-
-            const activateCustomerUrl = `${import.meta.env.VITE_API_CONTRACT_URL}/contracts/customers/${customerId}/activate`;
-            const activateCustomerResponse = await fetch(activateCustomerUrl, {
-                method: 'POST',
-                headers: {
-                    'Authorization': `Bearer ${accessToken}`,
-                    'Content-Type': 'application/json',
-                }
-            });
-
-            if (!activateCustomerResponse.ok) {
-                const errorText = await activateCustomerResponse.text();
-                // Try to parse JSON error response
-                try {
-                    const errorData = JSON.parse(errorText);
-                    if (errorData.message) {
-                        throw new Error(errorData.message);
-                    }
-                } catch (parseError) {
-                    // If not JSON or no message field, use default error
-                    if (parseError instanceof Error && parseError.message.includes("Customer status")) {
-                        throw parseError;
-                    }
-                }
-
-                throw new Error(`Lỗi khi kích hoạt khách hàng (${activateCustomerResponse.status})`);
-            }
-
-            await activateCustomerResponse.text();
-
             const firstTemplate = selectedContractGroup.templates[0];
             const shiftTemplateIds = selectedContractGroup.templates.map(t => t.id);
             const generateDays = calculateGenerateDays(firstTemplate.effectiveFrom, firstTemplate.effectiveTo);
@@ -480,17 +430,7 @@ const ManagerRequest = () => {
             setShowConfirmModal(false);
             setSelectedContractGroup(null);
 
-            // Check for specific customer status error
-            let errorMessage = 'Lỗi khi tạo ca trực';
-            if (err instanceof Error) {
-                errorMessage = err.message;
-
-                // Check if error message contains customer status validation error
-                if (errorMessage.includes("Customer status is 'in-active'") ||
-                    errorMessage.includes("expected 'schedule_shifts'")) {
-                    errorMessage = 'Khách hàng hiện chưa được kích hoạt hoặc bị hủy. Vui lòng liên hệ Phòng IT';
-                }
-            }
+            const errorMessage = err instanceof Error ? err.message : 'Lỗi khi tạo ca trực';
 
             setSnackbarFailed({
                 isOpen: true,
