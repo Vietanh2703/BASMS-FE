@@ -1,3 +1,4 @@
+/// <reference path="../../here-maps.d.ts" />
 import { useState, useEffect, useRef } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '../../hooks/useAuth';
@@ -91,6 +92,9 @@ const CustomerSchedule = () => {
     const [selectedShift, setSelectedShift] = useState<Shift | null>(null);
     const [showShiftDetail, setShowShiftDetail] = useState(false);
     const mapRef = useRef<HTMLDivElement>(null);
+    const [mapError, setMapError] = useState<string | null>(null);
+    const [mapLoading, setMapLoading] = useState(false);
+    const mapInstanceRef = useRef<H.Map | null>(null);
 
     useEffect(() => {
         const timer = setInterval(() => {
@@ -123,8 +127,20 @@ const CustomerSchedule = () => {
 
     useEffect(() => {
         if (showShiftDetail && selectedShift && mapRef.current) {
-            initializeMap();
+            loadHereMapsAndInitialize();
         }
+
+        // Cleanup
+        return () => {
+            if (mapInstanceRef.current) {
+                try {
+                    mapInstanceRef.current.dispose();
+                    mapInstanceRef.current = null;
+                } catch (e) {
+                    // Silent cleanup
+                }
+            }
+        };
     }, [showShiftDetail, selectedShift]);
 
     function getMonday(date: Date): Date {
@@ -304,44 +320,119 @@ const CustomerSchedule = () => {
         setSelectedShift(null);
     };
 
+    const loadHereMapsAndInitialize = async () => {
+        if (!selectedShift || !mapRef.current) return;
+
+        const apiKey = import.meta.env.VITE_HERE_MAP_API_KEY;
+
+        if (!apiKey) {
+            setMapError('HERE Maps API key không được cấu hình. Vui lòng kiểm tra file .env');
+            return;
+        }
+
+        setMapLoading(true);
+        setMapError(null);
+
+        try {
+            // Check if already loaded
+            if (window.H) {
+                initializeMap();
+                setMapLoading(false);
+                return;
+            }
+
+            // Load CSS
+            if (!document.querySelector('link[href*="mapsjs-ui.css"]')) {
+                const link = document.createElement('link');
+                link.rel = 'stylesheet';
+                link.href = 'https://js.api.here.com/v3/3.1/mapsjs-ui.css';
+                document.head.appendChild(link);
+            }
+
+            // Load scripts in order
+            const scripts = [
+                'https://js.api.here.com/v3/3.1/mapsjs-core.js',
+                'https://js.api.here.com/v3/3.1/mapsjs-service.js',
+                'https://js.api.here.com/v3/3.1/mapsjs-ui.js',
+                'https://js.api.here.com/v3/3.1/mapsjs-mapevents.js',
+            ];
+
+            for (const src of scripts) {
+                await new Promise<void>((resolve, reject) => {
+                    if (document.querySelector(`script[src="${src}"]`)) {
+                        resolve();
+                        return;
+                    }
+
+                    const script = document.createElement('script');
+                    script.src = src;
+                    script.async = false;
+                    script.onload = () => resolve();
+                    script.onerror = () => reject(new Error(`Failed to load ${src}`));
+                    document.head.appendChild(script);
+                });
+            }
+
+            // Wait for scripts to be ready
+            setTimeout(() => {
+                initializeMap();
+                setMapLoading(false);
+            }, 100);
+        } catch (error) {
+            setMapError('Không thể tải HERE Maps API. Vui lòng kiểm tra kết nối internet.');
+            setMapLoading(false);
+        }
+    };
+
     const initializeMap = () => {
         if (!selectedShift || !mapRef.current) return;
 
         // Clear previous map
         mapRef.current.innerHTML = '';
 
-        // @ts-ignore - HERE Maps API
-        if (window.H) {
-            // @ts-ignore
+        if (!window.H) {
+            setMapError('HERE Maps library chưa được load');
+            return;
+        }
+
+        try {
+            const apiKey = import.meta.env.VITE_HERE_MAP_API_KEY;
             const platform = new window.H.service.Platform({
-                apikey: import.meta.env.VITE_HERE_MAPS_API_KEY || 'YOUR_HERE_API_KEY'
+                apikey: apiKey,
             });
 
             const defaultLayers = platform.createDefaultLayers();
 
-            // @ts-ignore
+            const center = {
+                lat: selectedShift.locationLatitude,
+                lng: selectedShift.locationLongitude,
+            };
+
             const map = new window.H.Map(
                 mapRef.current,
                 defaultLayers.vector.normal.map,
                 {
-                    center: { lat: selectedShift.locationLatitude, lng: selectedShift.locationLongitude },
+                    center: center,
                     zoom: 15,
-                    pixelRatio: window.devicePixelRatio || 1
+                    pixelRatio: window.devicePixelRatio || 1,
                 }
             );
 
-            // @ts-ignore
-            const behavior = new window.H.mapevents.Behavior(new window.H.mapevents.MapEvents(map));
-            // @ts-ignore
-            const ui = window.H.ui.UI.createDefault(map, defaultLayers);
+            mapInstanceRef.current = map;
+
+            new window.H.mapevents.Behavior(
+                new window.H.mapevents.MapEvents(map)
+            );
+
+            window.H.ui.UI.createDefault(map, defaultLayers);
 
             // Add marker
-            // @ts-ignore
-            const marker = new window.H.map.Marker({
-                lat: selectedShift.locationLatitude,
-                lng: selectedShift.locationLongitude
-            });
+            const marker = new window.H.map.Marker(center);
             map.addObject(marker);
+
+            setMapError(null);
+        } catch (error) {
+            setMapError(`Lỗi khi khởi tạo bản đồ: ${error}`);
         }
     };
 
@@ -706,7 +797,21 @@ const CustomerSchedule = () => {
 
                             <div className="cust-schedule-detail-section">
                                 <h3>Bản đồ</h3>
-                                <div ref={mapRef} className="cust-schedule-map-container"></div>
+                                {mapError ? (
+                                    <div className="cust-schedule-map-error">
+                                        <svg viewBox="0 0 24 24" fill="currentColor" width="48" height="48">
+                                            <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-2h2v2zm0-4h-2V7h2v6z"/>
+                                        </svg>
+                                        <div className="cust-schedule-map-error-message">{mapError}</div>
+                                    </div>
+                                ) : mapLoading ? (
+                                    <div className="cust-schedule-map-loading">
+                                        <div className="cust-schedule-spinner"></div>
+                                        <p>Đang tải bản đồ...</p>
+                                    </div>
+                                ) : (
+                                    <div ref={mapRef} className="cust-schedule-map-container"></div>
+                                )}
                             </div>
                         </div>
                     </div>
