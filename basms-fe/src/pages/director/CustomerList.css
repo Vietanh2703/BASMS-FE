@@ -790,7 +790,8 @@
     flex-shrink: 0;
     display: flex;
     gap: 8px;
-    flex-direction: column;
+    flex-direction: row;
+    align-items: center;
 }
 
 .dir-customers-contract-title {
