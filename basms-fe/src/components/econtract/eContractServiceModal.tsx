@@ -202,11 +202,16 @@ const EContractServiceModal = ({ isOpen, onClose, templateId }: EContractService
     const handleCreateContract = (customer: Customer) => {
         // Navigate to template editor with customer info and template ID as query params
         const params = new URLSearchParams({
+            customerId: customer.id,
+            customerCode: customer.customerCode,
+            companyName: customer.companyName || '',
+            contactPersonName: customer.contactPersonName,
+            contactPersonTitle: customer.contactPersonTitle || '',
             email: customer.email,
             phone: customer.phone,
-            name: customer.contactPersonName,
-            identityNumber: '', // Not available in customer data
-            customerId: customer.id,
+            gender: customer.gender || '',
+            dateOfBirth: customer.dateOfBirth || '',
+            address: customer.address || '',
         });
 
         // Use serviceTemplateId from API, fallback to prop templateId
@@ -216,7 +221,7 @@ const EContractServiceModal = ({ isOpen, onClose, templateId }: EContractService
             params.append('template', finalTemplateId);
         }
 
-        navigate(`/e-contracts/template-editor?${params.toString()}`);
+        navigate(`/e-contracts/service-template-editor?${params.toString()}`);
         onClose();
     };
 

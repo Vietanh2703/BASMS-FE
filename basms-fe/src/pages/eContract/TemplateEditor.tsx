@@ -138,6 +138,59 @@ const TemplateEditor = () => {
         setIsDataLoaded(true);
     }, [templateId]);
 
+    // Pre-fill form with customer data from URL params
+    useEffect(() => {
+        if (!isDataLoaded) return;
+
+        const contactPersonName = searchParams.get('contactPersonName');
+        const email = searchParams.get('email');
+        const phone = searchParams.get('phone');
+        const address = searchParams.get('address');
+        const dateOfBirth = searchParams.get('dateOfBirth');
+
+        // Only pre-fill if we have customer data from URL and fields are empty
+        if (contactPersonName || email || phone) {
+            setFormData(prev => {
+                const updated = { ...prev };
+
+                // Pre-fill employee name
+                if (contactPersonName && !prev.EmployeeName.value) {
+                    updated.EmployeeName = { ...prev.EmployeeName, value: contactPersonName };
+                }
+
+                // Pre-fill email
+                if (email && !prev.EmployeeEmail.value) {
+                    updated.EmployeeEmail = { ...prev.EmployeeEmail, value: email };
+                }
+
+                // Pre-fill phone
+                if (phone && !prev.EmployeePhone.value) {
+                    updated.EmployeePhone = { ...prev.EmployeePhone, value: phone };
+                }
+
+                // Pre-fill address
+                if (address && !prev.EmployeeAddress.value) {
+                    updated.EmployeeAddress = { ...prev.EmployeeAddress, value: address };
+                }
+
+                // Pre-fill date of birth (format from ISO to display format)
+                if (dateOfBirth && !prev.EmployeeDateOfBirth.value) {
+                    try {
+                        const date = new Date(dateOfBirth);
+                        const day = date.getDate().toString().padStart(2, '0');
+                        const month = (date.getMonth() + 1).toString().padStart(2, '0');
+                        const year = date.getFullYear();
+                        updated.EmployeeDateOfBirth = { ...prev.EmployeeDateOfBirth, value: `${day}/${month}/${year}` };
+                    } catch (error) {
+                        console.error('Error formatting date:', error);
+                    }
+                }
+
+                return updated;
+            });
+        }
+    }, [searchParams, isDataLoaded]);
+
     // Auto-save formData to localStorage whenever it changes (after initial load)
     useEffect(() => {
         if (isDataLoaded && templateId) {
@@ -502,7 +555,7 @@ const TemplateEditor = () => {
                                 Quay lại
                             </button>
                             <button className="ted-submit-btn" onClick={handleSubmit}>
-                                Xem trước & Tạo
+                                Xem trước
                             </button>
                         </div>
                     </div>
@@ -525,7 +578,6 @@ const TemplateEditor = () => {
                                         </label>
                                         <div className="ted-field-input-wrapper">
                                             {fieldKey === 'CertificationLevel' ? (
-                                                // Dropdown for CertificationLevel (only I, II, III)
                                                 <select
                                                     className={`ted-field-input ${activeField === fieldKey ? 'ted-field-active' : ''} ${fieldErrors[fieldKey] ? 'ted-field-error' : ''}`}
                                                     value={formData[fieldKey].value}
