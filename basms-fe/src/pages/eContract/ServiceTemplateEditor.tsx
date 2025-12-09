@@ -95,6 +95,24 @@ const ServiceTemplateEditor = () => {
         }
     }, []);
 
+    // Auto-fill customer info from query params
+    useEffect(() => {
+        const email = searchParams.get('email');
+        const phone = searchParams.get('phone');
+        const name = searchParams.get('name');
+        const identityNumber = searchParams.get('identityNumber');
+
+        if (email || phone || name || identityNumber) {
+            setFormData(prev => ({
+                ...prev,
+                ...(email && { CompanyEmail: { ...prev.CompanyEmail, value: email } }),
+                ...(phone && { Phone: { ...prev.Phone, value: phone } }),
+                ...(name && { Name: { ...prev.Name, value: name } }),
+                ...(identityNumber && { EmployeeIdentityNumber: { ...prev.EmployeeIdentityNumber, value: identityNumber } }),
+            }));
+        }
+    }, [searchParams]);
+
     // Load saved data from localStorage on mount
     useEffect(() => {
         const savedData = localStorage.getItem('serviceContractReviewData');

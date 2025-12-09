@@ -1,0 +1,305 @@
+/* eContract Service Modal - ecsm prefix to avoid conflicts */
+
+.ecsm-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: rgba(0, 0, 0, 0.5);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 9999;
+    padding: 20px;
+}
+
+.ecsm-container {
+    background: white;
+    border-radius: 12px;
+    width: 100%;
+    max-width: 1200px;
+    max-height: 90vh;
+    display: flex;
+    flex-direction: column;
+    box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+}
+
+.ecsm-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 24px;
+    border-bottom: 1px solid #e5e7eb;
+}
+
+.ecsm-title {
+    font-size: 20px;
+    font-weight: 600;
+    color: #1e40af;
+    margin: 0;
+}
+
+.ecsm-close-btn {
+    background: none;
+    border: none;
+    color: #6b7280;
+    cursor: pointer;
+    padding: 4px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 4px;
+    transition: all 0.2s;
+}
+
+.ecsm-close-btn:hover {
+    background-color: #f3f4f6;
+    color: #1e40af;
+}
+
+.ecsm-body {
+    display: flex;
+    flex: 1;
+    overflow: hidden;
+    gap: 1px;
+    background-color: #e5e7eb;
+}
+
+/* Left Column - Customers */
+.ecsm-left-column {
+    flex: 1;
+    background: white;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+}
+
+.ecsm-column-header {
+    padding: 16px 20px;
+    border-bottom: 1px solid #e5e7eb;
+    background-color: #f9fafb;
+}
+
+.ecsm-column-title {
+    font-size: 14px;
+    font-weight: 600;
+    color: #374151;
+    margin: 0;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.ecsm-customers-list {
+    flex: 1;
+    overflow-y: auto;
+    padding: 12px;
+}
+
+.ecsm-customer-item {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 12px;
+    border: 1px solid #e5e7eb;
+    border-radius: 8px;
+    margin-bottom: 8px;
+    cursor: pointer;
+    transition: all 0.2s;
+    background: white;
+}
+
+.ecsm-customer-item:hover {
+    border-color: #3b82f6;
+    background-color: #eff6ff;
+}
+
+.ecsm-customer-item.ecsm-customer-active {
+    border-color: #3b82f6;
+    background-color: #eff6ff;
+}
+
+.ecsm-customer-info {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    flex: 1;
+    min-width: 0;
+}
+
+.ecsm-customer-avatar {
+    width: 48px;
+    height: 48px;
+    border-radius: 50%;
+    overflow: hidden;
+    flex-shrink: 0;
+    background: linear-gradient(135deg, #3b82f6, #1d4ed8);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    font-weight: 600;
+    font-size: 18px;
+}
+
+.ecsm-customer-avatar img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.ecsm-customer-details {
+    flex: 1;
+    min-width: 0;
+}
+
+.ecsm-customer-name {
+    font-size: 15px;
+    font-weight: 600;
+    color: #1f2937;
+    margin-bottom: 4px;
+}
+
+.ecsm-customer-email {
+    font-size: 13px;
+    color: #6b7280;
+    margin-bottom: 2px;
+}
+
+.ecsm-customer-phone {
+    font-size: 13px;
+    color: #6b7280;
+}
+
+.ecsm-create-btn {
+    padding: 8px 16px;
+    background-color: #3b82f6;
+    color: white;
+    border: none;
+    border-radius: 6px;
+    font-size: 14px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s;
+    flex-shrink: 0;
+}
+
+.ecsm-create-btn:hover {
+    background-color: #2563eb;
+}
+
+/* Right Column - Contracts */
+.ecsm-right-column {
+    flex: 1;
+    background: white;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+}
+
+.ecsm-contracts-list {
+    flex: 1;
+    overflow-y: auto;
+    padding: 12px;
+}
+
+.ecsm-contract-item {
+    padding: 16px;
+    border: 1px solid #e5e7eb;
+    border-radius: 8px;
+    margin-bottom: 8px;
+    background: white;
+    transition: all 0.2s;
+}
+
+.ecsm-contract-item:hover {
+    border-color: #3b82f6;
+    box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1);
+}
+
+.ecsm-contract-title {
+    font-size: 15px;
+    font-weight: 600;
+    color: #1f2937;
+    margin-bottom: 12px;
+}
+
+.ecsm-contract-dates {
+    display: flex;
+    gap: 16px;
+}
+
+.ecsm-contract-date {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.ecsm-date-label {
+    font-size: 13px;
+    color: #6b7280;
+    font-weight: 500;
+}
+
+.ecsm-date-value {
+    font-size: 13px;
+    color: #1f2937;
+}
+
+/* Loading, Error, Empty states */
+.ecsm-loading,
+.ecsm-error,
+.ecsm-empty {
+    padding: 40px 20px;
+    text-align: center;
+    color: #6b7280;
+    font-size: 14px;
+}
+
+.ecsm-error {
+    color: #dc2626;
+}
+
+/* Scrollbar styling */
+.ecsm-customers-list::-webkit-scrollbar,
+.ecsm-contracts-list::-webkit-scrollbar {
+    width: 6px;
+}
+
+.ecsm-customers-list::-webkit-scrollbar-track,
+.ecsm-contracts-list::-webkit-scrollbar-track {
+    background: #f1f5f9;
+}
+
+.ecsm-customers-list::-webkit-scrollbar-thumb,
+.ecsm-contracts-list::-webkit-scrollbar-thumb {
+    background: #cbd5e1;
+    border-radius: 3px;
+}
+
+.ecsm-customers-list::-webkit-scrollbar-thumb:hover,
+.ecsm-contracts-list::-webkit-scrollbar-thumb:hover {
+    background: #94a3b8;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+    .ecsm-body {
+        flex-direction: column;
+    }
+
+    .ecsm-left-column,
+    .ecsm-right-column {
+        min-height: 300px;
+    }
+
+    .ecsm-customer-item {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 12px;
+    }
+
+    .ecsm-create-btn {
+        width: 100%;
+    }
+}

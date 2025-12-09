@@ -391,7 +391,7 @@ const TemplateEditor = () => {
     };
 
     const handleBack = () => {
-        navigate('/econtract/template-list');
+        navigate('/e-contracts/create-new-contract');
     };
 
     return (
