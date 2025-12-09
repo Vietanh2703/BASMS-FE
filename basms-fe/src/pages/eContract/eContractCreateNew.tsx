@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useEContractAuth } from '../../hooks/useEContractAuth';
+import EContractServiceModal from '../../components/econtract/eContractServiceModal';
 import './eContractCreateNew.css';
 
 interface ContractTemplate {
@@ -37,6 +38,7 @@ const EContractCreateNew = () => {
     const [isProfileDropdownOpen, setIsProfileDropdownOpen] = useState(false);
     const [isLoggingOut, setIsLoggingOut] = useState(false);
     const [showLogoutModal, setShowLogoutModal] = useState(false);
+    const [showServiceModal, setShowServiceModal] = useState(false);
     const profileRef = useRef<HTMLDivElement>(null);
 
     // Search and filter states
@@ -228,8 +230,8 @@ const EContractCreateNew = () => {
             // Navigate to regular Template Editor for guard contracts
             navigate(`/e-contracts/guard-template-editor?template=${templateId}`);
         } else if (template.templateType === 'guard_service_contract') {
-            // Navigate to Service Template Editor for service contracts
-            navigate(`/e-contracts/service-template-editor?template=${templateId}`);
+            // Open service modal to select customer
+            setShowServiceModal(true);
         } else {
             // Default to regular Template Editor for other contract types
             navigate(`/e-contracts/template-editor?template=${templateId}`);
@@ -463,6 +465,12 @@ const EContractCreateNew = () => {
                     </div>
                 </div>
             )}
+
+            {/* Service Contract Modal */}
+            <EContractServiceModal
+                isOpen={showServiceModal}
+                onClose={() => setShowServiceModal(false)}
+            />
         </div>
     );
 };
