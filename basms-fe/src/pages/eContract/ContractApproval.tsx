@@ -462,7 +462,6 @@ const ContractApproval = () => {
                     </div>
 
                     <div className="ca-content-wrapper">
-                        {/* Left Column - Contract Display */}
                         <div className="ca-left-column">
                             <div className="ca-document-section">
                                 <h2 className="ca-section-title">Nội dung hợp đồng</h2>
@@ -486,7 +485,6 @@ const ContractApproval = () => {
                             </div>
                         </div>
 
-                        {/* Right Column - Contract Info and Approval */}
                         <div className="ca-right-column">
                             <div className="ca-info-section">
                                 <h2 className="ca-section-title">Thông tin hợp đồng</h2>

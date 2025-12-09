@@ -662,6 +662,175 @@
     background-color: #dbeafe;
 }
 
+.dir-customers-btn-activate {
+    background-color: #fefce8;
+    color: #ca8a04;
+    border: 1px solid #fde047;
+}
+
+.dir-customers-btn-activate:hover {
+    background-color: #fef9c3;
+}
+
+.dir-customers-btn-activate:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+}
+
+.dir-customers-btn-lock {
+    background-color: #fef2f2;
+    color: #dc2626;
+    border: 1px solid #fecaca;
+}
+
+.dir-customers-btn-lock:hover {
+    background-color: #fee2e2;
+}
+
+.dir-customers-btn-lock:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+}
+
+/* Contracts Section */
+.dir-customers-contracts-toggle {
+    margin-top: 16px;
+    padding-top: 16px;
+    border-top: 1px solid #e5e7eb;
+    display: flex;
+    justify-content: flex-end;
+}
+
+.dir-customers-toggle-btn {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 16px;
+    background-color: #f9fafb;
+    border: 1px solid #e5e7eb;
+    border-radius: 6px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    font-family: 'Inter', sans-serif;
+}
+
+.dir-customers-toggle-btn:hover:not(:disabled) {
+    background-color: #f3f4f6;
+    border-color: #3b82f6;
+}
+
+.dir-customers-toggle-btn:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+}
+
+.dir-customers-toggle-text {
+    font-size: 14px;
+    font-weight: 500;
+    color: #3b82f6;
+}
+
+.dir-customers-toggle-icon {
+    width: 20px;
+    height: 20px;
+    color: #3b82f6;
+    transition: transform 0.2s ease;
+}
+
+.dir-customers-toggle-icon-expanded {
+    transform: rotate(180deg);
+}
+
+.dir-customers-contracts-list {
+    margin-top: 16px;
+    padding: 16px;
+    background-color: #f9fafb;
+    border-radius: 8px;
+    border: 1px solid #e5e7eb;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.dir-customers-contracts-empty {
+    text-align: center;
+    padding: 24px;
+    color: #6b7280;
+    font-size: 14px;
+    font-style: italic;
+}
+
+.dir-customers-contract-item {
+    background-color: #ffffff;
+    padding: 16px;
+    border-radius: 8px;
+    border: 1px solid #e5e7eb;
+    transition: all 0.2s ease;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 16px;
+}
+
+.dir-customers-contract-item:hover {
+    border-color: #d1d5db;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+}
+
+.dir-customers-contract-content {
+    flex: 1;
+    min-width: 0;
+}
+
+.dir-customers-contract-main {
+    margin-bottom: 12px;
+}
+
+.dir-customers-contract-action {
+    flex-shrink: 0;
+}
+
+.dir-customers-contract-title {
+    font-size: 16px;
+    font-weight: 600;
+    color: #1f2937;
+    margin-bottom: 4px;
+}
+
+.dir-customers-contract-subtitle {
+    font-size: 13px;
+    font-weight: 500;
+    color: #3b82f6;
+    background-color: #eff6ff;
+    padding: 2px 8px;
+    border-radius: 4px;
+    display: inline-block;
+}
+
+.dir-customers-contract-dates {
+    display: flex;
+    gap: 24px;
+    flex-wrap: wrap;
+}
+
+.dir-customers-contract-date {
+    display: flex;
+    gap: 6px;
+    align-items: center;
+}
+
+.dir-customers-contract-date-label {
+    font-size: 13px;
+    color: #6b7280;
+    font-weight: 500;
+}
+
+.dir-customers-contract-date-value {
+    font-size: 13px;
+    color: #1f2937;
+    font-weight: 600;
+}
+
 /* Loading State */
 .dir-customers-loading {
     display: flex;
@@ -964,6 +1133,38 @@
     .dir-customers-action-btn {
         width: 100%;
         text-align: center;
+    }
+
+    .dir-customers-contracts-toggle {
+        justify-content: center;
+    }
+
+    .dir-customers-toggle-btn {
+        width: 100%;
+        justify-content: center;
+    }
+
+    .dir-customers-contracts-list {
+        padding: 12px;
+    }
+
+    .dir-customers-contract-item {
+        padding: 12px;
+        flex-direction: column;
+        align-items: stretch;
+    }
+
+    .dir-customers-contract-action {
+        width: 100%;
+    }
+
+    .dir-customers-contract-action .dir-customers-action-btn {
+        width: 100%;
+    }
+
+    .dir-customers-contract-dates {
+        flex-direction: column;
+        gap: 8px;
     }
 
     .dir-customers-pagination {

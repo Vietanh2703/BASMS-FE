@@ -152,19 +152,13 @@ const ManagerRequest = () => {
                 }
             );
 
-            if (!managerResponse.ok) {
-                const errorText = await managerResponse.text();
-                console.error('Manager API error:', managerResponse.status, errorText);
-                throw new Error(`Lỗi khi tải thông tin quản lý (${managerResponse.status})`);
-            }
 
             const managerText = await managerResponse.text();
             let managerData;
             try {
                 managerData = JSON.parse(managerText);
             } catch (e) {
-                console.error('Failed to parse manager response:', managerText.substring(0, 200));
-                throw new Error(`API trả về dữ liệu không hợp lệ. URL: ${managerUrl}`);
+                throw new Error('API trả về dữ liệu không hợp lệ');
             }
 
             const fetchedManagerId = managerData.manager?.id;
@@ -186,18 +180,13 @@ const ManagerRequest = () => {
                 }
             );
 
-            if (!templatesResponse.ok) {
-                const errorText = await templatesResponse.text();
-                console.error('Templates API error:', templatesResponse.status, errorText);
-                throw new Error(`Lỗi khi tải danh sách ca trực (${templatesResponse.status})`);
-            }
+
 
             const templatesText = await templatesResponse.text();
             let templatesData: PendingTemplatesResponse;
             try {
                 templatesData = JSON.parse(templatesText);
             } catch (e) {
-                console.error('Failed to parse templates response:', templatesText.substring(0, 200));
                 throw new Error('API trả về dữ liệu không hợp lệ');
             }
 
@@ -355,7 +344,6 @@ const ManagerRequest = () => {
             }
 
             const contractId = selectedContractGroup.contractId;
-            console.log('Fetching contract customer for contractId:', contractId);
 
             const contractCustomerUrl = `${import.meta.env.VITE_API_CONTRACT_URL}/contracts/${contractId}/customer`;
             const contractCustomerResponse = await fetch(contractCustomerUrl, {
@@ -365,19 +353,11 @@ const ManagerRequest = () => {
                 }
             });
 
-            if (!contractCustomerResponse.ok) {
-                const errorText = await contractCustomerResponse.text();
-                console.error('Contract customer API error:', contractCustomerResponse.status, errorText);
-                throw new Error(`Lỗi khi lấy thông tin hợp đồng (${contractCustomerResponse.status})`);
-            }
-
             const contractCustomerText = await contractCustomerResponse.text();
             let contractCustomerData;
             try {
                 contractCustomerData = JSON.parse(contractCustomerText);
-                console.log('Contract customer data:', contractCustomerData);
             } catch (e) {
-                console.error('Failed to parse contract customer response:', contractCustomerText.substring(0, 200));
                 throw new Error('API trả về dữ liệu không hợp lệ');
             }
 
@@ -385,8 +365,6 @@ const ManagerRequest = () => {
             if (!customerId) {
                 throw new Error('Không tìm thấy customer ID');
             }
-
-            console.log('Activating customer:', customerId);
 
             const activateCustomerUrl = `${import.meta.env.VITE_API_CONTRACT_URL}/contracts/customers/${customerId}/activate`;
             const activateCustomerResponse = await fetch(activateCustomerUrl, {
@@ -399,12 +377,23 @@ const ManagerRequest = () => {
 
             if (!activateCustomerResponse.ok) {
                 const errorText = await activateCustomerResponse.text();
-                console.error('Activate customer API error:', activateCustomerResponse.status, errorText);
+                // Try to parse JSON error response
+                try {
+                    const errorData = JSON.parse(errorText);
+                    if (errorData.message) {
+                        throw new Error(errorData.message);
+                    }
+                } catch (parseError) {
+                    // If not JSON or no message field, use default error
+                    if (parseError instanceof Error && parseError.message.includes("Customer status")) {
+                        throw parseError;
+                    }
+                }
+
                 throw new Error(`Lỗi khi kích hoạt khách hàng (${activateCustomerResponse.status})`);
             }
 
             await activateCustomerResponse.text();
-            console.log('Customer activated successfully');
 
             const firstTemplate = selectedContractGroup.templates[0];
             const shiftTemplateIds = selectedContractGroup.templates.map(t => t.id);
@@ -416,8 +405,6 @@ const ManagerRequest = () => {
                 generateFromDate: firstTemplate.effectiveFrom,
                 generateDays: generateDays
             };
-
-            console.log('Generating shifts with request:', requestBody);
 
             const response = await fetch(
                 `${import.meta.env.VITE_API_SHIFTS_URL}/shifts/generate`,
@@ -434,11 +421,56 @@ const ManagerRequest = () => {
             if (!response.ok) {
                 const errorText = await response.text();
                 console.error('Generate shifts API error:', response.status, errorText);
+
+                // Try to parse JSON error response
+                try {
+                    const errorData = JSON.parse(errorText);
+                    if (errorData.message) {
+                        throw new Error(errorData.message);
+                    }
+                } catch (parseError) {
+                    // If not JSON or no message field, use default error
+                    if (parseError instanceof Error && parseError.message.includes("Customer status")) {
+                        throw parseError;
+                    }
+                }
+
                 throw new Error(`Lỗi khi tạo ca trực (${response.status})`);
             }
 
             await response.text();
-            console.log('Shifts generated successfully');
+
+            // Update contract status after successful shift generation
+            const updateStatusUrl = `${import.meta.env.VITE_API_CONTRACT_URL}/contracts/${contractId}/update-status`;
+            const updateStatusResponse = await fetch(updateStatusUrl, {
+                method: 'POST',
+                headers: {
+                    'Authorization': `Bearer ${accessToken}`,
+                    'Content-Type': 'application/json',
+                }
+            });
+
+            if (!updateStatusResponse.ok) {
+                const errorText = await updateStatusResponse.text();
+                console.error('Update contract status API error:', updateStatusResponse.status, errorText);
+
+                // Try to parse JSON error response
+                try {
+                    const errorData = JSON.parse(errorText);
+                    if (errorData.message) {
+                        throw new Error(errorData.message);
+                    }
+                } catch (parseError) {
+                    // If not JSON or no message field, use default error
+                    if (parseError instanceof Error && parseError.message.includes("Customer status")) {
+                        throw parseError;
+                    }
+                }
+
+                throw new Error(`Lỗi khi cập nhật trạng thái hợp đồng (${updateStatusResponse.status})`);
+            }
+
+            await updateStatusResponse.text();
 
             setShowConfirmModal(false);
             setSelectedContractGroup(null);
@@ -447,9 +479,22 @@ const ManagerRequest = () => {
             console.error('Error in shift creation flow:', err);
             setShowConfirmModal(false);
             setSelectedContractGroup(null);
+
+            // Check for specific customer status error
+            let errorMessage = 'Lỗi khi tạo ca trực';
+            if (err instanceof Error) {
+                errorMessage = err.message;
+
+                // Check if error message contains customer status validation error
+                if (errorMessage.includes("Customer status is 'in-active'") ||
+                    errorMessage.includes("expected 'schedule_shifts'")) {
+                    errorMessage = 'Khách hàng hiện chưa được kích hoạt hoặc bị hủy. Vui lòng liên hệ Phòng IT';
+                }
+            }
+
             setSnackbarFailed({
                 isOpen: true,
-                message: err instanceof Error ? err.message : 'Lỗi khi tạo ca trực'
+                message: errorMessage
             });
         } finally {
             setIsSubmitting(false);

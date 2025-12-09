@@ -13,35 +13,23 @@ declare global {
     }
 }
 
+// API Response interfaces
 interface Customer {
     id: string;
     customerCode: string;
     companyName: string;
     contactPersonName: string;
     contactPersonTitle: string;
-    identityNumber: string;
-    identityIssueDate: string | null;
-    identityIssuePlace: string | null;
     email: string;
     phone: string;
-    avatarUrl: string | null;
-    gender: string;
-    dateOfBirth: string;
     address: string;
     city: string | null;
     district: string | null;
     industry: string | null;
-    companySize: string | null;
     status: string;
-    customerSince: string;
-    followsNationalHolidays: boolean;
-    notes: string | null;
-    createdAt: string;
 }
 
-interface Location {
-    id: string;
-    customerId: string;
+interface LocationDetails {
     locationCode: string;
     locationName: string;
     locationType: string;
@@ -54,15 +42,10 @@ interface Location {
     geofenceRadiusMeters: number;
     siteManagerName: string | null;
     siteManagerPhone: string | null;
-    operatingHoursType: string;
-    requires24x7Coverage: boolean;
-    minimumGuardsRequired: number;
-    isActive: boolean;
 }
 
 interface ContractLocation {
     id: string;
-    contractId: string;
     locationId: string;
     guardsRequired: number;
     coverageType: string;
@@ -72,11 +55,24 @@ interface ContractLocation {
     priorityLevel: number;
     autoGenerateShifts: boolean;
     isActive: boolean;
+    notes: string | null;
+    locationDetails: LocationDetails;
+}
+
+interface ContractDocument {
+    id: string;
+    documentType: string;
+    documentName: string;
+    fileUrl: string;
+    fileSize: number;
+    mimeType: string | null;
+    version: string;
+    documentDate: string | null;
+    createdAt: string;
 }
 
 interface ShiftSchedule {
     id: string;
-    contractId: string;
     locationId: string;
     scheduleName: string;
     scheduleType: string;
@@ -94,7 +90,6 @@ interface ShiftSchedule {
     appliesFriday: boolean;
     appliesSaturday: boolean;
     appliesSunday: boolean;
-    monthlyDates: string | null;
     appliesOnPublicHolidays: boolean;
     appliesOnCustomerHolidays: boolean;
     appliesOnWeekends: boolean;
@@ -102,19 +97,26 @@ interface ShiftSchedule {
     requiresArmedGuard: boolean;
     requiresSupervisor: boolean;
     minimumExperienceMonths: number;
-    requiredCertifications: string | null;
     autoGenerateEnabled: boolean;
     generateAdvanceDays: number;
     effectiveFrom: string;
     effectiveTo: string;
     isActive: boolean;
+}
+
+interface ContractPeriod {
+    id: string;
+    periodNumber: number;
+    periodType: string;
+    periodStartDate: string;
+    periodEndDate: string;
+    isCurrentPeriod: boolean;
     notes: string | null;
-    createdBy: string;
+    createdAt: string;
 }
 
 interface PublicHoliday {
     id: string;
-    contractId: string;
     holidayDate: string;
     holidayName: string;
     holidayNameEn: string;
@@ -137,26 +139,8 @@ interface PublicHoliday {
     year: number;
 }
 
-interface Document {
+interface ContractData {
     id: string;
-    documentType: string;
-    category: string;
-    documentName: string;
-    fileUrl: string;
-    fileSize: number;
-    version: string;
-    startDate: string;
-    endDate: string;
-    signDate: string;
-    approvedAt: string;
-    createdAt: string;
-    fileSizeFormatted: string;
-}
-
-interface Contract {
-    id: string;
-    customerId: string;
-    documentId: string;
     contractNumber: string;
     contractTitle: string;
     contractType: string;
@@ -164,45 +148,37 @@ interface Contract {
     startDate: string;
     endDate: string;
     durationMonths: number;
+    status: string;
     coverageModel: string;
-    followsCustomerCalendar: boolean;
-    workOnPublicHolidays: boolean;
-    workOnCustomerClosedDays: boolean;
     isRenewable: boolean;
     autoRenewal: boolean;
     renewalNoticeDays: number;
     renewalCount: number;
+    followsCustomerCalendar: boolean;
+    workOnPublicHolidays: boolean;
+    workOnCustomerClosedDays: boolean;
     autoGenerateShifts: boolean;
     generateShiftsAdvanceDays: number;
-    status: string;
-    approvedBy: string | null;
-    approvedAt: string | null;
-    signedDate: string | null;
-    activatedAt: string | null;
-    terminationDate: string | null;
-    terminationType: string | null;
-    terminationReason: string | null;
-    terminatedBy: string | null;
-    contractFileUrl: string;
-    notes: string | null;
-    createdAt: string;
-    document: Document;
+    customer: Customer;
+    documents: ContractDocument[];
     locations: ContractLocation[];
     shiftSchedules: ShiftSchedule[];
+    periods: ContractPeriod[];
     publicHolidays: PublicHoliday[];
+    createdBy: string;
+    createdAt: string;
+    updatedBy: string | null;
+    updatedAt: string | null;
 }
 
-interface CustomerDetailResponse {
+interface ContractDetailResponse {
     success: boolean;
-    errorMessage: string | null;
-    customer: Customer;
-    locations: Location[];
-    contracts: Contract[];
+    data: ContractData;
 }
 
 const CustomerDetail = () => {
     const navigate = useNavigate();
-    const { customerId } = useParams<{ customerId: string }>();
+    const { customerId, contractId } = useParams<{ customerId: string; contractId: string }>();
     const { user, logout } = useAuth();
     const [isMenuOpen, setIsMenuOpen] = useState(false);
     const [currentTime, setCurrentTime] = useState(new Date());
@@ -211,7 +187,7 @@ const CustomerDetail = () => {
     const [showLogoutModal, setShowLogoutModal] = useState(false);
     const profileRef = useRef<HTMLDivElement>(null);
 
-    const [customerData, setCustomerData] = useState<CustomerDetailResponse | null>(null);
+    const [contractData, setContractData] = useState<ContractDetailResponse | null>(null);
     const [isLoading, setIsLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
     const [mapsLoaded, setMapsLoaded] = useState(false);
@@ -300,9 +276,9 @@ const CustomerDetail = () => {
     }, [isProfileDropdownOpen]);
 
     useEffect(() => {
-        const fetchCustomerDetail = async () => {
-            if (!customerId) {
-                setError('ID khách hàng không hợp lệ');
+        const fetchContractDetail = async () => {
+            if (!contractId) {
+                setError('ID hợp đồng không hợp lệ');
                 setIsLoading(false);
                 return;
             }
@@ -321,7 +297,7 @@ const CustomerDetail = () => {
                     return;
                 }
 
-                const response = await fetch(`${apiUrl}/contracts/customers/${customerId}`, {
+                const response = await fetch(`${apiUrl}/contracts/${contractId}`, {
                     method: 'GET',
                     headers: {
                         'Authorization': `Bearer ${token}`,
@@ -330,33 +306,41 @@ const CustomerDetail = () => {
                 });
 
                 if (!response.ok) {
-                    throw new Error('Failed to fetch customer details');
+                    throw new Error('Failed to fetch contract details');
                 }
 
-                const data: CustomerDetailResponse = await response.json();
-                setCustomerData(data);
+                const data: ContractDetailResponse = await response.json();
+
+                if (!data.success || !data.data) {
+                    throw new Error('No contract data found in response');
+                }
+
+                setContractData(data);
             } catch (err) {
-                console.error('Error fetching customer details:', err);
-                setError('Không thể tải thông tin khách hàng. Vui lòng thử lại sau.');
+                console.error('Error fetching contract details:', err);
+                setError('Không thể tải thông tin hợp đồng. Vui lòng thử lại sau.');
             } finally {
                 setIsLoading(false);
             }
         };
 
-        fetchCustomerDetail();
-    }, [customerId]);
+        fetchContractDetail();
+    }, [contractId]);
 
     // Initialize maps for locations
     useEffect(() => {
-        if (!mapsLoaded || !customerData || !customerData.locations) {
+        if (!mapsLoaded || !contractData || !contractData.data.locations) {
             return;
         }
 
         const initializeMaps = () => {
             const apiKey = import.meta.env.VITE_HERE_MAP_API_KEY;
 
-            customerData.locations.forEach((location) => {
-                if (!location.latitude || !location.longitude) {
+            contractData.data.locations.forEach((location) => {
+                const lat = location.locationDetails.latitude;
+                const lng = location.locationDetails.longitude;
+
+                if (!lat || !lng) {
                     return;
                 }
 
@@ -380,7 +364,7 @@ const CustomerDetail = () => {
                         defaultLayers.vector.normal.map,
                         {
                             zoom: 16,
-                            center: { lat: location.latitude, lng: location.longitude }
+                            center: { lat: lat, lng: lng }
                         }
                     );
 
@@ -389,8 +373,8 @@ const CustomerDetail = () => {
 
                     // Add a marker at the location
                     const marker = new window.H.map.Marker({
-                        lat: location.latitude,
-                        lng: location.longitude
+                        lat: lat,
+                        lng: lng
                     });
                     map.addObject(marker);
 
@@ -417,7 +401,7 @@ const CustomerDetail = () => {
             });
             mapRefs.current = {};
         };
-    }, [mapsLoaded, customerData]);
+    }, [mapsLoaded, contractData]);
 
     const toggleMenu = () => {
         setIsMenuOpen(!isMenuOpen);
@@ -472,6 +456,7 @@ const CustomerDetail = () => {
     const getStatusLabel = (status: string) => {
         const statusMap: { [key: string]: string } = {
             active: 'Đang hoạt động',
+            'in-active': 'Chưa hoạt động',
             inactive: 'Không hoạt động',
             assigning_manager: 'Phân công bảo vệ',
             schedule_shifts: 'Phân công ca trực',
@@ -484,15 +469,6 @@ const CustomerDetail = () => {
             terminated: 'Đã chấm dứt',
         };
         return statusMap[status] || status;
-    };
-
-    const getGenderLabel = (gender: string) => {
-        const genderMap: { [key: string]: string } = {
-            male: 'Nam',
-            female: 'Nữ',
-            other: 'Khác',
-        };
-        return genderMap[gender] || gender;
     };
 
     const getLocationTypeLabel = (type: string) => {
@@ -516,13 +492,15 @@ const CustomerDetail = () => {
     };
 
     // Manager assignment functions
-    const handleOpenManagerModal = (contract: Contract) => {
+    const handleOpenManagerModal = () => {
+        if (!contractData) return;
+
         setModalState({
             isOpen: true,
             contract: {
-                id: contract.id,
-                title: contract.contractTitle,
-                number: contract.contractNumber
+                id: contractData.data.id,
+                title: contractData.data.contractTitle,
+                number: contractData.data.contractNumber
             }
         });
     };
@@ -538,30 +516,8 @@ const CustomerDetail = () => {
         // Show success snackbar
         setShowSnackbarSuccess(true);
 
-        // Refresh customer data after successful activation
-        if (customerId) {
-            try {
-                const apiUrl = import.meta.env.VITE_API_CONTRACT_URL;
-                const token = localStorage.getItem('accessToken');
-
-                if (!token) return;
-
-                const response = await fetch(`${apiUrl}/customers/${customerId}/details`, {
-                    method: 'GET',
-                    headers: {
-                        'Authorization': `Bearer ${token}`,
-                        'Content-Type': 'application/json',
-                    },
-                });
-
-                if (response.ok) {
-                    const data = await response.json();
-                    setCustomerData(data);
-                }
-            } catch (err) {
-                console.error('Error refreshing customer data:', err);
-            }
-        }
+        // Refresh contract data after successful activation by reloading the page
+        window.location.reload();
     };
 
     const handleManagerAssignmentError = () => {
@@ -700,13 +656,13 @@ const CustomerDetail = () => {
                             </button>
                             <h1 className="cust-detail-page-title">Chi tiết khách hàng</h1>
                         </div>
-                        {/* Hide buttons when customer status is schedule_shifts */}
-                        {customerData?.customer?.status !== 'schedule_shifts' && (
+                        {/* Show buttons only when contract status is draft */}
+                        {contractData?.data?.status === 'draft' && (
                             <div className="cust-detail-header-actions">
                                 <button
                                     className="cust-detail-action-btn cust-detail-btn-update"
                                     onClick={() => {
-                                        navigate(`/director/customer/${customerId}/edit`);
+                                        navigate(`/director/customer/${customerId}/${contractId}/edit`);
                                     }}
                                 >
                                     <svg viewBox="0 0 24 24" fill="currentColor" width="20" height="20">
@@ -716,15 +672,8 @@ const CustomerDetail = () => {
                                 </button>
                                 <button
                                     className="cust-detail-action-btn cust-detail-btn-assign"
-                                    onClick={() => {
-                                        if (customerData?.contracts && customerData.contracts.length > 0) {
-                                            // Use the first contract for now
-                                            handleOpenManagerModal(customerData.contracts[0]);
-                                        } else {
-                                            console.log('No contracts found');
-                                        }
-                                    }}
-                                    disabled={!customerData?.contracts || customerData.contracts.length === 0}
+                                    onClick={handleOpenManagerModal}
+                                    disabled={!contractData}
                                 >
                                     <svg viewBox="0 0 24 24" fill="currentColor" width="20" height="20">
                                         <path d="M16 11c1.66 0 2.99-1.34 2.99-3S17.66 5 16 5c-1.66 0-3 1.34-3 3s1.34 3 3 3zm-8 0c1.66 0 2.99-1.34 2.99-3S9.66 5 8 5C6.34 5 5 6.34 5 8s1.34 3 3 3zm0 2c-2.33 0-7 1.17-7 3.5V19h14v-2.5c0-2.33-4.67-3.5-7-3.5zm8 0c-.29 0-.62.02-.97.05 1.16.84 1.97 1.97 1.97 3.45V19h6v-2.5c0-2.33-4.67-3.5-7-3.5z"/>
@@ -738,7 +687,7 @@ const CustomerDetail = () => {
                     {/* Loading State */}
                     {isLoading && (
                         <div className="cust-detail-loading">
-                            <div className="cust-detail-loading-text">Đang tải thông tin khách hàng...</div>
+                            <div className="cust-detail-loading-text">Đang tải thông tin hợp đồng...</div>
                         </div>
                     )}
 
@@ -756,27 +705,27 @@ const CustomerDetail = () => {
                     )}
 
                     {/* Customer Detail Content */}
-                    {!isLoading && !error && customerData && (
+                    {!isLoading && !error && contractData && (
                         <div className="cust-detail-content">
                             {/* Customer Basic Information */}
                             <div className="cust-detail-section">
-                                <h2 className="cust-detail-section-title">Thông tin cơ bản</h2>
+                                <h2 className="cust-detail-section-title">Thông tin khách hàng</h2>
                                 <div className="cust-detail-info-grid">
                                     <div className="cust-detail-info-item">
                                         <span className="cust-detail-info-label">Mã khách hàng:</span>
-                                        <span className="cust-detail-info-value">{customerData.customer.customerCode}</span>
+                                        <span className="cust-detail-info-value">{contractData.data.customer.customerCode}</span>
                                     </div>
                                     <div className="cust-detail-info-item">
                                         <span className="cust-detail-info-label">Tên công ty:</span>
-                                        <span className="cust-detail-info-value">{customerData.customer.companyName}</span>
+                                        <span className="cust-detail-info-value">{contractData.data.customer.companyName}</span>
                                     </div>
                                     <div className="cust-detail-info-item">
                                         <span className="cust-detail-info-label">Địa chỉ:</span>
-                                        <span className="cust-detail-info-value">{customerData.customer.address}</span>
+                                        <span className="cust-detail-info-value">{contractData.data.customer.address}</span>
                                     </div>
                                     <div className="cust-detail-info-item">
-                                        <span className="cust-detail-info-label">Khách hàng từ:</span>
-                                        <span className="cust-detail-info-value">{formatDate(customerData.customer.customerSince)}</span>
+                                        <span className="cust-detail-info-label">Trạng thái:</span>
+                                        <span className="cust-detail-info-value">{getStatusLabel(contractData.data.customer.status)}</span>
                                     </div>
                                 </div>
                             </div>
@@ -787,43 +736,31 @@ const CustomerDetail = () => {
                                 <div className="cust-detail-info-grid">
                                     <div className="cust-detail-info-item">
                                         <span className="cust-detail-info-label">Họ và tên:</span>
-                                        <span className="cust-detail-info-value">{customerData.customer.contactPersonName}</span>
+                                        <span className="cust-detail-info-value">{contractData.data.customer.contactPersonName}</span>
                                     </div>
                                     <div className="cust-detail-info-item">
                                         <span className="cust-detail-info-label">Chức vụ:</span>
-                                        <span className="cust-detail-info-value">{customerData.customer.contactPersonTitle}</span>
-                                    </div>
-                                    <div className="cust-detail-info-item">
-                                        <span className="cust-detail-info-label">Số CMND/CCCD:</span>
-                                        <span className="cust-detail-info-value">{customerData.customer.identityNumber}</span>
+                                        <span className="cust-detail-info-value">{contractData.data.customer.contactPersonTitle}</span>
                                     </div>
                                     <div className="cust-detail-info-item">
                                         <span className="cust-detail-info-label">Email:</span>
-                                        <span className="cust-detail-info-value">{customerData.customer.email}</span>
+                                        <span className="cust-detail-info-value">{contractData.data.customer.email}</span>
                                     </div>
                                     <div className="cust-detail-info-item">
                                         <span className="cust-detail-info-label">Số điện thoại:</span>
-                                        <span className="cust-detail-info-value">{customerData.customer.phone}</span>
-                                    </div>
-                                    <div className="cust-detail-info-item">
-                                        <span className="cust-detail-info-label">Giới tính:</span>
-                                        <span className="cust-detail-info-value">{getGenderLabel(customerData.customer.gender)}</span>
-                                    </div>
-                                    <div className="cust-detail-info-item">
-                                        <span className="cust-detail-info-label">Ngày sinh:</span>
-                                        <span className="cust-detail-info-value">{formatDate(customerData.customer.dateOfBirth)}</span>
+                                        <span className="cust-detail-info-value">{contractData.data.customer.phone}</span>
                                     </div>
                                 </div>
                             </div>
 
                             {/* Locations */}
-                            {customerData.locations && customerData.locations.length > 0 && (
+                            {contractData.data.locations && contractData.data.locations.length > 0 && (
                                 <div className="cust-detail-section">
-                                    <h2 className="cust-detail-section-title">Địa điểm ({customerData.locations.length})</h2>
-                                    {customerData.locations.map((location) => (
+                                    <h2 className="cust-detail-section-title">Địa điểm ({contractData.data.locations.length})</h2>
+                                    {contractData.data.locations.map((location) => (
                                         <div key={location.id} className="cust-detail-location-card">
                                             <div className="cust-detail-location-header">
-                                                <h3 className="cust-detail-location-name">{location.locationName}</h3>
+                                                <h3 className="cust-detail-location-name">{location.locationDetails.locationName}</h3>
                                                 <span className={`cust-detail-location-status ${location.isActive ? 'cust-detail-active' : 'cust-detail-inactive'}`}>
                                                     {location.isActive ? 'Hoạt động' : 'Không hoạt động'}
                                                 </span>
@@ -831,43 +768,41 @@ const CustomerDetail = () => {
                                             <div className="cust-detail-info-grid">
                                                 <div className="cust-detail-info-item">
                                                     <span className="cust-detail-info-label">Mã địa điểm:</span>
-                                                    <span className="cust-detail-info-value">{location.locationCode}</span>
+                                                    <span className="cust-detail-info-value">{location.locationDetails.locationCode}</span>
                                                 </div>
                                                 <div className="cust-detail-info-item">
                                                     <span className="cust-detail-info-label">Loại địa điểm:</span>
-                                                    <span className="cust-detail-info-value">{getLocationTypeLabel(location.locationType)}</span>
+                                                    <span className="cust-detail-info-value">{getLocationTypeLabel(location.locationDetails.locationType)}</span>
                                                 </div>
                                                 <div className="cust-detail-info-item">
                                                     <span className="cust-detail-info-label">Địa chỉ:</span>
-                                                    <span className="cust-detail-info-value">{location.address}</span>
+                                                    <span className="cust-detail-info-value">{location.locationDetails.address}</span>
                                                 </div>
                                                 <div className="cust-detail-info-item">
-                                                    <span className="cust-detail-info-label">Yêu cầu 24/7:</span>
-                                                    <span className="cust-detail-info-value">
-                                                        {location.requires24x7Coverage ? 'Có' : 'Không'}
-                                                    </span>
+                                                    <span className="cust-detail-info-label">Số bảo vệ yêu cầu:</span>
+                                                    <span className="cust-detail-info-value">{location.guardsRequired}</span>
                                                 </div>
-                                                {location.siteManagerName && (
+                                                {location.locationDetails.siteManagerName && (
                                                     <>
                                                         <div className="cust-detail-info-item">
                                                             <span className="cust-detail-info-label">Người quản lý:</span>
-                                                            <span className="cust-detail-info-value">{location.siteManagerName}</span>
+                                                            <span className="cust-detail-info-value">{location.locationDetails.siteManagerName}</span>
                                                         </div>
                                                         <div className="cust-detail-info-item">
                                                             <span className="cust-detail-info-label">SĐT người quản lý:</span>
-                                                            <span className="cust-detail-info-value">{location.siteManagerPhone}</span>
+                                                            <span className="cust-detail-info-value">{location.locationDetails.siteManagerPhone}</span>
                                                         </div>
                                                     </>
                                                 )}
                                             </div>
 
                                             {/* HERE Maps Display */}
-                                            {location.latitude && location.longitude && (
+                                            {location.locationDetails.latitude && location.locationDetails.longitude && (
                                                 <div className="cust-detail-location-map">
                                                     <h4 className="cust-detail-map-title">Vị trí trên bản đồ</h4>
                                                     <div className="cust-detail-map-coordinates">
-                                                        <span>Kinh độ: {location.longitude.toFixed(6)}</span>
-                                                        <span>Vĩ độ: {location.latitude.toFixed(6)}</span>
+                                                        <span>Kinh độ: {location.locationDetails.longitude.toFixed(6)}</span>
+                                                        <span>Vĩ độ: {location.locationDetails.latitude.toFixed(6)}</span>
                                                     </div>
                                                     <div
                                                         id={`map-${location.id}`}
@@ -899,140 +834,145 @@ const CustomerDetail = () => {
                                 </div>
                             )}
 
-                            {/* Contracts */}
-                            {customerData.contracts && customerData.contracts.length > 0 && (
-                                <div className="cust-detail-section">
-                                    <h2 className="cust-detail-section-title">Hợp đồng ({customerData.contracts.length})</h2>
-                                    {customerData.contracts.map((contract) => (
-                                        <div key={contract.id} className="cust-detail-contract-card">
-                                            <div className="cust-detail-contract-header">
-                                                <div>
-                                                    <h3 className="cust-detail-contract-title">{contract.contractTitle}</h3>
-                                                    <p className="cust-detail-contract-number">{contract.contractNumber}</p>
+                            {/* Contract Information */}
+                            <div className="cust-detail-section">
+                                <h2 className="cust-detail-section-title">Thông tin hợp đồng</h2>
+                                <div className="cust-detail-contract-card">
+                                    <div className="cust-detail-contract-header">
+                                        <div>
+                                            <h3 className="cust-detail-contract-title">{contractData.data.contractTitle}</h3>
+                                            <p className="cust-detail-contract-number">{contractData.data.contractNumber}</p>
+                                        </div>
+                                        <div className="cust-detail-contract-header-actions">
+                                            <span className={`cust-detail-contract-status cust-detail-status-${contractData.data.status}`}>
+                                                {getStatusLabel(contractData.data.status)}
+                                            </span>
+                                        </div>
+                                    </div>
+
+                                    <div className="cust-detail-subsection">
+                                        <h4 className="cust-detail-subsection-title">Thông tin chung</h4>
+                                        <div className="cust-detail-info-grid">
+                                            <div className="cust-detail-info-item">
+                                                <span className="cust-detail-info-label">Loại hợp đồng:</span>
+                                                <span className="cust-detail-info-value">{getContractTypeLabel(contractData.data.contractType)}</span>
+                                            </div>
+                                            <div className="cust-detail-info-item">
+                                                <span className="cust-detail-info-label">Phạm vi dịch vụ:</span>
+                                                <span className="cust-detail-info-value">{contractData.data.serviceScope}</span>
+                                            </div>
+                                            <div className="cust-detail-info-item">
+                                                <span className="cust-detail-info-label">Ngày bắt đầu:</span>
+                                                <span className="cust-detail-info-value">{formatDate(contractData.data.startDate)}</span>
+                                            </div>
+                                            <div className="cust-detail-info-item">
+                                                <span className="cust-detail-info-label">Ngày kết thúc:</span>
+                                                <span className="cust-detail-info-value">{formatDate(contractData.data.endDate)}</span>
+                                            </div>
+                                            <div className="cust-detail-info-item">
+                                                <span className="cust-detail-info-label">Thời hạn:</span>
+                                                <span className="cust-detail-info-value">{contractData.data.durationMonths} tháng</span>
+                                            </div>
+                                            <div className="cust-detail-info-item">
+                                                <span className="cust-detail-info-label">Gia hạn tự động:</span>
+                                                <span className="cust-detail-info-value">
+                                                    {contractData.data.autoRenewal ? 'Có' : 'Không'}
+                                                </span>
+                                            </div>
+                                            <div className="cust-detail-info-item">
+                                                <span className="cust-detail-info-label">Làm việc ngày lễ:</span>
+                                                <span className="cust-detail-info-value">
+                                                    {contractData.data.workOnPublicHolidays ? 'Có' : 'Không'}
+                                                </span>
+                                            </div>
+                                            <div className="cust-detail-info-item">
+                                                <span className="cust-detail-info-label">Tự động tạo ca:</span>
+                                                <span className="cust-detail-info-value">
+                                                    {contractData.data.autoGenerateShifts ? 'Có' : 'Không'}
+                                                </span>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    {/* Shift Schedules */}
+                                    {contractData.data.shiftSchedules && contractData.data.shiftSchedules.length > 0 && (
+                                        <div className="cust-detail-subsection">
+                                            <h4 className="cust-detail-subsection-title">Lịch ca trực ({contractData.data.shiftSchedules.length})</h4>
+                                            {contractData.data.shiftSchedules.map((shift) => (
+                                                <div key={shift.id} className="cust-detail-shift-card">
+                                                    <div className="cust-detail-shift-header">
+                                                        <h5 className="cust-detail-shift-name">{shift.scheduleName}</h5>
+                                                        <span className="cust-detail-shift-time">
+                                                            {formatTime(shift.shiftStartTime)} - {formatTime(shift.shiftEndTime)}
+                                                            {shift.crossesMidnight && ' (qua đêm)'}
+                                                        </span>
+                                                    </div>
+                                                    <div className="cust-detail-info-grid">
+                                                        <div className="cust-detail-info-item">
+                                                            <span className="cust-detail-info-label">Thời lượng:</span>
+                                                            <span className="cust-detail-info-value">{shift.durationHours} giờ</span>
+                                                        </div>
+                                                        <div className="cust-detail-info-item">
+                                                            <span className="cust-detail-info-label">Nghỉ giữa ca:</span>
+                                                            <span className="cust-detail-info-value">{shift.breakMinutes} phút</span>
+                                                        </div>
+                                                        <div className="cust-detail-info-item">
+                                                            <span className="cust-detail-info-label">Số bảo vệ/ca:</span>
+                                                            <span className="cust-detail-info-value">{shift.guardsPerShift}</span>
+                                                        </div>
+                                                    </div>
+                                                    <div className="cust-detail-shift-days">
+                                                        <span className="cust-detail-info-label">Áp dụng:</span>
+                                                        <div className="cust-detail-days-row">
+                                                            <span className={shift.appliesMonday ? 'cust-detail-day-active' : 'cust-detail-day-inactive'}>T2</span>
+                                                            <span className={shift.appliesTuesday ? 'cust-detail-day-active' : 'cust-detail-day-inactive'}>T3</span>
+                                                            <span className={shift.appliesWednesday ? 'cust-detail-day-active' : 'cust-detail-day-inactive'}>T4</span>
+                                                            <span className={shift.appliesThursday ? 'cust-detail-day-active' : 'cust-detail-day-inactive'}>T5</span>
+                                                            <span className={shift.appliesFriday ? 'cust-detail-day-active' : 'cust-detail-day-inactive'}>T6</span>
+                                                            <span className={shift.appliesSaturday ? 'cust-detail-day-active' : 'cust-detail-day-inactive'}>T7</span>
+                                                            <span className={shift.appliesSunday ? 'cust-detail-day-active' : 'cust-detail-day-inactive'}>CN</span>
+                                                        </div>
+                                                    </div>
                                                 </div>
-                                                <div className="cust-detail-contract-header-actions">
-                                                    <span className={`cust-detail-contract-status cust-detail-status-${contract.status}`}>
-                                                        {getStatusLabel(contract.status)}
+                                            ))}
+                                        </div>
+                                    )}
+
+                                    {/* Public Holidays */}
+                                    <div className="cust-detail-subsection">
+                                        <h4 className="cust-detail-subsection-title">
+                                            Ngày nghỉ lễ ({contractData.data.publicHolidays?.length || 0})
+                                        </h4>
+                                        {contractData.data.publicHolidays && contractData.data.publicHolidays.length > 0 ? (
+                                            <div className="cust-detail-holidays-list">
+                                                {contractData.data.publicHolidays.map((holiday) => (
+                                                    <div key={holiday.id} className="cust-detail-holiday-item">
+                                                        <div className="cust-detail-holiday-date">
+                                                            {formatDate(holiday.holidayDate)}
+                                                        </div>
+                                                        <div className="cust-detail-holiday-info">
+                                                            <div className="cust-detail-holiday-name">{holiday.holidayName}</div>
+                                                            <div className="cust-detail-holiday-details">
+                                                                {holiday.totalHolidayDays > 1 &&
+                                                                    `(${holiday.totalHolidayDays} ngày)`
+                                                                }
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                ))}
+                                            </div>
+                                        ) : (
+                                            <div className="cust-detail-info-grid">
+                                                <div className="cust-detail-info-item">
+                                                    <span className="cust-detail-info-value" style={{ fontStyle: 'italic', color: '#6b7280' }}>
+                                                        Chưa có ngày nghỉ lễ được cấu hình
                                                     </span>
                                                 </div>
                                             </div>
-
-                                            {/* Contract Basic Info */}
-                                            <div className="cust-detail-subsection">
-                                                <h4 className="cust-detail-subsection-title">Thông tin chung</h4>
-                                                <div className="cust-detail-info-grid">
-                                                    <div className="cust-detail-info-item">
-                                                        <span className="cust-detail-info-label">Loại hợp đồng:</span>
-                                                        <span className="cust-detail-info-value">{getContractTypeLabel(contract.contractType)}</span>
-                                                    </div>
-                                                    <div className="cust-detail-info-item">
-                                                        <span className="cust-detail-info-label">Phạm vi dịch vụ:</span>
-                                                        <span className="cust-detail-info-value">{contract.serviceScope}</span>
-                                                    </div>
-                                                    <div className="cust-detail-info-item">
-                                                        <span className="cust-detail-info-label">Ngày bắt đầu:</span>
-                                                        <span className="cust-detail-info-value">{formatDate(contract.startDate)}</span>
-                                                    </div>
-                                                    <div className="cust-detail-info-item">
-                                                        <span className="cust-detail-info-label">Ngày kết thúc:</span>
-                                                        <span className="cust-detail-info-value">{formatDate(contract.endDate)}</span>
-                                                    </div>
-                                                    <div className="cust-detail-info-item">
-                                                        <span className="cust-detail-info-label">Thời hạn:</span>
-                                                        <span className="cust-detail-info-value">{contract.durationMonths} tháng</span>
-                                                    </div>
-                                                    <div className="cust-detail-info-item">
-                                                        <span className="cust-detail-info-label">Gia hạn tự động:</span>
-                                                        <span className="cust-detail-info-value">
-                                                            {contract.autoRenewal ? 'Có' : 'Không'}
-                                                        </span>
-                                                    </div>
-                                                    <div className="cust-detail-info-item">
-                                                        <span className="cust-detail-info-label">Làm việc ngày lễ:</span>
-                                                        <span className="cust-detail-info-value">
-                                                            {contract.workOnPublicHolidays ? 'Có' : 'Không'}
-                                                        </span>
-                                                    </div>
-                                                    <div className="cust-detail-info-item">
-                                                        <span className="cust-detail-info-label">Tự động tạo ca:</span>
-                                                        <span className="cust-detail-info-value">
-                                                            {contract.autoGenerateShifts ? 'Có' : 'Không'}
-                                                        </span>
-                                                    </div>
-                                                </div>
-                                            </div>
-
-                                            {/* Shift Schedules */}
-                                            {contract.shiftSchedules && contract.shiftSchedules.length > 0 && (
-                                                <div className="cust-detail-subsection">
-                                                    <h4 className="cust-detail-subsection-title">Lịch ca trực ({contract.shiftSchedules.length})</h4>
-                                                    {contract.shiftSchedules.map((shift) => (
-                                                        <div key={shift.id} className="cust-detail-shift-card">
-                                                            <div className="cust-detail-shift-header">
-                                                                <h5 className="cust-detail-shift-name">{shift.scheduleName}</h5>
-                                                                <span className="cust-detail-shift-time">
-                                                                    {formatTime(shift.shiftStartTime)} - {formatTime(shift.shiftEndTime)}
-                                                                    {shift.crossesMidnight && ' (qua đêm)'}
-                                                                </span>
-                                                            </div>
-                                                            <div className="cust-detail-info-grid">
-                                                                <div className="cust-detail-info-item">
-                                                                    <span className="cust-detail-info-label">Thời lượng:</span>
-                                                                    <span className="cust-detail-info-value">{shift.durationHours} giờ</span>
-                                                                </div>
-                                                                <div className="cust-detail-info-item">
-                                                                    <span className="cust-detail-info-label">Nghỉ giữa ca:</span>
-                                                                    <span className="cust-detail-info-value">{shift.breakMinutes} phút</span>
-                                                                </div>
-                                                                <div className="cust-detail-info-item">
-                                                                    <span className="cust-detail-info-label">Số bảo vệ/ca:</span>
-                                                                    <span className="cust-detail-info-value">{shift.guardsPerShift}</span>
-                                                                </div>
-                                                            </div>
-                                                            <div className="cust-detail-shift-days">
-                                                                <span className="cust-detail-info-label">Áp dụng:</span>
-                                                                <div className="cust-detail-days-row">
-                                                                    <span className={shift.appliesMonday ? 'cust-detail-day-active' : 'cust-detail-day-inactive'}>T2</span>
-                                                                    <span className={shift.appliesTuesday ? 'cust-detail-day-active' : 'cust-detail-day-inactive'}>T3</span>
-                                                                    <span className={shift.appliesWednesday ? 'cust-detail-day-active' : 'cust-detail-day-inactive'}>T4</span>
-                                                                    <span className={shift.appliesThursday ? 'cust-detail-day-active' : 'cust-detail-day-inactive'}>T5</span>
-                                                                    <span className={shift.appliesFriday ? 'cust-detail-day-active' : 'cust-detail-day-inactive'}>T6</span>
-                                                                    <span className={shift.appliesSaturday ? 'cust-detail-day-active' : 'cust-detail-day-inactive'}>T7</span>
-                                                                    <span className={shift.appliesSunday ? 'cust-detail-day-active' : 'cust-detail-day-inactive'}>CN</span>
-                                                                </div>
-                                                            </div>
-                                                        </div>
-                                                    ))}
-                                                </div>
-                                            )}
-
-                                            {/* Public Holidays */}
-                                            {contract.publicHolidays && contract.publicHolidays.length > 0 && (
-                                                <div className="cust-detail-subsection">
-                                                    <h4 className="cust-detail-subsection-title">Ngày nghỉ lễ ({contract.publicHolidays.length})</h4>
-                                                    <div className="cust-detail-holidays-list">
-                                                        {contract.publicHolidays.map((holiday) => (
-                                                            <div key={holiday.id} className="cust-detail-holiday-item">
-                                                                <div className="cust-detail-holiday-date">
-                                                                    {formatDate(holiday.holidayDate)}
-                                                                </div>
-                                                                <div className="cust-detail-holiday-info">
-                                                                    <div className="cust-detail-holiday-name">{holiday.holidayName}</div>
-                                                                    <div className="cust-detail-holiday-details">
-                                                                        {holiday.totalHolidayDays > 1 &&
-                                                                            `(${holiday.totalHolidayDays} ngày)`
-                                                                        }
-                                                                    </div>
-                                                                </div>
-                                                            </div>
-                                                        ))}
-                                                    </div>
-                                                </div>
-                                            )}
-                                        </div>
-                                    ))}
+                                        )}
+                                    </div>
                                 </div>
-                            )}
+                            </div>
                         </div>
                     )}
                 </main>

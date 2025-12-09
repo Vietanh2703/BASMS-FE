@@ -37,15 +37,9 @@ interface ShiftScheduleData {
     notes: string;
 }
 
-interface Contract {
-    id: string;
-    contractNumber: string;
-    customerId: string;
-}
-
 interface ShiftSchedule {
     id: string;
-    contractId: string;
+    locationId: string;
     scheduleName: string;
     scheduleType: string;
     shiftStartTime: string;
@@ -104,7 +98,7 @@ interface PublicHoliday {
 }
 
 interface ShiftScheduleEditProps {
-    customerId: string;
+    contractId: string;
 }
 
 export interface ShiftScheduleEditHandle {
@@ -124,16 +118,13 @@ const MINUTES = Array.from({ length: 60 }, (_, i) => i.toString().padStart(2, '0
 const SECONDS = Array.from({ length: 60 }, (_, i) => i.toString().padStart(2, '0'));
 
 const ShiftScheduleEdit = forwardRef<ShiftScheduleEditHandle, ShiftScheduleEditProps>(({
-    customerId
+    contractId
 }, ref) => {
     // API data states
-    const [contracts, setContracts] = useState<Contract[]>([]);
     const [shiftSchedules, setShiftSchedules] = useState<ShiftSchedule[]>([]);
-    const [contractId, setContractId] = useState<string | null>(null);
     const [publicHolidays, setPublicHolidays] = useState<PublicHoliday[]>([]);
 
     // Loading states
-    const [isLoadingContracts, setIsLoadingContracts] = useState(false);
     const [isLoadingSchedules, setIsLoadingSchedules] = useState(false);
     const [isLoadingHolidays, setIsLoadingHolidays] = useState(false);
     const [loadError, setLoadError] = useState<string | null>(null);
@@ -165,58 +156,13 @@ const ShiftScheduleEdit = forwardRef<ShiftScheduleEditHandle, ShiftScheduleEditP
     const [showDeleteModal, setShowDeleteModal] = useState(false);
     const [holidayToDelete, setHolidayToDelete] = useState<string | null>(null);
 
-    // Fetch contracts when component mounts
+    // Fetch contract data (includes shift schedules and public holidays)
     useEffect(() => {
-        const fetchContracts = async () => {
-            if (!customerId) return;
-
-            setIsLoadingContracts(true);
-            setLoadError(null);
-
-            try {
-                const apiUrl = import.meta.env.VITE_API_CONTRACT_URL;
-                const token = localStorage.getItem('accessToken');
-
-                if (!token) {
-                    setLoadError('Không tìm thấy token xác thực. Vui lòng đăng nhập lại.');
-                    return;
-                }
-
-                const response = await fetch(`${apiUrl}/contracts/customers/${customerId}/contracts`, {
-                    method: 'GET',
-                    headers: {
-                        'Authorization': `Bearer ${token}`,
-                        'Content-Type': 'application/json',
-                    },
-                });
-
-                if (!response.ok) {
-                    throw new Error('Failed to fetch contracts');
-                }
-
-                const data = await response.json();
-                setContracts(data.contracts || []);
-
-                // Automatically select first contract if available
-                if (data.contracts && data.contracts.length > 0) {
-                    setContractId(data.contracts[0].id);
-                }
-            } catch (err) {
-                setLoadError('Không thể tải danh sách hợp đồng. Vui lòng thử lại sau.');
-            } finally {
-                setIsLoadingContracts(false);
-            }
-        };
-
-        fetchContracts();
-    }, [customerId]);
-
-    // Fetch shift schedules when contractId changes
-    useEffect(() => {
-        const fetchShiftSchedules = async () => {
+        const fetchContractData = async () => {
             if (!contractId) return;
 
             setIsLoadingSchedules(true);
+            setIsLoadingHolidays(true);
             setLoadError(null);
 
             try {
@@ -228,7 +174,7 @@ const ShiftScheduleEdit = forwardRef<ShiftScheduleEditHandle, ShiftScheduleEditP
                     return;
                 }
 
-                const response = await fetch(`${apiUrl}/contracts/${contractId}/shift-schedules`, {
+                const response = await fetch(`${apiUrl}/contracts/${contractId}`, {
                     method: 'GET',
                     headers: {
                         'Authorization': `Bearer ${token}`,
@@ -237,12 +183,13 @@ const ShiftScheduleEdit = forwardRef<ShiftScheduleEditHandle, ShiftScheduleEditP
                 });
 
                 if (!response.ok) {
-                    throw new Error('Failed to fetch shift schedules');
+                    throw new Error('Failed to fetch contract data');
                 }
 
-                const data = await response.json();
+                const result = await response.json();
+                const data = result.data;
 
-                // Sort schedules: morning -> afternoon -> night
+                // Process shift schedules
                 const scheduleOrder: { [key: string]: number } = {
                     'Ca sáng': 1,
                     'Ca chiều': 2,
@@ -253,6 +200,9 @@ const ShiftScheduleEdit = forwardRef<ShiftScheduleEditHandle, ShiftScheduleEditP
                 });
 
                 setShiftSchedules(sortedSchedules);
+
+                // Process public holidays
+                setPublicHolidays(data.publicHolidays || []);
 
                 // Initialize form data and time pickers for all schedules
                 const formsData: { [scheduleId: string]: ShiftScheduleData } = {};
@@ -308,55 +258,14 @@ const ShiftScheduleEdit = forwardRef<ShiftScheduleEditHandle, ShiftScheduleEditP
                 setScheduleFormsData(formsData);
                 setTimePickers(timers);
             } catch (err) {
-                setLoadError('Không thể tải danh sách lịch ca trực. Vui lòng thử lại sau.');
+                setLoadError('Không thể tải thông tin hợp đồng. Vui lòng thử lại sau.');
             } finally {
                 setIsLoadingSchedules(false);
-            }
-        };
-
-        fetchShiftSchedules();
-    }, [contractId]);
-
-    // Fetch public holidays when contractId changes
-    useEffect(() => {
-        const fetchPublicHolidays = async () => {
-            if (!contractId) return;
-
-            setIsLoadingHolidays(true);
-            setLoadError(null);
-
-            try {
-                const apiUrl = import.meta.env.VITE_API_CONTRACT_URL;
-                const token = localStorage.getItem('accessToken');
-
-                if (!token) {
-                    setLoadError('Không tìm thấy token xác thực. Vui lòng đăng nhập lại.');
-                    return;
-                }
-
-                const response = await fetch(`${apiUrl}/contracts/${contractId}/public-holidays`, {
-                    method: 'GET',
-                    headers: {
-                        'Authorization': `Bearer ${token}`,
-                        'Content-Type': 'application/json',
-                    },
-                });
-
-                if (!response.ok) {
-                    throw new Error('Failed to fetch public holidays');
-                }
-
-                const data = await response.json();
-                const holidaysData = data.holidays || data.publicHolidays || data.data || data.items || [];
-                setPublicHolidays(holidaysData);
-            } catch (err) {
-                setLoadError('Không thể tải danh sách ngày lễ. Vui lòng thử lại sau.');
-            } finally {
                 setIsLoadingHolidays(false);
             }
         };
 
-        fetchPublicHolidays();
+        fetchContractData();
     }, [contractId]);
 
     const calculateDuration = (scheduleId: string, startTime: string, endTime: string) => {
@@ -734,17 +643,26 @@ const ShiftScheduleEdit = forwardRef<ShiftScheduleEditHandle, ShiftScheduleEditP
 
                 // Update existing holidays via PUT
                 for (const holiday of existingHolidays) {
-                    const response = await fetch(`${apiUrl}/contracts/holidays/${holiday.id}`, {
-                        method: 'PUT',
-                        headers: {
-                            'Authorization': `Bearer ${token}`,
-                            'Content-Type': 'application/json',
-                        },
-                        body: JSON.stringify(holiday),
-                    });
+                    try {
+                        const response = await fetch(`${apiUrl}/contracts/holidays/${holiday.id}`, {
+                            method: 'PUT',
+                            headers: {
+                                'Authorization': `Bearer ${token}`,
+                                'Content-Type': 'application/json',
+                            },
+                            body: JSON.stringify(holiday),
+                        });
 
-                    if (!response.ok) {
-                        throw new Error('Failed to update public holiday');
+                        if (!response.ok) {
+                            const errorData = await response.json().catch(() => ({}));
+                            console.error('Failed to update holiday:', holiday.id, errorData);
+                            // Continue with other holidays instead of throwing
+                            continue;
+                        }
+                    } catch (error) {
+                        console.error('Error updating holiday:', holiday.id, error);
+                        // Continue with other holidays
+                        continue;
                     }
                 }
 
@@ -765,47 +683,24 @@ const ShiftScheduleEdit = forwardRef<ShiftScheduleEditHandle, ShiftScheduleEditP
 
     return (
         <div className="shift-schedule-edit">
-            {/* Contract and Schedule Selection */}
-            <div className="shift-schedule-section">
-                <h3 className="shift-schedule-section-title">Chọn lịch ca trực</h3>
-
-                {isLoadingContracts && (
-                    <div className="shift-schedule-info-text">Đang tải danh sách hợp đồng...</div>
-                )}
-
-                {loadError && (
+            {/* Loading and Error States */}
+            {loadError && (
+                <div className="shift-schedule-section">
                     <div className="shift-schedule-error-text">{loadError}</div>
-                )}
+                </div>
+            )}
 
-                {!isLoadingContracts && contracts.length > 0 && (
-                    <div className="shift-schedule-form-grid">
-                        <div className="shift-schedule-form-group">
-                            <label className="shift-schedule-label">Hợp đồng</label>
-                            <select
-                                className="shift-schedule-input"
-                                value={contractId || ''}
-                                onChange={(e) => {
-                                    setContractId(e.target.value);
-                                }}
-                            >
-                                {contracts.map(contract => (
-                                    <option key={contract.id} value={contract.id}>
-                                        {contract.contractNumber}
-                                    </option>
-                                ))}
-                            </select>
-                        </div>
-                    </div>
-                )}
+            {isLoadingSchedules && (
+                <div className="shift-schedule-section">
+                    <div className="shift-schedule-info-text">Đang tải thông tin lịch ca trực và ngày lễ...</div>
+                </div>
+            )}
 
-                {isLoadingSchedules && (
-                    <div className="shift-schedule-info-text">Đang tải danh sách lịch ca trực...</div>
-                )}
-
-                {!isLoadingContracts && !isLoadingSchedules && shiftSchedules.length === 0 && contractId && (
+            {!isLoadingSchedules && shiftSchedules.length === 0 && !loadError && (
+                <div className="shift-schedule-section">
                     <div className="shift-schedule-info-text">Không có lịch ca trực nào cho hợp đồng này.</div>
-                )}
-            </div>
+                </div>
+            )}
 
             {/* Render all shift schedules */}
             {!isLoadingSchedules && shiftSchedules.length > 0 && shiftSchedules.map(schedule => {

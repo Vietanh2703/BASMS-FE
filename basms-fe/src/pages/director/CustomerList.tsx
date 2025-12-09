@@ -2,6 +2,7 @@ import { useState, useEffect, useRef } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '../../hooks/useAuth';
 import SnackbarChecked from '../../components/snackbar/snackbarChecked';
+import SnackbarFailed from '../../components/snackbar/snackbarFailed';
 import './CustomerList.css';
 
 interface Customer {
@@ -33,6 +34,30 @@ interface CustomerResponse {
     totalCount: number;
 }
 
+interface Contract {
+    id: string;
+    customerId: string;
+    documentId: string;
+    contractNumber: string;
+    contractTitle: string;
+    contractType: string;
+    serviceScope: string;
+    startDate: string;
+    endDate: string;
+    status: string;
+    createdAt: string;
+}
+
+interface ContractsResponse {
+    success: boolean;
+    errorMessage: string | null;
+    customerId: string;
+    customerCode: string;
+    customerName: string;
+    totalContracts: number;
+    contracts: Contract[];
+}
+
 const CustomerList = () => {
     const navigate = useNavigate();
     const { user, logout } = useAuth();
@@ -56,11 +81,22 @@ const CustomerList = () => {
     const [isLoading, setIsLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
 
+    // Contracts states
+    const [expandedCustomers, setExpandedCustomers] = useState<Set<string>>(new Set());
+    const [customerContracts, setCustomerContracts] = useState<Map<string, ContractsResponse>>(new Map());
+    const [loadingContracts, setLoadingContracts] = useState<Set<string>>(new Set());
+
     // Create customer modal states
     const [showCreateModal, setShowCreateModal] = useState(false);
     const [isCreating, setIsCreating] = useState(false);
     const [createError, setCreateError] = useState<string | null>(null);
     const [showSuccessSnackbar, setShowSuccessSnackbar] = useState(false);
+    const [showFailureSnackbar, setShowFailureSnackbar] = useState(false);
+    const [failureMessage, setFailureMessage] = useState('');
+
+    // Account activation/lock states
+    const [activatingCustomers, setActivatingCustomers] = useState<Set<string>>(new Set());
+    const [lockingCustomers, setLockingCustomers] = useState<Set<string>>(new Set());
     const [formData, setFormData] = useState({
         IdentityNumber: '',
         IdentityIssueDate: '',
@@ -209,6 +245,24 @@ const CustomerList = () => {
         return statusMap[status] || status;
     };
 
+    const getContractStatusLabel = (status: string) => {
+        const statusMap: { [key: string]: string } = {
+            'draft': 'Chưa phân công',
+            'schedule_shifts': 'Đang xếp ca trực',
+            'shift_generated': 'Đã xếp ca trực',
+        };
+        return statusMap[status] || status;
+    };
+
+    const getContractStatusColor = (status: string) => {
+        const colorMap: { [key: string]: string } = {
+            'draft': '#6b7280', // gray
+            'schedule_shifts': '#f59e0b', // amber
+            'shift_generated': '#10b981', // green
+        };
+        return colorMap[status] || '#6b7280';
+    };
+
     // Filter and sort customers
     const filteredAndSortedCustomers = allCustomers
         .filter(customer => {
@@ -254,9 +308,8 @@ const CustomerList = () => {
         setCurrentPage(page);
         window.scrollTo({ top: 0, behavior: 'smooth' });
     };
-
-    const handleViewCustomer = (customerId: string) => {
-        navigate(`/director/customer/${customerId}`);
+    const handleViewContract = (customerId: string, contractId: string) => {
+        navigate(`/director/customer/${customerId}/${contractId}`);
     };
 
     const handleViewSchedule = (customerId: string) => {
@@ -265,6 +318,79 @@ const CustomerList = () => {
 
     const handleRefresh = () => {
         window.location.reload();
+    };
+
+    const fetchCustomerContracts = async (customerId: string) => {
+        // If already loading, return
+        if (loadingContracts.has(customerId)) {
+            return;
+        }
+
+        // If already fetched, just toggle expand
+        if (customerContracts.has(customerId)) {
+            return;
+        }
+
+        setLoadingContracts(prev => new Set(prev).add(customerId));
+
+        try {
+            const apiUrl = import.meta.env.VITE_API_CONTRACT_URL;
+            const token = localStorage.getItem('accessToken');
+
+            if (!token) {
+                console.error('No access token found');
+                return;
+            }
+
+            const response = await fetch(`${apiUrl}/contracts/customers/${customerId}/all`, {
+                method: 'GET',
+                headers: {
+                    'Authorization': `Bearer ${token}`,
+                    'Content-Type': 'application/json',
+                },
+            });
+
+            if (!response.ok) {
+                throw new Error('Failed to fetch contracts');
+            }
+
+            const data: ContractsResponse = await response.json();
+
+            setCustomerContracts(prev => {
+                const newMap = new Map(prev);
+                newMap.set(customerId, data);
+                return newMap;
+            });
+        } catch (err) {
+            console.error('Error fetching contracts:', err);
+        } finally {
+            setLoadingContracts(prev => {
+                const newSet = new Set(prev);
+                newSet.delete(customerId);
+                return newSet;
+            });
+        }
+    };
+
+    const toggleCustomerContracts = async (customerId: string) => {
+        const isExpanded = expandedCustomers.has(customerId);
+
+        if (isExpanded) {
+            // Collapse
+            setExpandedCustomers(prev => {
+                const newSet = new Set(prev);
+                newSet.delete(customerId);
+                return newSet;
+            });
+        } else {
+            // Expand
+            setExpandedCustomers(prev => new Set(prev).add(customerId));
+
+            // Fetch contracts if not already fetched
+            if (!customerContracts.has(customerId)) {
+                await fetchCustomerContracts(customerId);
+            }
+        }
     };
 
     const handleCreateCustomer = () => {
@@ -383,6 +509,132 @@ const CustomerList = () => {
             setCreateError(err.message || 'Có lỗi xảy ra khi tạo khách hàng. Vui lòng thử lại.');
         } finally {
             setIsCreating(false);
+        }
+    };
+
+    const handleActivateCustomer = async (customer: Customer) => {
+        if (activatingCustomers.has(customer.id)) return;
+
+        setActivatingCustomers(prev => new Set(prev).add(customer.id));
+
+        try {
+            const apiUrl = import.meta.env.VITE_API_CONTRACT_URL;
+            const token = localStorage.getItem('accessToken');
+
+            if (!token) {
+                throw new Error('Không tìm thấy token xác thực. Vui lòng đăng nhập lại.');
+            }
+
+            // Step 1: Activate customer
+            const activateResponse = await fetch(`${apiUrl}/contracts/customers/${customer.id}/activate`, {
+                method: 'POST',
+                headers: {
+                    'Authorization': `Bearer ${token}`,
+                    'Content-Type': 'application/json',
+                },
+            });
+
+            if (!activateResponse.ok) {
+                const errorText = await activateResponse.text();
+                try {
+                    const errorData = JSON.parse(errorText);
+                    throw new Error(errorData.message || 'Không thể kích hoạt tài khoản');
+                } catch (parseError) {
+                    if (parseError instanceof Error && parseError.message.includes('Không thể')) {
+                        throw parseError;
+                    }
+                    throw new Error('Không thể kích hoạt tài khoản');
+                }
+            }
+
+            // Step 2: Send login email
+            const emailResponse = await fetch(`${apiUrl}/users/send-login-email`, {
+                method: 'POST',
+                headers: {
+                    'Authorization': `Bearer ${token}`,
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    email: customer.email,
+                    phoneNumber: customer.phone
+                }),
+            });
+
+            if (!emailResponse.ok) {
+                // Email sending failed, but activation succeeded
+                setFailureMessage('Tài khoản đã được kích hoạt nhưng không thể gửi email thông báo');
+                setShowFailureSnackbar(true);
+            } else {
+                // Both succeeded
+                setShowSuccessSnackbar(true);
+            }
+
+            // Reload page after showing message
+            setTimeout(() => {
+                window.location.reload();
+            }, 2000);
+        } catch (err: any) {
+            setFailureMessage(err.message || 'Có lỗi xảy ra khi kích hoạt tài khoản');
+            setShowFailureSnackbar(true);
+        } finally {
+            setActivatingCustomers(prev => {
+                const newSet = new Set(prev);
+                newSet.delete(customer.id);
+                return newSet;
+            });
+        }
+    };
+
+    const handleLockCustomer = async (customer: Customer) => {
+        if (lockingCustomers.has(customer.id)) return;
+
+        setLockingCustomers(prev => new Set(prev).add(customer.id));
+
+        try {
+            const apiUrl = import.meta.env.VITE_API_CONTRACT_URL;
+            const token = localStorage.getItem('accessToken');
+
+            if (!token) {
+                throw new Error('Không tìm thấy token xác thực. Vui lòng đăng nhập lại.');
+            }
+
+            // Lock customer account
+            const lockResponse = await fetch(`${apiUrl}/contracts/customers/${customer.id}/lock`, {
+                method: 'POST',
+                headers: {
+                    'Authorization': `Bearer ${token}`,
+                    'Content-Type': 'application/json',
+                },
+            });
+
+            if (!lockResponse.ok) {
+                const errorText = await lockResponse.text();
+                try {
+                    const errorData = JSON.parse(errorText);
+                    throw new Error(errorData.message || 'Không thể khóa tài khoản');
+                } catch (parseError) {
+                    if (parseError instanceof Error && parseError.message.includes('Không thể')) {
+                        throw parseError;
+                    }
+                    throw new Error('Không thể khóa tài khoản');
+                }
+            }
+
+            setShowSuccessSnackbar(true);
+
+            // Reload page after showing success message
+            setTimeout(() => {
+                window.location.reload();
+            }, 2000);
+        } catch (err: any) {
+            setFailureMessage(err.message || 'Có lỗi xảy ra khi khóa tài khoản');
+            setShowFailureSnackbar(true);
+        } finally {
+            setLockingCustomers(prev => {
+                const newSet = new Set(prev);
+                newSet.delete(customer.id);
+                return newSet;
+            });
         }
     };
 
@@ -660,22 +912,115 @@ const CustomerList = () => {
                                                 <span className="dir-customers-detail-value">{formatDate(customer.customerSince)}</span>
                                             </div>
                                         </div>
+
+                                        {/* Action buttons based on customer status */}
                                         <div className="dir-customers-item-actions">
-                                            {customer.status === 'active' && (
+                                            {customer.status === 'in-active' && (
                                                 <button
-                                                    className="dir-customers-action-btn dir-customers-btn-schedule"
-                                                    onClick={() => handleViewSchedule(customer.id)}
+                                                    className="dir-customers-action-btn dir-customers-btn-activate"
+                                                    onClick={() => handleActivateCustomer(customer)}
+                                                    disabled={activatingCustomers.has(customer.id)}
                                                 >
-                                                    Xem ca trực
+                                                    {activatingCustomers.has(customer.id) ? 'Đang kích hoạt...' : 'Kích hoạt tài khoản'}
                                                 </button>
                                             )}
+
+                                            {customer.status === 'active' && (
+                                                <>
+                                                    <button
+                                                        className="dir-customers-action-btn dir-customers-btn-schedule"
+                                                        onClick={() => handleViewSchedule(customer.id)}
+                                                    >
+                                                        Xem ca trực
+                                                    </button>
+                                                    <button
+                                                        className="dir-customers-action-btn dir-customers-btn-lock"
+                                                        onClick={() => handleLockCustomer(customer)}
+                                                        disabled={lockingCustomers.has(customer.id)}
+                                                    >
+                                                        {lockingCustomers.has(customer.id) ? 'Đang khóa...' : 'Khóa tài khoản'}
+                                                    </button>
+                                                </>
+                                            )}
+                                        </div>
+
+                                        {/* Total Contracts Toggle */}
+                                        <div className="dir-customers-contracts-toggle">
                                             <button
-                                                className="dir-customers-action-btn dir-customers-btn-view"
-                                                onClick={() => handleViewCustomer(customer.id)}
+                                                className="dir-customers-toggle-btn"
+                                                onClick={() => toggleCustomerContracts(customer.id)}
+                                                disabled={loadingContracts.has(customer.id)}
                                             >
-                                                Xem chi tiết
+                                                <span className="dir-customers-toggle-text">
+                                                    {loadingContracts.has(customer.id) ? 'Đang tải...' :
+                                                     customerContracts.has(customer.id) ?
+                                                     `${customerContracts.get(customer.id)?.totalContracts || 0} Hợp đồng` :
+                                                     'Xem hợp đồng'}
+                                                </span>
+                                                <svg
+                                                    className={`dir-customers-toggle-icon ${expandedCustomers.has(customer.id) ? 'dir-customers-toggle-icon-expanded' : ''}`}
+                                                    viewBox="0 0 24 24"
+                                                    fill="currentColor"
+                                                >
+                                                    <path d="M7 10l5 5 5-5z"/>
+                                                </svg>
                                             </button>
                                         </div>
+
+                                        {/* Contracts List */}
+                                        {expandedCustomers.has(customer.id) && customerContracts.has(customer.id) && (
+                                            <div className="dir-customers-contracts-list">
+                                                {customerContracts.get(customer.id)!.contracts.length === 0 ? (
+                                                    <div className="dir-customers-contracts-empty">
+                                                        Không có hợp đồng nào
+                                                    </div>
+                                                ) : (
+                                                    customerContracts.get(customer.id)!.contracts.map(contract => (
+                                                        <div key={contract.id} className="dir-customers-contract-item">
+                                                            <div className="dir-customers-contract-content">
+                                                                <div className="dir-customers-contract-main">
+                                                                    <div className="dir-customers-contract-title">
+                                                                        {contract.contractTitle}
+                                                                    </div>
+                                                                    <div className="dir-customers-contract-subtitle">
+                                                                        {contract.contractNumber}
+                                                                    </div>
+                                                                </div>
+                                                                <div className="dir-customers-contract-dates">
+                                                                    <div className="dir-customers-contract-date">
+                                                                        <span className="dir-customers-contract-date-label">Bắt đầu:</span>
+                                                                        <span className="dir-customers-contract-date-value">{formatDate(contract.startDate)}</span>
+                                                                    </div>
+                                                                    <div className="dir-customers-contract-date">
+                                                                        <span className="dir-customers-contract-date-label">Kết thúc:</span>
+                                                                        <span className="dir-customers-contract-date-value">{formatDate(contract.endDate)}</span>
+                                                                        <span
+                                                                            className="dir-customers-contract-status"
+                                                                            style={{
+                                                                                color: getContractStatusColor(contract.status),
+                                                                                marginLeft: '12px',
+                                                                                fontWeight: '500',
+                                                                                fontSize: '14px'
+                                                                            }}
+                                                                        >
+                                                                            {getContractStatusLabel(contract.status)}
+                                                                        </span>
+                                                                    </div>
+                                                                </div>
+                                                            </div>
+                                                            <div className="dir-customers-contract-action">
+                                                                <button
+                                                                    className="dir-customers-action-btn dir-customers-btn-view"
+                                                                    onClick={() => handleViewContract(customer.id, contract.id)}
+                                                                >
+                                                                    {contract.status === 'draft' ? 'Xem chi tiết & phân công' : 'Xem chi tiết'}
+                                                                </button>
+                                                            </div>
+                                                        </div>
+                                                    ))
+                                                )}
+                                            </div>
+                                        )}
                                     </div>
                                 ))
                             )}
@@ -963,6 +1308,13 @@ const CustomerList = () => {
                 isOpen={showSuccessSnackbar}
                 duration={2000}
                 onClose={() => setShowSuccessSnackbar(false)}
+            />
+
+            <SnackbarFailed
+                message={failureMessage}
+                isOpen={showFailureSnackbar}
+                duration={4000}
+                onClose={() => setShowFailureSnackbar(false)}
             />
         </div>
     );

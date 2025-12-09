@@ -180,12 +180,12 @@ function App() {
                             <CustomerList />
                         </RoleBasedRoute>
                     }/>
-                    <Route path="/director/customer/:customerId" element={
+                    <Route path="/director/customer/:customerId/:contractId" element={
                         <RoleBasedRoute allowedRoles={[ROLES.DIRECTOR]}>
                             <CustomerDetail />
                         </RoleBasedRoute>
                     }/>
-                    <Route path="/director/customer/:customerId/edit" element={
+                    <Route path="/director/customer/:customerId/:contractId/edit" element={
                         <RoleBasedRoute allowedRoles={[ROLES.DIRECTOR]}>
                             <CustomerEdit />
                         </RoleBasedRoute>

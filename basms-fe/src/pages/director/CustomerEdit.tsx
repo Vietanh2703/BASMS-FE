@@ -13,29 +13,16 @@ interface Customer {
     companyName: string;
     contactPersonName: string;
     contactPersonTitle: string;
-    identityNumber: string;
-    identityIssueDate: string | null;
-    identityIssuePlace: string | null;
     email: string;
     phone: string;
-    avatarUrl: string | null;
-    gender: string;
-    dateOfBirth: string;
     address: string;
     city: string | null;
     district: string | null;
     industry: string | null;
-    companySize: string | null;
     status: string;
-    customerSince: string;
-    followsNationalHolidays: boolean;
-    notes: string | null;
-    createdAt: string;
 }
 
-interface Location {
-    id: string;
-    customerId: string;
+interface LocationDetails {
     locationCode: string;
     locationName: string;
     locationType: string;
@@ -48,23 +35,136 @@ interface Location {
     geofenceRadiusMeters: number;
     siteManagerName: string | null;
     siteManagerPhone: string | null;
-    operatingHoursType: string;
-    requires24x7Coverage: boolean;
-    minimumGuardsRequired: number;
+}
+
+interface Location {
+    id: string;
+    locationId: string;
+    guardsRequired: number;
+    coverageType: string;
+    serviceStartDate: string;
+    serviceEndDate: string | null;
+    isPrimaryLocation: boolean;
+    priorityLevel: number;
+    autoGenerateShifts: boolean;
+    isActive: boolean;
+    notes: string | null;
+    locationDetails: LocationDetails;
+}
+
+interface Document {
+    id: string;
+    documentType: string;
+    documentName: string;
+    fileUrl: string;
+    fileSize: number;
+    mimeType: string | null;
+    version: string;
+    documentDate: string | null;
+    createdAt: string;
+}
+
+interface Period {
+    id: string;
+    periodNumber: number;
+    periodType: string;
+    periodStartDate: string;
+    periodEndDate: string;
+    isCurrentPeriod: boolean;
+    notes: string | null;
+    createdAt: string;
+}
+
+interface ShiftSchedule {
+    id: string;
+    locationId: string;
+    scheduleName: string;
+    scheduleType: string;
+    shiftStartTime: string;
+    shiftEndTime: string;
+    crossesMidnight: boolean;
+    durationHours: number;
+    breakMinutes: number;
+    guardsPerShift: number;
+    recurrenceType: string;
+    appliesMonday: boolean;
+    appliesTuesday: boolean;
+    appliesWednesday: boolean;
+    appliesThursday: boolean;
+    appliesFriday: boolean;
+    appliesSaturday: boolean;
+    appliesSunday: boolean;
+    appliesOnPublicHolidays: boolean;
+    appliesOnCustomerHolidays: boolean;
+    appliesOnWeekends: boolean;
+    skipWhenLocationClosed: boolean;
+    requiresArmedGuard: boolean;
+    requiresSupervisor: boolean;
+    minimumExperienceMonths: number;
+    autoGenerateEnabled: boolean;
+    generateAdvanceDays: number;
+    effectiveFrom: string;
+    effectiveTo: string;
     isActive: boolean;
 }
 
-interface UpdateCustomerRequest {
-    customerId: string;
-    companyName: string;
-    contactPersonName: string;
-    contactPersonTitle: string;
-    identityNumber: string;
-    identityIssueDate: string | null;
-    identityIssuePlace: string | null;
-    dateOfBirth: string;
-    address: string;
+interface PublicHoliday {
+    id: string;
+    holidayDate: string;
+    holidayName: string;
+    holidayNameEn: string;
+    holidayCategory: string;
+    isTetPeriod: boolean;
+    isTetHoliday: boolean;
+    tetDayNumber: number | null;
+    holidayStartDate: string;
+    holidayEndDate: string;
+    totalHolidayDays: number;
+    isOfficialHoliday: boolean;
+    isObserved: boolean;
+    originalDate: string | null;
+    observedDate: string | null;
+    appliesNationwide: boolean;
+    appliesToRegions: string | null;
+    standardWorkplacesClosed: boolean;
+    essentialServicesOperating: boolean;
+    description: string | null;
+    year: number;
 }
+
+interface ContractData {
+    id: string;
+    contractNumber: string;
+    contractTitle: string;
+    contractType: string;
+    serviceScope: string;
+    startDate: string;
+    endDate: string;
+    durationMonths: number;
+    status: string;
+    coverageModel: string;
+    isRenewable: boolean;
+    autoRenewal: boolean;
+    renewalNoticeDays: number;
+    renewalCount: number;
+    followsCustomerCalendar: boolean;
+    workOnPublicHolidays: boolean;
+    workOnCustomerClosedDays: boolean;
+    autoGenerateShifts: boolean;
+    generateShiftsAdvanceDays: number;
+    customer: Customer;
+    documents: Document[];
+    locations: Location[];
+    shiftSchedules: ShiftSchedule[];
+    periods: Period[];
+    publicHolidays: PublicHoliday[];
+    createdBy: string;
+    createdAt: string;
+    updatedBy: string | null;
+    updatedAt: string | null;
+}
+
+
 
 interface UpdateLocationGpsRequest {
     latitude: number;
@@ -73,7 +173,7 @@ interface UpdateLocationGpsRequest {
 
 const CustomerEdit = () => {
     const navigate = useNavigate();
-    const { customerId } = useParams<{ customerId: string }>();
+    const { customerId, contractId } = useParams<{ customerId: string; contractId: string }>();
     const { user, logout } = useAuth();
 
     // UI state
@@ -86,13 +186,14 @@ const CustomerEdit = () => {
 
     // Map refs and state
     const mapContainerRef = useRef<HTMLDivElement | null>(null);
-    const mapRef = useRef<any>(null);
-    const markerRef = useRef<any>(null);
+    const mapRef = useRef<H.Map | null>(null);
+    const markerRef = useRef<H.map.Marker | null>(null);
     const shiftScheduleRef = useRef<ShiftScheduleEditHandle>(null);
     const [searchQuery, setSearchQuery] = useState('');
-    const [searchResults, setSearchResults] = useState<any[]>([]);
+    const [searchResults, setSearchResults] = useState<H.service.SearchResult[]>([]);
 
     // Data state
+    const [contractData, setContractData] = useState<ContractData | null>(null);
     const [customerData, setCustomerData] = useState<Customer | null>(null);
     const [locations, setLocations] = useState<Location[]>([]);
     const [selectedLocation, setSelectedLocation] = useState<Location | null>(null);
@@ -106,19 +207,7 @@ const CustomerEdit = () => {
     const [showSnackbarSuccess, setShowSnackbarSuccess] = useState(false);
     const [showSnackbarFailed, setShowSnackbarFailed] = useState(false);
 
-    // Form states
-    const [formData, setFormData] = useState<UpdateCustomerRequest>({
-        customerId: customerId || '',
-        companyName: '',
-        contactPersonName: '',
-        contactPersonTitle: '',
-        identityNumber: '',
-        identityIssueDate: null,
-        identityIssuePlace: null,
-        dateOfBirth: '',
-        address: '',
-    });
-
+    // GPS form state
     const [gpsData, setGpsData] = useState<UpdateLocationGpsRequest>({
         latitude: 0,
         longitude: 0,
@@ -149,11 +238,11 @@ const CustomerEdit = () => {
         };
     }, [isProfileDropdownOpen]);
 
-    // Fetch customer data
+    // Fetch contract data
     useEffect(() => {
-        const fetchCustomerData = async () => {
-            if (!customerId) {
-                setError('ID khách hàng không hợp lệ');
+        const fetchContractData = async () => {
+            if (!contractId || !customerId) {
+                setError('ID hợp đồng hoặc ID khách hàng không hợp lệ');
                 setIsLoading(false);
                 return;
             }
@@ -171,7 +260,7 @@ const CustomerEdit = () => {
                     return;
                 }
 
-                const response = await fetch(`${apiUrl}/contracts/customers/${customerId}`, {
+                const response = await fetch(`${apiUrl}/contracts/${contractId}`, {
                     method: 'GET',
                     headers: {
                         'Authorization': `Bearer ${token}`,
@@ -180,77 +269,40 @@ const CustomerEdit = () => {
                 });
 
                 if (!response.ok) {
-                    throw new Error('Failed to fetch customer data');
+                    throw new Error('Failed to fetch contract data');
                 }
 
-                const data = await response.json();
-                setCustomerData(data.customer);
+                const result = await response.json();
+                const data: ContractData = result.data;
 
-                // Set form data
-                setFormData({
-                    customerId: data.customer.id,
-                    companyName: data.customer.companyName,
-                    contactPersonName: data.customer.contactPersonName,
-                    contactPersonTitle: data.customer.contactPersonTitle,
-                    identityNumber: data.customer.identityNumber,
-                    identityIssueDate: data.customer.identityIssueDate,
-                    identityIssuePlace: data.customer.identityIssuePlace,
-                    dateOfBirth: data.customer.dateOfBirth ? data.customer.dateOfBirth.split('T')[0] : '',
-                    address: data.customer.address,
-                });
-            } catch (err) {
-                setError('Không thể tải thông tin khách hàng. Vui lòng thử lại sau.');
+                setContractData(data);
+                setCustomerData(data.customer);
+                setLocations(data.locations || []);
+
+                if (data.locations && data.locations.length > 0) {
+                    const firstLocation = data.locations[0];
+                    setSelectedLocation(firstLocation);
+
+                    const lat = firstLocation.locationDetails.latitude;
+                    const lng = firstLocation.locationDetails.longitude;
+
+                    if (lat && lng) {
+                        setGpsData({
+                            latitude: lat,
+                            longitude: lng,
+                        });
+                    }
+                }
+            } catch (error) {
+                setError('Không thể tải thông tin hợp đồng. Vui lòng thử lại sau.');
             } finally {
                 setIsLoading(false);
             }
         };
 
-        fetchCustomerData();
-    }, [customerId]);
+        fetchContractData();
+    }, [contractId, customerId]);
 
-    // Fetch locations
-    useEffect(() => {
-        const fetchLocations = async () => {
-            if (!customerId) return;
-
-            try {
-                const apiUrl = import.meta.env.VITE_API_CONTRACT_URL;
-                const token = localStorage.getItem('accessToken');
-
-                if (!token) return;
-
-                const response = await fetch(`${apiUrl}/contracts/customers/${customerId}/locations`, {
-                    method: 'GET',
-                    headers: {
-                        'Authorization': `Bearer ${token}`,
-                        'Content-Type': 'application/json',
-                    },
-                });
-
-                if (!response.ok) {
-                    throw new Error('Failed to fetch locations');
-                }
-
-                const data = await response.json();
-                setLocations(data.locations || []);
-
-                // Select first location by default
-                if (data.locations && data.locations.length > 0) {
-                    setSelectedLocation(data.locations[0]);
-                    if (data.locations[0].latitude && data.locations[0].longitude) {
-                        setGpsData({
-                            latitude: data.locations[0].latitude,
-                            longitude: data.locations[0].longitude,
-                        });
-                    }
-                }
-            } catch (err) {
-                // Silent error
-            }
-        };
-
-        fetchLocations();
-    }, [customerId]);
 
     // Initialize HERE Maps
     useEffect(() => {
@@ -313,7 +365,7 @@ const CustomerEdit = () => {
                 markerRef.current = marker;
 
                 // Update coordinates when marker is dragged
-                map.addEventListener('dragstart', (ev: any) => {
+                map.addEventListener('dragstart', (ev: H.MapEvent) => {
                     const target = ev.target;
                     if (target instanceof window.H.map.Marker) {
                         const pointer = ev.currentPointer;
@@ -321,7 +373,7 @@ const CustomerEdit = () => {
                     }
                 }, false);
 
-                map.addEventListener('dragend', (ev: any) => {
+                map.addEventListener('dragend', (ev: H.MapEvent) => {
                     const target = ev.target;
                     if (target instanceof window.H.map.Marker) {
                         const position = target.getGeometry();
@@ -333,7 +385,7 @@ const CustomerEdit = () => {
                 }, false);
 
                 // Click on map to place marker
-                map.addEventListener('tap', (evt: any) => {
+                map.addEventListener('tap', (evt: H.MapEvent) => {
                     const coord = map.screenToGeo(
                         evt.currentPointer.viewportX,
                         evt.currentPointer.viewportY
@@ -469,38 +521,6 @@ const CustomerEdit = () => {
         return `${dayName}, ${day}/${month}/${year} ${hours}:${minutes}:${seconds}`;
     };
 
-    const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
-        const { name, value } = e.target;
-        setFormData(prev => ({
-            ...prev,
-            [name]: value,
-        }));
-    };
-
-    const handleUpdateCustomer = async () => {
-        if (!customerId) return;
-
-        const apiUrl = import.meta.env.VITE_API_CONTRACT_URL;
-        const token = localStorage.getItem('accessToken');
-
-        if (!token) {
-            throw new Error('Không tìm thấy token xác thực. Vui lòng đăng nhập lại.');
-        }
-
-        const response = await fetch(`${apiUrl}/contracts/customers/${customerId}`, {
-            method: 'PUT',
-            headers: {
-                'Authorization': `Bearer ${token}`,
-                'Content-Type': 'application/json',
-            },
-            body: JSON.stringify(formData),
-        });
-
-        if (!response.ok) {
-            throw new Error('Không thể cập nhật thông tin khách hàng');
-        }
-    };
-
     const handleUpdateGPS = async () => {
         if (!selectedLocation) return;
 
@@ -511,7 +531,7 @@ const CustomerEdit = () => {
             throw new Error('Không tìm thấy token xác thực. Vui lòng đăng nhập lại.');
         }
 
-        const response = await fetch(`${apiUrl}/locations/${selectedLocation.id}/gps`, {
+        const response = await fetch(`${apiUrl}/locations/${selectedLocation.locationId}/gps`, {
             method: 'PUT',
             headers: {
                 'Authorization': `Bearer ${token}`,
@@ -533,9 +553,6 @@ const CustomerEdit = () => {
         setError(null);
 
         try {
-            // Save customer data
-            await handleUpdateCustomer();
-
             // Save GPS data if location is selected
             if (selectedLocation) {
                 await handleUpdateGPS();
@@ -558,8 +575,9 @@ const CustomerEdit = () => {
             // Show success message
             setShowSuccessMessage(true);
             setShowSnackbarSuccess(true);
-        } catch (err: any) {
-            setError(err.message || 'Có lỗi xảy ra khi lưu thông tin. Vui lòng thử lại.');
+        } catch (err: unknown) {
+            const errorMessage = err instanceof Error ? err.message : 'Có lỗi xảy ra khi lưu thông tin. Vui lòng thử lại.';
+            setError(errorMessage);
             setShowSnackbarFailed(true);
         } finally {
             setIsSaving(false);
@@ -583,7 +601,7 @@ const CustomerEdit = () => {
             {
                 q: searchQuery,
             },
-            (result: any) => {
+            (result: H.service.GeocodeResponse) => {
                 setIsSaving(false);
                 if (result.items && result.items.length > 0) {
                     setSearchResults(result.items);
@@ -613,7 +631,7 @@ const CustomerEdit = () => {
         );
     };
 
-    const selectSearchResult = (result: any) => {
+    const selectSearchResult = (result: H.service.SearchResult) => {
         const { lat, lng } = result.position;
 
         if (mapRef.current && markerRef.current) {
@@ -762,14 +780,14 @@ const CustomerEdit = () => {
                         <div className="cust-edit-header-left">
                             <button
                                 className="cust-edit-back-btn"
-                                onClick={() => navigate(`/director/customer/${customerId}`)}
+                                onClick={() => navigate(`/director/customer/${customerId}/${contractId}`)}
                             >
                                 <svg viewBox="0 0 24 24" fill="currentColor" width="20" height="20">
                                     <path d="M20 11H7.83l5.59-5.59L12 4l-8 8 8 8 1.41-1.41L7.83 13H20v-2z"/>
                                 </svg>
                                 Quay lại
                             </button>
-                            <h1 className="cust-edit-page-title">Cập nhật thông tin khách hàng</h1>
+                            <h1 className="cust-edit-page-title">Cập nhật thông tin hợp đồng</h1>
                         </div>
                     </div>
 
@@ -795,103 +813,30 @@ const CustomerEdit = () => {
                     )}
 
                     {/* Form Content */}
-                    {!isLoading && customerData && (
+                    {!isLoading && customerData && contractData && (
                         <div className="cust-edit-content">
-                        {/* Customer Information Form */}
+                        {/* Customer Information Display (Read-only) */}
                         <div className="cust-edit-section">
                             <h3 className="cust-edit-section-title">Thông tin khách hàng</h3>
                             <div className="cust-edit-form-grid">
                                 <div className="cust-edit-form-group">
-                                    <label className="cust-edit-label">Tên công ty *</label>
+                                    <label className="cust-edit-label">Tên công ty</label>
                                     <input
                                         type="text"
-                                        name="companyName"
                                         className="cust-edit-input"
-                                        value={formData.companyName}
-                                        onChange={handleInputChange}
-                                        required
+                                        value={customerData.companyName}
+                                        disabled
+                                        style={{ backgroundColor: '#f5f5f5', cursor: 'not-allowed' }}
                                     />
                                 </div>
                                 <div className="cust-edit-form-group">
-                                    <label className="cust-edit-label">Địa chỉ *</label>
+                                    <label className="cust-edit-label">Địa chỉ</label>
                                     <input
                                         type="text"
-                                        name="address"
                                         className="cust-edit-input"
-                                        value={formData.address}
-                                        onChange={handleInputChange}
-                                        required
-                                    />
-                                </div>
-                            </div>
-                        </div>
-
-                        {/* Contact Person Information */}
-                        <div className="cust-edit-section">
-                            <h3 className="cust-edit-section-title">Thông tin người liên hệ</h3>
-                            <div className="cust-edit-form-grid">
-                                <div className="cust-edit-form-group">
-                                    <label className="cust-edit-label">Họ và tên *</label>
-                                    <input
-                                        type="text"
-                                        name="contactPersonName"
-                                        className="cust-edit-input"
-                                        value={formData.contactPersonName}
-                                        onChange={handleInputChange}
-                                        required
-                                    />
-                                </div>
-                                <div className="cust-edit-form-group">
-                                    <label className="cust-edit-label">Chức vụ *</label>
-                                    <input
-                                        type="text"
-                                        name="contactPersonTitle"
-                                        className="cust-edit-input"
-                                        value={formData.contactPersonTitle}
-                                        onChange={handleInputChange}
-                                        required
-                                    />
-                                </div>
-                                <div className="cust-edit-form-group">
-                                    <label className="cust-edit-label">Số CMND/CCCD *</label>
-                                    <input
-                                        type="text"
-                                        name="identityNumber"
-                                        className="cust-edit-input"
-                                        value={formData.identityNumber}
-                                        onChange={handleInputChange}
-                                        required
-                                    />
-                                </div>
-                                <div className="cust-edit-form-group">
-                                    <label className="cust-edit-label">Ngày cấp</label>
-                                    <input
-                                        type="date"
-                                        name="identityIssueDate"
-                                        className="cust-edit-input"
-                                        value={formData.identityIssueDate ? formData.identityIssueDate.split('T')[0] : ''}
-                                        onChange={handleInputChange}
-                                    />
-                                </div>
-                                <div className="cust-edit-form-group">
-                                    <label className="cust-edit-label">Nơi cấp</label>
-                                    <input
-                                        type="text"
-                                        name="identityIssuePlace"
-                                        className="cust-edit-input"
-                                        value={formData.identityIssuePlace || ''}
-                                        onChange={handleInputChange}
-                                    />
-                                </div>
-                                <div className="cust-edit-form-group">
-                                    <label className="cust-edit-label">Ngày sinh *</label>
-                                    <input
-                                        type="date"
-                                        name="dateOfBirth"
-                                        className="cust-edit-input"
-                                        value={formData.dateOfBirth}
-                                        onChange={handleInputChange}
-                                        required
+                                        value={customerData.address}
+                                        disabled
+                                        style={{ backgroundColor: '#f5f5f5', cursor: 'not-allowed' }}
                                     />
                                 </div>
                             </div>
@@ -901,6 +846,38 @@ const CustomerEdit = () => {
                         {locations.length > 0 && (
                             <div className="cust-edit-section">
                                 <h3 className="cust-edit-section-title">Vị trí GPS địa điểm</h3>
+
+                                {/* Location Selector */}
+                                {locations.length > 1 && (
+                                    <div className="cust-edit-form-group">
+                                        <label className="cust-edit-label">Chọn địa điểm</label>
+                                        <select
+                                            className="cust-edit-input"
+                                            value={selectedLocation?.id || ''}
+                                            onChange={(e) => {
+                                                const location = locations.find(loc => loc.id === e.target.value);
+                                                if (location) {
+                                                    setSelectedLocation(location);
+                                                    const lat = location.locationDetails.latitude;
+                                                    const lng = location.locationDetails.longitude;
+                                                    if (lat && lng) {
+                                                        setGpsData({ latitude: lat, longitude: lng });
+                                                        if (mapRef.current && markerRef.current) {
+                                                            mapRef.current.setCenter({ lat, lng });
+                                                            markerRef.current.setGeometry({ lat, lng });
+                                                        }
+                                                    }
+                                                }
+                                            }}
+                                        >
+                                            {locations.map(loc => (
+                                                <option key={loc.id} value={loc.id}>
+                                                    {loc.locationDetails.locationName} - {loc.locationDetails.address}
+                                                </option>
+                                            ))}
+                                        </select>
+                                    </div>
+                                )}
 
                                 {/* Map Search */}
                                 <div className="cust-edit-form-group">
@@ -995,19 +972,86 @@ const CustomerEdit = () => {
                             </div>
                         )}
 
-                        {/* Shift Schedule Edit Section */}
-                        {customerId && (
-                            <ShiftScheduleEdit
-                                ref={shiftScheduleRef}
-                                customerId={customerId}
-                            />
-                        )}
+                        {/* Contract Information Display */}
+                        <div className="cust-edit-section">
+                            <h3 className="cust-edit-section-title">Thông tin hợp đồng</h3>
+                            <div className="cust-edit-form-grid">
+                                <div className="cust-edit-form-group">
+                                    <label className="cust-edit-label">Số hợp đồng</label>
+                                    <input
+                                        type="text"
+                                        className="cust-edit-input"
+                                        value={contractData.contractNumber}
+                                        disabled
+                                        style={{ backgroundColor: '#f5f5f5', cursor: 'not-allowed' }}
+                                    />
+                                </div>
+                                <div className="cust-edit-form-group">
+                                    <label className="cust-edit-label">Tên hợp đồng</label>
+                                    <input
+                                        type="text"
+                                        className="cust-edit-input"
+                                        value={contractData.contractTitle}
+                                        disabled
+                                        style={{ backgroundColor: '#f5f5f5', cursor: 'not-allowed' }}
+                                    />
+                                </div>
+                                <div className="cust-edit-form-group">
+                                    <label className="cust-edit-label">Loại hợp đồng</label>
+                                    <input
+                                        type="text"
+                                        className="cust-edit-input"
+                                        value={contractData.contractType === 'long_term' ? 'Dài hạn' : 'Ngắn hạn'}
+                                        disabled
+                                        style={{ backgroundColor: '#f5f5f5', cursor: 'not-allowed' }}
+                                    />
+                                </div>
+                                <div className="cust-edit-form-group">
+                                    <label className="cust-edit-label">Trạng thái</label>
+                                    <input
+                                        type="text"
+                                        className="cust-edit-input"
+                                        value={contractData.status === 'draft' ? 'Bản nháp' : contractData.status === 'active' ? 'Hoạt động' : 'Không hoạt động'}
+                                        disabled
+                                        style={{ backgroundColor: '#f5f5f5', cursor: 'not-allowed' }}
+                                    />
+                                </div>
+                                <div className="cust-edit-form-group">
+                                    <label className="cust-edit-label">Ngày bắt đầu</label>
+                                    <input
+                                        type="text"
+                                        className="cust-edit-input"
+                                        value={new Date(contractData.startDate).toLocaleDateString('vi-VN')}
+                                        disabled
+                                        style={{ backgroundColor: '#f5f5f5', cursor: 'not-allowed' }}
+                                    />
+                                </div>
+                                <div className="cust-edit-form-group">
+                                    <label className="cust-edit-label">Ngày kết thúc</label>
+                                    <input
+                                        type="text"
+                                        className="cust-edit-input"
+                                        value={new Date(contractData.endDate).toLocaleDateString('vi-VN')}
+                                        disabled
+                                        style={{ backgroundColor: '#f5f5f5', cursor: 'not-allowed' }}
+                                    />
+                                </div>
+                            </div>
+                        </div>
 
-                        {/* Action Buttons */}
+                            {/* Shift Schedule Section */}
+                            {contractId && (
+                                <ShiftScheduleEdit
+                                    ref={shiftScheduleRef}
+                                    contractId={contractId}
+                                />
+                            )}
+
+                            {/* Action Buttons */}
                         <div className="cust-edit-actions">
                             <button
                                 className="cust-edit-btn cust-edit-btn-cancel"
-                                onClick={() => navigate(`/director/customer/${customerId}`)}
+                                onClick={() => navigate(`/director/customer/${customerId}/${contractId}`)}
                                 disabled={isSaving}
                             >
                                 Hủy

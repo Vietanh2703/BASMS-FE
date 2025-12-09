@@ -1,9 +1,40 @@
 declare namespace H {
+    interface DefaultLayers {
+        vector: {
+            normal: {
+                map: Layer;
+            };
+        };
+    }
+
+    interface Layer {
+        // Base layer type
+    }
+
+    interface MapObject {
+        // Base map object type
+    }
+
     namespace service {
         class Platform {
             constructor(options: { apikey: string });
-            createDefaultLayers(): any;
+            createDefaultLayers(): DefaultLayers;
             getSearchService(): SearchService;
+        }
+
+        interface SearchResult {
+            title?: string;
+            position: {
+                lat: number;
+                lng: number;
+            };
+            address?: {
+                label: string;
+            };
+        }
+
+        interface GeocodeResponse {
+            items?: SearchResult[];
         }
 
         interface SearchService {
@@ -11,8 +42,8 @@ declare namespace H {
                 params: {
                     q: string;
                 },
-                onResult: (result: any) => void,
-                onError: (error: any) => void
+                onResult: (result: GeocodeResponse) => void,
+                onError: (error: Error) => void
             ): void;
         }
     }
@@ -20,33 +51,45 @@ declare namespace H {
     class Map {
         constructor(
             element: HTMLElement,
-            baseLayer: any,
+            baseLayer: Layer,
             options?: {
                 center?: { lat: number; lng: number };
                 zoom?: number;
                 pixelRatio?: number;
             }
         );
-        addObject(object: any): void;
-        removeObjects(objects: any[]): void;
-        getObjects(): any[];
+        addObject(object: MapObject): void;
+        removeObjects(objects: MapObject[]): void;
+        getObjects(): MapObject[];
         setCenter(location: { lat: number; lng: number }): void;
         setZoom(zoom: number): void;
-        getViewModel(): any;
+        getViewModel(): ViewModel;
         getViewPort(): ViewPort;
         screenToGeo(x: number, y: number): { lat: number; lng: number };
-        addEventListener(type: string, handler: (evt: any) => void, useCapture?: boolean): void;
-        removeEventListener(type: string, handler: (evt: any) => void, useCapture?: boolean): void;
+        addEventListener(type: string, handler: (evt: MapEvent) => void, useCapture?: boolean): void;
+        removeEventListener(type: string, handler: (evt: MapEvent) => void, useCapture?: boolean): void;
         dispose(): void;
+    }
+
+    interface ViewModel {
+        // View model interface
     }
 
     interface ViewPort {
         resize(): void;
     }
 
+    interface MapEvent {
+        target: MapObject;
+        currentPointer: {
+            viewportX: number;
+            viewportY: number;
+        };
+    }
+
     namespace map {
-        class Marker {
-            constructor(position: { lat: number; lng: number }, options?: any);
+        class Marker extends MapObject {
+            constructor(position: { lat: number; lng: number }, options?: { volatility?: boolean });
             draggable: boolean;
             setGeometry(geometry: { lat: number; lng: number }): void;
             getGeometry(): { lat: number; lng: number };
@@ -64,7 +107,7 @@ declare namespace H {
 
     namespace ui {
         class UI {
-            static createDefault(map: H.Map, defaultLayers: any): UI;
+            static createDefault(map: H.Map, defaultLayers: DefaultLayers): UI;
         }
     }
 
