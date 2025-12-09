@@ -71,17 +71,8 @@ interface Shift {
     version: number;
 }
 
-interface Contract {
-    id: string;
-    contractNumber: string;
-    contractTitle: string;
-    status: string;
-    startDate: string;
-    endDate: string;
-}
-
 const CustomerSchedule = () => {
-    const { customerId } = useParams<{ customerId: string }>();
+    const { contractId } = useParams<{ contractId: string }>();
     const navigate = useNavigate();
     const { user, logout } = useAuth();
     const [isMenuOpen, setIsMenuOpen] = useState(true);
@@ -125,10 +116,10 @@ const CustomerSchedule = () => {
     }, [isProfileDropdownOpen]);
 
     useEffect(() => {
-        if (customerId) {
+        if (contractId) {
             fetchShifts();
         }
-    }, [customerId, selectedWeekStart]);
+    }, [contractId, selectedWeekStart]);
 
     useEffect(() => {
         if (showShiftDetail && selectedShift && mapRef.current) {
@@ -163,31 +154,11 @@ const CustomerSchedule = () => {
                 throw new Error('Không tìm thấy token xác thực');
             }
 
-            // Step 1: Get contract ID
-            const contractsUrl = `${import.meta.env.VITE_API_CONTRACT_URL}/contracts/customers/${customerId}/contracts`;
-            const contractsResponse = await fetch(contractsUrl, {
-                headers: {
-                    'Authorization': `Bearer ${token}`,
-                    'Content-Type': 'application/json',
-                }
-            });
-
-            if (!contractsResponse.ok) {
-                throw new Error('Không thể tải thông tin hợp đồng');
+            if (!contractId) {
+                throw new Error('Không tìm thấy ID hợp đồng');
             }
 
-            const contractsData = await contractsResponse.json();
-            const contracts: Contract[] = contractsData.contracts || [];
-
-            if (contracts.length === 0) {
-                setShifts([]);
-                setLoading(false);
-                return;
-            }
-
-            const contractId = contracts[0].id;
-
-            // Step 2: Get shifts using the new API endpoint
+            // Get shifts using contractId directly from URL params
             const shiftsUrl = `${import.meta.env.VITE_API_SHIFTS_URL}/shifts/get-all?contractId=${contractId}`;
             const shiftsResponse = await fetch(shiftsUrl, {
                 headers: {

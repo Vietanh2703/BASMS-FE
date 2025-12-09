@@ -788,6 +788,9 @@
 
 .dir-customers-contract-action {
     flex-shrink: 0;
+    display: flex;
+    gap: 8px;
+    flex-direction: column;
 }
 
 .dir-customers-contract-title {
