@@ -72,6 +72,29 @@ const ServiceTemplateEditor = () => {
         setShowSnackbarWarning(false);
     }, []);
 
+    // Auto-generate contract number and sign date on mount
+    useEffect(() => {
+        // Only generate if not already set (not from saved data)
+        if (!formData.ContractNumber.value) {
+            // Generate 8 random digits
+            const randomNumber = Math.floor(10000000 + Math.random() * 90000000).toString();
+
+            // Get current date
+            const now = new Date();
+            const day = now.getDate().toString();
+            const month = (now.getMonth() + 1).toString();
+            const year = now.getFullYear().toString();
+
+            setFormData(prev => ({
+                ...prev,
+                ContractNumber: { ...prev.ContractNumber, value: randomNumber },
+                SignDay: { ...prev.SignDay, value: day },
+                SignMonth: { ...prev.SignMonth, value: month },
+                SignYear: { ...prev.SignYear, value: year },
+            }));
+        }
+    }, []);
+
     // Load saved data from localStorage on mount
     useEffect(() => {
         const savedData = localStorage.getItem('serviceContractReviewData');
@@ -528,6 +551,16 @@ const ServiceTemplateEditor = () => {
                                                     placeholder={`Nhập ${formData[fieldKey].fieldName.toLowerCase()}...`}
                                                     style={getFieldStyle(fieldKey)}
                                                     rows={6}
+                                                />
+                                            ) : ['ContractNumber', 'SignDay', 'SignMonth', 'SignYear'].includes(fieldKey) ? (
+                                                // Read-only input for auto-generated fields
+                                                <input
+                                                    type="text"
+                                                    className={`sted-field-input ${activeField === fieldKey ? 'sted-field-active' : ''} ${fieldErrors[fieldKey] ? 'sted-field-error' : ''}`}
+                                                    value={formData[fieldKey].value}
+                                                    readOnly
+                                                    placeholder="Tự động điền"
+                                                    style={{ backgroundColor: '#f5f5f5', cursor: 'not-allowed' }}
                                                 />
                                             ) : (
                                                 <input
