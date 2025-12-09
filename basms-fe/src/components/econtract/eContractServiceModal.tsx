@@ -60,9 +60,15 @@ const EContractServiceModal = ({ isOpen, onClose }: EContractServiceModalProps) 
         setLoadingCustomers(true);
         setError(null);
         try {
-            const token = localStorage.getItem('accessToken');
+            // Kiểm tra nhiều key có thể
+            const token = localStorage.getItem('accessToken') ||
+                localStorage.getItem('token') ||
+                sessionStorage.getItem('accessToken') ||
+                sessionStorage.getItem('token');
+
             if (!token) {
-                throw new Error('Không tìm thấy token xác thực');
+                console.error('Available localStorage keys:', Object.keys(localStorage));
+                throw new Error('Không tìm thấy token xác thực. Vui lòng đăng nhập lại.');
             }
 
             const apiUrl = import.meta.env.VITE_API_CONTRACT_URL;
@@ -73,6 +79,10 @@ const EContractServiceModal = ({ isOpen, onClose }: EContractServiceModalProps) 
                 },
             });
 
+            if (response.status === 401) {
+                throw new Error('Token hết hạn. Vui lòng đăng nhập lại.');
+            }
+
             if (!response.ok) {
                 throw new Error('Không thể tải danh sách khách hàng');
             }
@@ -80,7 +90,6 @@ const EContractServiceModal = ({ isOpen, onClose }: EContractServiceModalProps) 
             const data = await response.json();
             setCustomers(data.customers || []);
 
-            // Auto-select first customer
             if (data.customers && data.customers.length > 0) {
                 setSelectedCustomerId(data.customers[0].id);
             }
@@ -90,6 +99,7 @@ const EContractServiceModal = ({ isOpen, onClose }: EContractServiceModalProps) 
             setLoadingCustomers(false);
         }
     };
+
 
     const fetchContracts = async (customerId: string) => {
         setLoadingContracts(true);
