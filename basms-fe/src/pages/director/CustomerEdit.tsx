@@ -5,7 +5,6 @@ import ShiftScheduleEdit, { type ShiftScheduleEditHandle } from './ShiftSchedule
 import SnackbarChecked from '../../components/snackbar/snackbarChecked';
 import SnackbarFailed from '../../components/snackbar/snackbarFailed';
 import './CustomerEdit.css';
-import '../../here-maps.d.ts';
 
 interface Customer {
     id: string;
@@ -369,14 +368,14 @@ const CustomerEdit = () => {
                     const target = ev.target;
                     if (target instanceof window.H.map.Marker) {
                         const pointer = ev.currentPointer;
-                        target.setGeometry(map.screenToGeo(pointer.viewportX, pointer.viewportY));
+                        (target as H.map.Marker).setGeometry(map.screenToGeo(pointer.viewportX, pointer.viewportY));
                     }
                 }, false);
 
                 map.addEventListener('dragend', (ev: H.MapEvent) => {
                     const target = ev.target;
                     if (target instanceof window.H.map.Marker) {
-                        const position = target.getGeometry();
+                        const position = (target as H.map.Marker).getGeometry();
                         setGpsData({
                             latitude: position.lat,
                             longitude: position.lng,
