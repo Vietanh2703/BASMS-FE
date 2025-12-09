@@ -70,7 +70,7 @@ const CustomerList = () => {
 
     // Search and sort states
     const [searchTerm, setSearchTerm] = useState('');
-    const [sortBy, setSortBy] = useState<'companyName' | 'customerSince'>('companyName');
+    const [sortBy, setSortBy] = useState<'contactPersonName' | 'customerSince'>('contactPersonName');
     const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('asc');
     const [statusFilter, setStatusFilter] = useState<string>('all');
     const [currentPage, setCurrentPage] = useState(1);
@@ -116,7 +116,7 @@ const CustomerList = () => {
     });
 
     const sortOptions = [
-        { value: 'companyName', label: 'Tên công ty (A-Z)' },
+        { value: 'contactPersonName', label: 'Tên người liên hệ (A-Z)' },
         { value: 'customerSince', label: 'Ngày trở thành khách hàng' },
     ];
 
@@ -266,6 +266,11 @@ const CustomerList = () => {
     // Filter and sort customers
     const filteredAndSortedCustomers = allCustomers
         .filter(customer => {
+            // Only show active and in-active customers
+            if (customer.status !== 'active' && customer.status !== 'in-active') {
+                return false;
+            }
+
             // Search filter
             if (searchTerm) {
                 const searchLower = searchTerm.toLowerCase();
@@ -287,8 +292,8 @@ const CustomerList = () => {
             return true;
         })
         .sort((a, b) => {
-            if (sortBy === 'companyName') {
-                const comparison = a.companyName.localeCompare(b.companyName, 'vi');
+            if (sortBy === 'contactPersonName') {
+                const comparison = a.contactPersonName.localeCompare(b.contactPersonName, 'vi');
                 return sortOrder === 'asc' ? comparison : -comparison;
             } else if (sortBy === 'customerSince') {
                 const dateA = new Date(a.customerSince).getTime();
@@ -801,12 +806,7 @@ const CustomerList = () => {
                             >
                                 <option value="all">Tất cả trạng thái</option>
                                 <option value="active">Đang hoạt động</option>
-                                <option value="inactive">Không hoạt động</option>
                                 <option value="in-active">Chưa hoạt động</option>
-                                <option value="assigning_manager">Phân công quản lý</option>
-                                <option value="schedule_shifts">Phân công ca trực</option>
-                                <option value="Cancelled">Đã hủy</option>
-                                <option value="Expired">Hết hạn</option>
                             </select>
                         </div>
 
@@ -815,7 +815,7 @@ const CustomerList = () => {
                                 className="dir-customers-sort-select"
                                 value={sortBy}
                                 onChange={(e) => {
-                                    setSortBy(e.target.value as 'companyName' | 'customerSince');
+                                    setSortBy(e.target.value as 'contactPersonName' | 'customerSince');
                                     setCurrentPage(1);
                                 }}
                             >
@@ -879,8 +879,7 @@ const CustomerList = () => {
                                     <div key={customer.id} className="dir-customers-item">
                                         <div className="dir-customers-item-header">
                                             <div className="dir-customers-item-main-info">
-                                                <div className="dir-customers-item-company-name">{customer.companyName}</div>
-                                                <div className="dir-customers-item-contact-name">{customer.contactPersonName}</div>
+                                                <div className="dir-customers-item-company-name">{customer.contactPersonName}</div>
                                                 <div className="dir-customers-item-code">
                                                     <span className="dir-customers-code-label">Mã KH:</span>
                                                     <span className="dir-customers-code-value">{customer.customerCode}</span>
