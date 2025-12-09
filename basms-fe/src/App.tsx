@@ -190,7 +190,7 @@ function App() {
                             <CustomerEdit />
                         </RoleBasedRoute>
                     }/>
-                    <Route path="/director/customer/:customerId/view-shift-schedule" element={
+                    <Route path="/director/customer/:contractId/view-shift-schedule" element={
                         <RoleBasedRoute allowedRoles={[ROLES.DIRECTOR]}>
                             <CustomerSchedule />
                         </RoleBasedRoute>

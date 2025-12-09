@@ -312,8 +312,8 @@ const CustomerList = () => {
         navigate(`/director/customer/${customerId}/${contractId}`);
     };
 
-    const handleViewSchedule = (customerId: string) => {
-        navigate(`/director/customer/${customerId}/view-shift-schedule`);
+    const handleViewSchedule = (contractId: string) => {
+        navigate(`/director/customer/${contractId}/view-shift-schedule`);
     };
 
     const handleRefresh = () => {
@@ -926,21 +926,13 @@ const CustomerList = () => {
                                             )}
 
                                             {customer.status === 'active' && (
-                                                <>
-                                                    <button
-                                                        className="dir-customers-action-btn dir-customers-btn-schedule"
-                                                        onClick={() => handleViewSchedule(customer.id)}
-                                                    >
-                                                        Xem ca trực
-                                                    </button>
-                                                    <button
-                                                        className="dir-customers-action-btn dir-customers-btn-lock"
-                                                        onClick={() => handleLockCustomer(customer)}
-                                                        disabled={lockingCustomers.has(customer.id)}
-                                                    >
-                                                        {lockingCustomers.has(customer.id) ? 'Đang khóa...' : 'Khóa tài khoản'}
-                                                    </button>
-                                                </>
+                                                <button
+                                                    className="dir-customers-action-btn dir-customers-btn-lock"
+                                                    onClick={() => handleLockCustomer(customer)}
+                                                    disabled={lockingCustomers.has(customer.id)}
+                                                >
+                                                    {lockingCustomers.has(customer.id) ? 'Đang khóa...' : 'Khóa tài khoản'}
+                                                </button>
                                             )}
                                         </div>
 
@@ -1015,6 +1007,14 @@ const CustomerList = () => {
                                                                 >
                                                                     {contract.status === 'draft' ? 'Xem chi tiết & phân công' : 'Xem chi tiết'}
                                                                 </button>
+                                                                {contract.status === 'shift_generated' && (
+                                                                    <button
+                                                                        className="dir-customers-action-btn dir-customers-btn-schedule"
+                                                                        onClick={() => handleViewSchedule(contract.id)}
+                                                                    >
+                                                                        Xem ca trực
+                                                                    </button>
+                                                                )}
                                                             </div>
                                                         </div>
                                                     ))
