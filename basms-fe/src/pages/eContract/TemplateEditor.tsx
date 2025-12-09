@@ -494,7 +494,7 @@ const TemplateEditor = () => {
                 <main className="ted-main">
                     <div className="ted-page-header">
                         <div>
-                            <h1 className="ted-page-title">Soạn thảo hợp đồng</h1>
+                            <h1 className="ted-page-title">Hợp đồng lao động bảo vệ</h1>
                             <p className="ted-page-subtitle">Điền thông tin và xem trước hợp đồng trước khi tạo</p>
                         </div>
                         <div className="ted-header-actions">
