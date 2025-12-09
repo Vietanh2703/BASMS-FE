@@ -60,8 +60,9 @@ const EContractServiceModal = ({ isOpen, onClose }: EContractServiceModalProps) 
         setLoadingCustomers(true);
         setError(null);
         try {
-            // Kiểm tra nhiều key có thể
-            const token = localStorage.getItem('accessToken') ||
+            // Kiểm tra token eContract trước, sau đó mới kiểm tra token thông thường
+            const token = localStorage.getItem('eContractAccessToken') ||
+                localStorage.getItem('accessToken') ||
                 localStorage.getItem('token') ||
                 sessionStorage.getItem('accessToken') ||
                 sessionStorage.getItem('token');
@@ -104,7 +105,9 @@ const EContractServiceModal = ({ isOpen, onClose }: EContractServiceModalProps) 
     const fetchContracts = async (customerId: string) => {
         setLoadingContracts(true);
         try {
-            const token = localStorage.getItem('accessToken');
+            // Kiểm tra token eContract trước, sau đó mới kiểm tra token thông thường
+            const token = localStorage.getItem('eContractAccessToken') ||
+                localStorage.getItem('accessToken');
             if (!token) {
                 throw new Error('Không tìm thấy token xác thực');
             }
