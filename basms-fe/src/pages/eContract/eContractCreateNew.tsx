@@ -39,6 +39,7 @@ const EContractCreateNew = () => {
     const [isLoggingOut, setIsLoggingOut] = useState(false);
     const [showLogoutModal, setShowLogoutModal] = useState(false);
     const [showServiceModal, setShowServiceModal] = useState(false);
+    const [selectedTemplateId, setSelectedTemplateId] = useState<string | null>(null);
     const profileRef = useRef<HTMLDivElement>(null);
 
     // Search and filter states
@@ -230,7 +231,8 @@ const EContractCreateNew = () => {
             // Navigate to regular Template Editor for guard contracts
             navigate(`/e-contracts/guard-template-editor?template=${templateId}`);
         } else if (template.templateType === 'guard_service_contract') {
-            // Open service modal to select customer
+            // Open service modal to select customer and pass templateId
+            setSelectedTemplateId(templateId);
             setShowServiceModal(true);
         } else {
             // Default to regular Template Editor for other contract types
@@ -469,7 +471,11 @@ const EContractCreateNew = () => {
             {/* Service Contract Modal */}
             <EContractServiceModal
                 isOpen={showServiceModal}
-                onClose={() => setShowServiceModal(false)}
+                onClose={() => {
+                    setShowServiceModal(false);
+                    setSelectedTemplateId(null);
+                }}
+                templateId={selectedTemplateId || undefined}
             />
         </div>
     );

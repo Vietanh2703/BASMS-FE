@@ -31,9 +31,10 @@ interface Contract {
 interface EContractServiceModalProps {
     isOpen: boolean;
     onClose: () => void;
+    templateId?: string;
 }
 
-const EContractServiceModal = ({ isOpen, onClose }: EContractServiceModalProps) => {
+const EContractServiceModal = ({ isOpen, onClose, templateId }: EContractServiceModalProps) => {
     const navigate = useNavigate();
     const [customers, setCustomers] = useState<Customer[]>([]);
     const [selectedCustomerId, setSelectedCustomerId] = useState<string | null>(null);
@@ -135,7 +136,7 @@ const EContractServiceModal = ({ isOpen, onClose }: EContractServiceModalProps) 
     };
 
     const handleCreateContract = (customer: Customer) => {
-        // Navigate to ServiceTemplateEditor with customer info as query params
+        // Navigate to template editor with customer info and template ID as query params
         const params = new URLSearchParams({
             email: customer.email,
             phone: customer.phone,
@@ -143,7 +144,13 @@ const EContractServiceModal = ({ isOpen, onClose }: EContractServiceModalProps) 
             identityNumber: '', // Not available in customer data
             customerId: customer.id,
         });
-        navigate(`/econtract/service-template-editor?${params.toString()}`);
+
+        // Add templateId if provided
+        if (templateId) {
+            params.append('template', templateId);
+        }
+
+        navigate(`/e-contracts/template-editor?${params.toString()}`);
         onClose();
     };
 
