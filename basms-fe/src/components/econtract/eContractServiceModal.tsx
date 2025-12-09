@@ -28,6 +28,29 @@ interface Contract {
     status: string;
 }
 
+interface Document {
+    id: string;
+    category: string;
+    documentType: string;
+    documentName: string;
+    fileUrl: string;
+    fileSize: number;
+    version: string;
+    startDate: string | null;
+    endDate: string | null;
+    uploadedBy: string;
+    createdAt: string;
+    fileSizeFormatted: string;
+    downloadUrl: string;
+}
+
+interface DocumentsResponse {
+    success: boolean;
+    errorMessage: string | null;
+    documents: Document[];
+    totalCount: number;
+}
+
 interface EContractServiceModalProps {
     isOpen: boolean;
     onClose: () => void;
@@ -42,10 +65,12 @@ const EContractServiceModal = ({ isOpen, onClose, templateId }: EContractService
     const [loadingCustomers, setLoadingCustomers] = useState(false);
     const [loadingContracts, setLoadingContracts] = useState(false);
     const [error, setError] = useState<string | null>(null);
+    const [serviceTemplateId, setServiceTemplateId] = useState<string | null>(null);
 
-    // Fetch customers on mount
+    // Fetch template on mount
     useEffect(() => {
         if (isOpen) {
+            fetchServiceTemplate();
             fetchCustomers();
         }
     }, [isOpen]);
@@ -56,6 +81,45 @@ const EContractServiceModal = ({ isOpen, onClose, templateId }: EContractService
             fetchContracts(selectedCustomerId);
         }
     }, [selectedCustomerId]);
+
+    const fetchServiceTemplate = async () => {
+        try {
+            const token = localStorage.getItem('eContractAccessToken') ||
+                localStorage.getItem('accessToken');
+
+            if (!token) {
+                console.error('No token found for fetching template');
+                return;
+            }
+
+            const apiUrl = import.meta.env.VITE_API_CONTRACT_URL;
+            const response = await fetch(`${apiUrl}/contracts/documents`, {
+                headers: {
+                    'Authorization': `Bearer ${token}`,
+                    'Content-Type': 'application/json',
+                },
+            });
+
+            if (!response.ok) {
+                throw new Error('Failed to fetch templates');
+            }
+
+            const data: DocumentsResponse = await response.json();
+
+            // Find guard_service_contract template
+            const serviceTemplate = data.documents.find(
+                doc => doc.category === 'guard_service_contract' && doc.documentType === 'template'
+            );
+
+            if (serviceTemplate) {
+                setServiceTemplateId(serviceTemplate.id);
+            } else {
+                console.warn('No guard_service_contract template found');
+            }
+        } catch (err) {
+            console.error('Error fetching service template:', err);
+        }
+    };
 
     const fetchCustomers = async () => {
         setLoadingCustomers(true);
@@ -145,9 +209,11 @@ const EContractServiceModal = ({ isOpen, onClose, templateId }: EContractService
             customerId: customer.id,
         });
 
-        // Add templateId if provided
-        if (templateId) {
-            params.append('template', templateId);
+        // Use serviceTemplateId from API, fallback to prop templateId
+        const finalTemplateId = serviceTemplateId || templateId;
+
+        if (finalTemplateId) {
+            params.append('template', finalTemplateId);
         }
 
         navigate(`/e-contracts/template-editor?${params.toString()}`);
