@@ -122,7 +122,12 @@ const ShiftAssignment = () => {
             }
 
             const managerData = await managerResponse.json();
-            const fetchedManagerId = managerData.managerId;
+            const fetchedManagerId = managerData.manager?.id;
+
+            if (!fetchedManagerId) {
+                throw new Error('Không tìm thấy manager ID trong response');
+            }
+
             setManagerId(fetchedManagerId);
 
             // Fetch contracts managed by this manager

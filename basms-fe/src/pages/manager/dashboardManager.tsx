@@ -49,12 +49,16 @@ const DashboardManager = () => {
             if (!accessToken) return;
 
             const managerResponse = await fetch(
-                `${import.meta.env.VITE_API_SHIFTS_URL}/shifts/managers/by-email?email=${email}`,
+                `${import.meta.env.VITE_API_SHIFTS_URL}/shifts/managers/by-email`,
                 {
+                    method: 'POST',
                     headers: {
                         'Authorization': `Bearer ${accessToken}`,
                         'Content-Type': 'application/json',
-                    }
+                    },
+                    body: JSON.stringify({
+                        Email: email
+                    })
                 }
             );
 

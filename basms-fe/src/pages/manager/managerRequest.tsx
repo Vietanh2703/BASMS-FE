@@ -141,14 +141,18 @@ const ManagerRequest = () => {
                 return;
             }
 
-            const managerUrl = `${import.meta.env.VITE_API_SHIFTS_URL}/shifts/managers/by-email?email=${encodeURIComponent(email)}`;
+            const managerUrl = `${import.meta.env.VITE_API_SHIFTS_URL}/shifts/managers/by-email`;
 
             const managerResponse = await fetch(managerUrl,
                 {
+                    method: 'POST',
                     headers: {
                         'Authorization': `Bearer ${accessToken}`,
                         'Content-Type': 'application/json',
-                    }
+                    },
+                    body: JSON.stringify({
+                        Email: email
+                    })
                 }
             );
 
