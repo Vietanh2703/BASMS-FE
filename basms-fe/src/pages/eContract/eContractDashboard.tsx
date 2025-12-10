@@ -36,6 +36,31 @@ interface ContractStats {
     expiredOrCanceled: number;
 }
 
+interface Contract {
+    id: string;
+    contractNumber: string;
+    contractType: string;
+    status: string;
+    documentId: string;
+    customerId: string;
+    customerName: string;
+    customerEmail: string;
+    category: string;
+    startDate: string;
+    endDate: string;
+    daysRemaining: number;
+    expiryStatus: string;
+    createdAt: string;
+    updatedAt: string;
+}
+
+interface ContractsResponse {
+    success: boolean;
+    contracts: Contract[];
+    totalCount: number;
+    errorMessage: string | null;
+}
+
 const EContractDashboard = () => {
     const navigate = useNavigate();
     const location = useLocation();
@@ -54,6 +79,8 @@ const EContractDashboard = () => {
     const [isLoadingStats, setIsLoadingStats] = useState(true);
     const [chartFilter, setChartFilter] = useState<'7days' | '1month' | '1year'>('7days');
     const [documents, setDocuments] = useState<Document[]>([]);
+    const [contracts, setContracts] = useState<Contract[]>([]);
+    const [isLoadingContracts, setIsLoadingContracts] = useState(true);
 
     // Calendar state
     const now = new Date();
@@ -209,9 +236,41 @@ const EContractDashboard = () => {
         }
     };
 
+    // Fetch contracts from API
+    const fetchContracts = async () => {
+        setIsLoadingContracts(true);
+        try {
+            const apiUrl = import.meta.env.VITE_API_CONTRACT_URL;
+            const token = localStorage.getItem('eContractAccessToken');
+
+            const response = await fetch(`${apiUrl}/contracts/get-all`, {
+                method: 'GET',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${token}`,
+                },
+            });
+
+            if (!response.ok) {
+                throw new Error('Failed to fetch contracts');
+            }
+
+            const data: ContractsResponse = await response.json();
+
+            if (data.success) {
+                setContracts(data.contracts);
+            }
+        } catch (error) {
+            console.error('Error fetching contracts:', error);
+        } finally {
+            setIsLoadingContracts(false);
+        }
+    };
+
     // Fetch contract stats on component mount
     useEffect(() => {
         fetchContractStats();
+        fetchContracts();
     }, []);
 
     // Process documents into chart data based on filter
@@ -301,6 +360,26 @@ const EContractDashboard = () => {
         return category ? categoryMap[category] || category : 'Khác';
     };
 
+    // Get contract category label for contracts
+    const getContractCategoryLabel = (category: string) => {
+        const categoryMap: { [key: string]: string } = {
+            'guard_service_contract': 'Hợp đồng dịch vụ bảo vệ',
+            'guard_labor_contract': 'Hợp đồng lao động bảo vệ',
+            'manager_service_contract': 'Hợp đồng lao động quản lý',
+        };
+        return categoryMap[category] || category;
+    };
+
+    // Get expiry status label
+    const getExpiryStatusLabel = (status: string) => {
+        const statusMap: { [key: string]: string } = {
+            'active': 'Đang hoạt động',
+            'near_expired': 'Gần hết hạn',
+            'expired': 'Hết hạn',
+        };
+        return statusMap[status] || status;
+    };
+
     // Process contracts by category for bar chart (last 12 months)
     const processContractsByCategory = () => {
         if (documents.length === 0) return [];
@@ -350,14 +429,6 @@ const EContractDashboard = () => {
         { id: 6, type: 'created', message: 'Tạo mới hợp đồng HD-2024-131', time: '10:30' },
     ];
 
-    // Mock data for priority table
-    const priorityContracts = [
-        { id: 1, name: 'HD-2024-145', type: 'Dịch vụ bảo vệ', status: 'pending', deadline: '2025-11-26', daysLeft: 1 },
-        { id: 2, name: 'HD-2024-146', type: 'Thuê nhân sự', status: 'pending', deadline: '2025-11-27', daysLeft: 2 },
-        { id: 3, name: 'HD-2024-147', type: 'Hợp tác kinh doanh', status: 'review', deadline: '2025-11-28', daysLeft: 3 },
-        { id: 4, name: 'HD-2024-148', type: 'Dịch vụ bảo vệ', status: 'pending', deadline: '2025-11-29', daysLeft: 4 },
-        { id: 5, name: 'HD-2024-149', type: 'Bảo trì thiết bị', status: 'review', deadline: '2025-11-30', daysLeft: 5 },
-    ];
 
     // Mock data for calendar events (deadlines)
     const calendarEvents = [
@@ -723,36 +794,42 @@ const EContractDashboard = () => {
                                 <h2 className="ec-table-title">Hợp đồng cần xử lý</h2>
                             </div>
                             <div className="ec-table-content">
-                                <table className="ec-priority-table">
-                                    <thead>
-                                        <tr>
-                                            <th>Mã hợp đồng</th>
-                                            <th>Loại</th>
-                                            <th>Trạng thái</th>
-                                            <th>Deadline</th>
-                                            <th>Còn lại</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody>
-                                        {priorityContracts.map((contract) => (
-                                            <tr key={contract.id} className={contract.daysLeft <= 2 ? 'ec-row-urgent' : ''}>
-                                                <td className="ec-td-name">{contract.name}</td>
-                                                <td>{contract.type}</td>
-                                                <td>
-                                                    <span className={`ec-status-badge ec-status-${contract.status}`}>
-                                                        {contract.status === 'pending' ? 'Chờ ký' : 'Đang xem xét'}
-                                                    </span>
-                                                </td>
-                                                <td>{contract.deadline}</td>
-                                                <td>
-                                                    <span className={`ec-days-left ${contract.daysLeft <= 2 ? 'ec-days-urgent' : ''}`}>
-                                                        {contract.daysLeft} ngày
-                                                    </span>
-                                                </td>
+                                {isLoadingContracts ? (
+                                    <div style={{ textAlign: 'center', padding: '20px' }}>Đang tải...</div>
+                                ) : contracts.length === 0 ? (
+                                    <div style={{ textAlign: 'center', padding: '20px' }}>Không có hợp đồng nào</div>
+                                ) : (
+                                    <table className="ec-priority-table">
+                                        <thead>
+                                            <tr>
+                                                <th>Mã hợp đồng</th>
+                                                <th>Người ký</th>
+                                                <th>Loại hợp đồng</th>
+                                                <th>Trạng thái</th>
+                                                <th>Còn lại</th>
                                             </tr>
-                                        ))}
-                                    </tbody>
-                                </table>
+                                        </thead>
+                                        <tbody>
+                                            {contracts.map((contract) => (
+                                                <tr key={contract.id} className={contract.daysRemaining <= 7 ? 'ec-row-urgent' : ''}>
+                                                    <td className="ec-td-name">{contract.contractNumber}</td>
+                                                    <td>{contract.customerName}</td>
+                                                    <td>{getContractCategoryLabel(contract.category)}</td>
+                                                    <td>
+                                                        <span className={`ec-status-badge ec-status-${contract.expiryStatus}`}>
+                                                            {getExpiryStatusLabel(contract.expiryStatus)}
+                                                        </span>
+                                                    </td>
+                                                    <td>
+                                                        <span className={`ec-days-left ${contract.daysRemaining <= 7 ? 'ec-days-urgent' : ''}`}>
+                                                            {contract.daysRemaining} ngày
+                                                        </span>
+                                                    </td>
+                                                </tr>
+                                            ))}
+                                        </tbody>
+                                    </table>
+                                )}
                             </div>
                         </div>
 
