@@ -854,8 +854,29 @@
     color: #1d4ed8;
 }
 
+.ec-status-active {
+    background-color: #d1fae5;
+    color: #059669;
+}
+
+.ec-status-near_expired {
+    background-color: #fef3c7;
+    color: #d97706;
+}
+
+.ec-status-expired {
+    background-color: #fee2e2;
+    color: #dc2626;
+}
+
 .ec-days-left {
     font-weight: 500;
+    color: #059669;
+}
+
+.ec-days-warning {
+    color: #f59e0b;
+    font-weight: 600;
 }
 
 .ec-days-urgent {

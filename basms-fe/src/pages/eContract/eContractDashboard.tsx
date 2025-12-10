@@ -380,6 +380,16 @@ const EContractDashboard = () => {
         return statusMap[status] || status;
     };
 
+    // Get days remaining class
+    const getDaysRemainingClass = (days: number) => {
+        if (days <= 0) {
+            return 'ec-days-urgent'; // Màu đỏ
+        } else if (days <= 7) {
+            return 'ec-days-warning'; // Màu vàng
+        }
+        return ''; // Màu mặc định (xanh)
+    };
+
     // Process contracts by category for bar chart (last 12 months)
     const processContractsByCategory = () => {
         if (documents.length === 0) return [];
@@ -791,7 +801,7 @@ const EContractDashboard = () => {
                         {/* Priority Table */}
                         <div className="ec-table-section">
                             <div className="ec-table-header">
-                                <h2 className="ec-table-title">Hợp đồng cần xử lý</h2>
+                                <h2 className="ec-table-title">Danh sách hợp đồng</h2>
                             </div>
                             <div className="ec-table-content">
                                 {isLoadingContracts ? (
@@ -811,7 +821,7 @@ const EContractDashboard = () => {
                                         </thead>
                                         <tbody>
                                             {contracts.map((contract) => (
-                                                <tr key={contract.id} className={contract.daysRemaining <= 7 ? 'ec-row-urgent' : ''}>
+                                                <tr key={contract.id} className={contract.daysRemaining <= 0 ? 'ec-row-urgent' : ''}>
                                                     <td className="ec-td-name">{contract.contractNumber}</td>
                                                     <td>{contract.customerName}</td>
                                                     <td>{getContractCategoryLabel(contract.category)}</td>
@@ -821,7 +831,7 @@ const EContractDashboard = () => {
                                                         </span>
                                                     </td>
                                                     <td>
-                                                        <span className={`ec-days-left ${contract.daysRemaining <= 7 ? 'ec-days-urgent' : ''}`}>
+                                                        <span className={`ec-days-left ${getDaysRemainingClass(contract.daysRemaining)}`}>
                                                             {contract.daysRemaining} ngày
                                                         </span>
                                                     </td>
