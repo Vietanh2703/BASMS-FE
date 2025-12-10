@@ -217,11 +217,19 @@
     box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1);
 }
 
+.ecsm-contract-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 12px;
+    gap: 12px;
+}
+
 .ecsm-contract-title {
     font-size: 15px;
     font-weight: 600;
     color: #1f2937;
-    margin-bottom: 12px;
+    flex: 1;
 }
 
 .ecsm-contract-dates {
@@ -247,54 +255,41 @@
 }
 
 /* Contract Expired Info */
-.ecsm-contract-expired-info {
-    margin-top: 12px;
-    padding: 12px;
-    background-color: #f0fdf4;
-    border: 1px solid #bbf7d0;
-    border-radius: 6px;
-}
-
 .ecsm-expired-message {
     font-size: 13px;
     font-weight: 600;
-    color: #059669;
-    margin-bottom: 8px;
+    white-space: nowrap;
 }
 
-.ecsm-expired-details {
-    display: flex;
-    align-items: center;
-    gap: 6px;
-}
-
-.ecsm-expired-label {
-    font-size: 12px;
-    color: #6b7280;
-    font-weight: 500;
-}
-
-.ecsm-expired-status {
-    font-size: 12px;
-    font-weight: 600;
-    padding: 2px 8px;
-    border-radius: 4px;
-    text-transform: capitalize;
-}
-
-.ecsm-expired-status.ecsm-status-active {
-    background-color: #d1fae5;
+.ecsm-expired-message.ecsm-expired-green {
     color: #059669;
 }
 
-.ecsm-expired-status.ecsm-status-expiring_soon {
-    background-color: #fef3c7;
+.ecsm-expired-message.ecsm-expired-yellow {
     color: #d97706;
 }
 
-.ecsm-expired-status.ecsm-status-expired {
-    background-color: #fee2e2;
+.ecsm-expired-message.ecsm-expired-red {
     color: #dc2626;
+}
+
+/* Renewal Button */
+.ecsm-renewal-btn {
+    margin-top: 12px;
+    padding: 8px 16px;
+    background-color: #059669;
+    color: white;
+    border: none;
+    border-radius: 6px;
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s;
+    width: 100%;
+}
+
+.ecsm-renewal-btn:hover {
+    background-color: #047857;
 }
 
 /* Loading, Error, Empty states */

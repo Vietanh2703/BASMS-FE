@@ -365,10 +365,30 @@ const EContractServiceModal = ({ isOpen, onClose, templateId }: EContractService
                                 {contracts.map((contract) => {
                                     const expiredInfo = contractExpiredInfo[contract.id];
                                     const showExpiredInfo = contract.status === 'shift_generated' && expiredInfo;
+                                    const showRenewalButton = contract.status === 'near_expired' || contract.status === 'expired';
+
+                                    // Determine color based on days remaining
+                                    let expiredMessageClass = 'ecsm-expired-message';
+                                    if (expiredInfo) {
+                                        if (expiredInfo.daysRemaining === 0) {
+                                            expiredMessageClass += ' ecsm-expired-red';
+                                        } else if (expiredInfo.daysRemaining <= 7) {
+                                            expiredMessageClass += ' ecsm-expired-yellow';
+                                        } else {
+                                            expiredMessageClass += ' ecsm-expired-green';
+                                        }
+                                    }
 
                                     return (
                                         <div key={contract.id} className="ecsm-contract-item">
-                                            <div className="ecsm-contract-title">{contract.contractTitle}</div>
+                                            <div className="ecsm-contract-header">
+                                                <div className="ecsm-contract-title">{contract.contractTitle}</div>
+                                                {showExpiredInfo && (
+                                                    <div className={expiredMessageClass}>
+                                                        {expiredInfo.message}
+                                                    </div>
+                                                )}
+                                            </div>
                                             <div className="ecsm-contract-dates">
                                                 <div className="ecsm-contract-date">
                                                     <span className="ecsm-date-label">Bắt đầu:</span>
@@ -379,16 +399,10 @@ const EContractServiceModal = ({ isOpen, onClose, templateId }: EContractService
                                                     <span className="ecsm-date-value">{formatDate(contract.endDate)}</span>
                                                 </div>
                                             </div>
-                                            {showExpiredInfo && (
-                                                <div className="ecsm-contract-expired-info">
-                                                    <div className="ecsm-expired-message">{expiredInfo.message}</div>
-                                                    <div className="ecsm-expired-details">
-                                                        <span className="ecsm-expired-label">Trạng thái:</span>
-                                                        <span className={`ecsm-expired-status ecsm-status-${expiredInfo.status}`}>
-                                                            {expiredInfo.status}
-                                                        </span>
-                                                    </div>
-                                                </div>
+                                            {showRenewalButton && (
+                                                <button className="ecsm-renewal-btn">
+                                                    Gia hạn hợp đồng
+                                                </button>
                                             )}
                                         </div>
                                     );
