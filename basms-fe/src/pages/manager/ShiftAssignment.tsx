@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef } from 'react';
 import { useAuth } from '../../hooks/useAuth.ts';
 import ManagerInfoModal from "../../components/managerInfoModal/managerInfoModal.tsx";
+import '../manager/dashboardManager.css';
 import './ShiftAssignment.css';
 
 interface Contract {
@@ -102,13 +103,17 @@ const ShiftAssignment = () => {
             }
 
             // Fetch manager ID by email
-            const managerUrl = `${import.meta.env.VITE_API_SHIFTS_URL}/shifts/managers/by-email?email=${encodeURIComponent(email)}`;
+            const managerUrl = `${import.meta.env.VITE_API_SHIFTS_URL}/shifts/managers/by-email`;
 
             const managerResponse = await fetch(managerUrl, {
+                method: 'POST',
                 headers: {
                     'Authorization': `Bearer ${accessToken}`,
                     'Content-Type': 'application/json',
-                }
+                },
+                body: JSON.stringify({
+                    Email: email
+                })
             });
 
             if (!managerResponse.ok) {
