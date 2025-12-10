@@ -246,6 +246,57 @@
     color: #1f2937;
 }
 
+/* Contract Expired Info */
+.ecsm-contract-expired-info {
+    margin-top: 12px;
+    padding: 12px;
+    background-color: #f0fdf4;
+    border: 1px solid #bbf7d0;
+    border-radius: 6px;
+}
+
+.ecsm-expired-message {
+    font-size: 13px;
+    font-weight: 600;
+    color: #059669;
+    margin-bottom: 8px;
+}
+
+.ecsm-expired-details {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.ecsm-expired-label {
+    font-size: 12px;
+    color: #6b7280;
+    font-weight: 500;
+}
+
+.ecsm-expired-status {
+    font-size: 12px;
+    font-weight: 600;
+    padding: 2px 8px;
+    border-radius: 4px;
+    text-transform: capitalize;
+}
+
+.ecsm-expired-status.ecsm-status-active {
+    background-color: #d1fae5;
+    color: #059669;
+}
+
+.ecsm-expired-status.ecsm-status-expiring_soon {
+    background-color: #fef3c7;
+    color: #d97706;
+}
+
+.ecsm-expired-status.ecsm-status-expired {
+    background-color: #fee2e2;
+    color: #dc2626;
+}
+
 /* Loading, Error, Empty states */
 .ecsm-loading,
 .ecsm-error,

@@ -1006,7 +1006,7 @@ const CustomerList = () => {
                                                                 >
                                                                     {contract.status === 'draft' ? 'Xem chi tiết & phân công' : 'Xem chi tiết'}
                                                                 </button>
-                                                                {contract.status === 'shift_generated' && (
+                                                                {(contract.status === 'shift_generated' || contract.status === 'near_expired' || contract.status === 'expired') && (
                                                                     <button
                                                                         className="dir-customers-action-btn dir-customers-btn-schedule"
                                                                         onClick={() => handleViewSchedule(contract.id)}

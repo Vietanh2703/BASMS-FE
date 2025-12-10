@@ -28,6 +28,17 @@ interface Contract {
     status: string;
 }
 
+interface ContractExpiredInfo {
+    success: boolean;
+    contractId: string;
+    contractNumber: string;
+    contractType: string;
+    endDate: string;
+    daysRemaining: number;
+    status: string;
+    message: string;
+}
+
 interface Document {
     id: string;
     category: string;
@@ -66,6 +77,7 @@ const EContractServiceModal = ({ isOpen, onClose, templateId }: EContractService
     const [loadingContracts, setLoadingContracts] = useState(false);
     const [error, setError] = useState<string | null>(null);
     const [serviceTemplateId, setServiceTemplateId] = useState<string | null>(null);
+    const [contractExpiredInfo, setContractExpiredInfo] = useState<Record<string, ContractExpiredInfo>>({});
 
     // Fetch template on mount
     useEffect(() => {
@@ -81,6 +93,17 @@ const EContractServiceModal = ({ isOpen, onClose, templateId }: EContractService
             fetchContracts(selectedCustomerId);
         }
     }, [selectedCustomerId]);
+
+    // Fetch expired info for contracts with status 'shift_generated'
+    useEffect(() => {
+        if (contracts.length > 0) {
+            contracts.forEach(contract => {
+                if (contract.status === 'shift_generated') {
+                    fetchContractExpiredInfo(contract.id);
+                }
+            });
+        }
+    }, [contracts]);
 
     const fetchServiceTemplate = async () => {
         try {
@@ -199,6 +222,37 @@ const EContractServiceModal = ({ isOpen, onClose, templateId }: EContractService
         }
     };
 
+    const fetchContractExpiredInfo = async (contractId: string) => {
+        try {
+            const token = localStorage.getItem('eContractAccessToken') ||
+                localStorage.getItem('accessToken');
+            if (!token) {
+                return;
+            }
+
+            const apiUrl = import.meta.env.VITE_API_CONTRACT_URL;
+            const response = await fetch(`${apiUrl}/contracts/${contractId}/check-expired`, {
+                headers: {
+                    'Authorization': `Bearer ${token}`,
+                    'Content-Type': 'application/json',
+                },
+            });
+
+            if (!response.ok) {
+                console.error(`Failed to fetch expired info for contract ${contractId}`);
+                return;
+            }
+
+            const data: ContractExpiredInfo = await response.json();
+            setContractExpiredInfo(prev => ({
+                ...prev,
+                [contractId]: data
+            }));
+        } catch (err) {
+            console.error(`Error fetching expired info for contract ${contractId}:`, err);
+        }
+    };
+
     const handleCreateContract = (customer: Customer) => {
         // Navigate to template editor with customer info and template ID as query params
         const params = new URLSearchParams({
@@ -308,21 +362,37 @@ const EContractServiceModal = ({ isOpen, onClose, templateId }: EContractService
                             <div className="ecsm-empty">Khách hàng chưa có hợp đồng nào</div>
                         ) : (
                             <div className="ecsm-contracts-list">
-                                {contracts.map((contract) => (
-                                    <div key={contract.id} className="ecsm-contract-item">
-                                        <div className="ecsm-contract-title">{contract.contractTitle}</div>
-                                        <div className="ecsm-contract-dates">
-                                            <div className="ecsm-contract-date">
-                                                <span className="ecsm-date-label">Bắt đầu:</span>
-                                                <span className="ecsm-date-value">{formatDate(contract.startDate)}</span>
+                                {contracts.map((contract) => {
+                                    const expiredInfo = contractExpiredInfo[contract.id];
+                                    const showExpiredInfo = contract.status === 'shift_generated' && expiredInfo;
+
+                                    return (
+                                        <div key={contract.id} className="ecsm-contract-item">
+                                            <div className="ecsm-contract-title">{contract.contractTitle}</div>
+                                            <div className="ecsm-contract-dates">
+                                                <div className="ecsm-contract-date">
+                                                    <span className="ecsm-date-label">Bắt đầu:</span>
+                                                    <span className="ecsm-date-value">{formatDate(contract.startDate)}</span>
+                                                </div>
+                                                <div className="ecsm-contract-date">
+                                                    <span className="ecsm-date-label">Kết thúc:</span>
+                                                    <span className="ecsm-date-value">{formatDate(contract.endDate)}</span>
+                                                </div>
                                             </div>
-                                            <div className="ecsm-contract-date">
-                                                <span className="ecsm-date-label">Kết thúc:</span>
-                                                <span className="ecsm-date-value">{formatDate(contract.endDate)}</span>
-                                            </div>
+                                            {showExpiredInfo && (
+                                                <div className="ecsm-contract-expired-info">
+                                                    <div className="ecsm-expired-message">{expiredInfo.message}</div>
+                                                    <div className="ecsm-expired-details">
+                                                        <span className="ecsm-expired-label">Trạng thái:</span>
+                                                        <span className={`ecsm-expired-status ecsm-status-${expiredInfo.status}`}>
+                                                            {expiredInfo.status}
+                                                        </span>
+                                                    </div>
+                                                </div>
+                                            )}
                                         </div>
-                                    </div>
-                                ))}
+                                    );
+                                })}
                             </div>
                         )}
                     </div>
