@@ -37,6 +37,7 @@ import ContractApproval from "./pages/eContract/ContractApproval.tsx";
 import DashboardManager from "./pages/manager/dashboardManager.tsx";
 import ManagerRequest from "./pages/manager/managerRequest.tsx";
 import ManagerGuardList from "./pages/manager/managerGuardList.tsx";
+import ShiftAssignment from "./pages/manager/ShiftAssignment.tsx";
 import { ROLES } from './constants/roles';
 import './App.css';
 
@@ -215,6 +216,11 @@ function App() {
                     <Route path="/manager/request" element={
                         <RoleBasedRoute allowedRoles={[ROLES.MANAGER]}>
                             <ManagerRequest />
+                        </RoleBasedRoute>
+                    }/>
+                    <Route path="/manager/shift-assignment" element={
+                        <RoleBasedRoute allowedRoles={[ROLES.MANAGER]}>
+                            <ShiftAssignment />
                         </RoleBasedRoute>
                     }/>
 

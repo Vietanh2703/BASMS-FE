@@ -1,0 +1,355 @@
+/* Shift Assignment Specific Styles */
+
+/* Contracts Grid */
+.shift-contracts-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(450px, 1fr));
+    gap: 24px;
+}
+
+/* Contract Card */
+.shift-contract-card {
+    background-color: #ffffff;
+    border: 1px solid #e5e7eb;
+    border-radius: 16px;
+    overflow: hidden;
+    transition: all 0.3s ease;
+    box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1);
+}
+
+.shift-contract-card:hover {
+    border-color: #3b82f6;
+    box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+    transform: translateY(-2px);
+}
+
+/* Contract Header */
+.shift-contract-header {
+    padding: 20px;
+    background: linear-gradient(135deg, #f9fafb 0%, #ffffff 100%);
+    border-bottom: 1px solid #e5e7eb;
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: 16px;
+}
+
+.shift-contract-title-section {
+    flex: 1;
+}
+
+.shift-contract-number {
+    font-size: 18px;
+    font-weight: 700;
+    color: #1e40af;
+    margin: 0 0 6px 0;
+}
+
+.shift-contract-name {
+    font-size: 14px;
+    color: #6b7280;
+    margin: 0;
+    font-weight: 500;
+}
+
+/* Status Badges */
+.shift-status-badge {
+    padding: 6px 14px;
+    border-radius: 20px;
+    font-size: 12px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    white-space: nowrap;
+}
+
+.shift-status-active {
+    background-color: #d1fae5;
+    color: #059669;
+}
+
+.shift-status-pending {
+    background-color: #fef3c7;
+    color: #d97706;
+}
+
+.shift-status-completed {
+    background-color: #dbeafe;
+    color: #1d4ed8;
+}
+
+.shift-status-cancelled {
+    background-color: #fee2e2;
+    color: #dc2626;
+}
+
+/* Contract Body */
+.shift-contract-body {
+    padding: 20px;
+}
+
+.shift-contract-info-row {
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
+    margin-bottom: 16px;
+}
+
+.shift-contract-info-row:last-of-type {
+    margin-bottom: 20px;
+}
+
+.shift-info-icon {
+    width: 20px;
+    height: 20px;
+    color: #6b7280;
+    flex-shrink: 0;
+    margin-top: 2px;
+}
+
+.shift-info-content {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.shift-info-label {
+    font-size: 12px;
+    color: #9ca3af;
+    font-weight: 500;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.shift-info-value {
+    font-size: 14px;
+    color: #1f2937;
+    font-weight: 500;
+}
+
+/* Contract Stats */
+.shift-contract-stats {
+    display: flex;
+    align-items: center;
+    justify-content: space-around;
+    padding: 16px;
+    background-color: #f9fafb;
+    border-radius: 12px;
+    margin-top: 16px;
+}
+
+.shift-stat-item {
+    text-align: center;
+}
+
+.shift-stat-number {
+    font-size: 24px;
+    font-weight: 700;
+    color: #1e40af;
+    margin-bottom: 4px;
+}
+
+.shift-stat-pending {
+    color: #d97706;
+}
+
+.shift-stat-label {
+    font-size: 12px;
+    color: #6b7280;
+    font-weight: 500;
+}
+
+.shift-stat-divider {
+    width: 1px;
+    height: 40px;
+    background-color: #e5e7eb;
+}
+
+/* Contract Footer */
+.shift-contract-footer {
+    padding: 16px 20px;
+    background-color: #f9fafb;
+    border-top: 1px solid #e5e7eb;
+    display: flex;
+    gap: 12px;
+}
+
+.shift-btn-view,
+.shift-btn-assign {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    padding: 12px 16px;
+    border: none;
+    border-radius: 8px;
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.shift-btn-view {
+    background-color: #ffffff;
+    color: #3b82f6;
+    border: 1px solid #3b82f6;
+}
+
+.shift-btn-view:hover {
+    background-color: #eff6ff;
+}
+
+.shift-btn-view svg {
+    width: 18px;
+    height: 18px;
+}
+
+.shift-btn-assign {
+    background-color: #3b82f6;
+    color: #ffffff;
+}
+
+.shift-btn-assign:hover {
+    background-color: #1d4ed8;
+}
+
+.shift-btn-assign svg {
+    width: 18px;
+    height: 18px;
+}
+
+/* Loading, Error, Empty States */
+.manager-loading,
+.manager-error,
+.manager-empty {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 60px 24px;
+    text-align: center;
+}
+
+.manager-spinner {
+    width: 48px;
+    height: 48px;
+    border: 4px solid #e5e7eb;
+    border-top-color: #3b82f6;
+    border-radius: 50%;
+    animation: shift-spin 1s linear infinite;
+    margin-bottom: 20px;
+}
+
+@keyframes shift-spin {
+    to {
+        transform: rotate(360deg);
+    }
+}
+
+.manager-loading p,
+.manager-error p,
+.manager-empty p {
+    font-size: 16px;
+    color: #6b7280;
+    margin: 0;
+}
+
+.manager-error {
+    color: #ef4444;
+}
+
+.manager-error-icon,
+.manager-empty-icon {
+    width: 64px;
+    height: 64px;
+    margin-bottom: 20px;
+    opacity: 0.5;
+}
+
+.manager-retry-btn {
+    margin-top: 20px;
+    padding: 12px 24px;
+    background-color: #3b82f6;
+    color: white;
+    border: none;
+    border-radius: 8px;
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.manager-retry-btn:hover {
+    background-color: #1d4ed8;
+}
+
+/* Search Bar */
+.manager-search-bar {
+    background-color: #ffffff;
+    border: 1px solid #e5e7eb;
+    border-radius: 12px;
+    padding: 16px 20px;
+    margin-bottom: 24px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.manager-search-icon {
+    width: 20px;
+    height: 20px;
+    color: #6b7280;
+    flex-shrink: 0;
+}
+
+.manager-search-input {
+    flex: 1;
+    border: none;
+    outline: none;
+    font-size: 14px;
+    color: #1f2937;
+    background: transparent;
+}
+
+.manager-search-input::placeholder {
+    color: #9ca3af;
+}
+
+/* Responsive Design */
+@media (max-width: 1200px) {
+    .shift-contracts-grid {
+        grid-template-columns: repeat(auto-fill, minmax(400px, 1fr));
+    }
+}
+
+@media (max-width: 768px) {
+    .shift-contracts-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .shift-contract-header {
+        flex-direction: column;
+        align-items: flex-start;
+    }
+
+    .shift-contract-footer {
+        flex-direction: column;
+    }
+
+    .shift-btn-view,
+    .shift-btn-assign {
+        width: 100%;
+    }
+
+    .shift-contract-stats {
+        flex-direction: column;
+        gap: 16px;
+    }
+
+    .shift-stat-divider {
+        width: 100%;
+        height: 1px;
+    }
+}
