@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from 'react';
-import { useParams, useSearchParams, useNavigate } from 'react-router-dom';
+import { useParams, useSearchParams } from 'react-router-dom';
 import './ContractSign.css';
 import SnackbarChecked from "../../components/snackbar/snackbarChecked.tsx";
 import SnackbarFailed from "../../components/snackbar/snackbarFailed.tsx";
@@ -21,7 +21,6 @@ interface ContractResponse {
 const ContractSign = () => {
     const { documentId } = useParams<{ documentId: string }>();
     const [searchParams] = useSearchParams();
-    const navigate = useNavigate();
     const securityToken = searchParams.get('token');
 
     const [contractData, setContractData] = useState<ContractDocument | null>(null);
