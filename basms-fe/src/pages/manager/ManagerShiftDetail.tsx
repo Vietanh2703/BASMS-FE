@@ -172,7 +172,8 @@ const ManagerShiftDetail = () => {
                 throw new Error('Không tìm thấy ID hợp đồng');
             }
 
-            const shiftsUrl = `${import.meta.env.VITE_API_SHIFTS_URL}/shifts/get-all?contractId=${contractId}`;
+            // includeAll=true to get past shifts as well
+            const shiftsUrl = `${import.meta.env.VITE_API_SHIFTS_URL}/shifts/get-all?contractId=${contractId}&includeAll=true`;
             const shiftsResponse = await fetch(shiftsUrl, {
                 headers: {
                     'Authorization': `Bearer ${token}`,
