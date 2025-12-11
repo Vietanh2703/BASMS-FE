@@ -4,29 +4,78 @@ import ManagerInfoModal from "../../components/managerInfoModal/managerInfoModal
 import '../manager/dashboardManager.css';
 import './ShiftAssignment.css';
 
-interface Contract {
+interface ManagedContract {
     contractId: string;
-    contractNumber: string;
-    contractName: string;
-    startDate: string;
-    endDate: string;
-    status: string;
-    customerName: string;
-    customerPhone: string;
-    customerEmail: string;
-    location: string;
-    totalGuardsRequired: number;
-    assignedGuardsCount: number;
-    pendingShiftsCount: number;
-    createdAt: string;
-    updatedAt: string;
+    managerId: string;
+    locationId: string;
+    locationName: string;
+    locationAddress: string;
+    locationLatitude: number;
+    locationLongitude: number;
+    totalShiftTemplates: number;
+    totalActiveTemplates: number;
+    templateStatus: string;
+    effectiveFrom: string;
+    effectiveTo: string;
+    earliestCreatedAt: string;
+    latestUpdatedAt: string;
 }
 
-interface ContractsResponse {
+interface ManagedContractsResponse {
     success: boolean;
-    contracts: Contract[];
+    data: ManagedContract[];
     totalCount: number;
-    errorMessage: string | null;
+    filters: {
+        managerId: string;
+        status: string;
+    };
+}
+
+interface Customer {
+    id: string;
+    customerCode: string;
+    companyName: string;
+    contactPersonName: string;
+    contactPersonTitle: string;
+    identityNumber: string;
+    identityIssueDate: string;
+    identityIssuePlace: string;
+    email: string;
+    phone: string;
+    dateOfBirth: string;
+    address: string;
+    city: string | null;
+    district: string | null;
+    industry: string | null;
+    status: string;
+}
+
+interface ContractDetail {
+    id: string;
+    contractNumber: string;
+    contractTitle: string;
+    contractType: string;
+    serviceScope: string;
+    startDate: string;
+    endDate: string;
+    durationMonths: number;
+    status: string;
+    customer: Customer;
+}
+
+interface ContractDetailResponse {
+    success: boolean;
+    data: ContractDetail;
+}
+
+interface DisplayContract {
+    contractId: string;
+    locationName: string;
+    customerName: string;
+    customerAddress: string;
+    status: string;
+    startDate: string;
+    endDate: string;
 }
 
 const ShiftAssignment = () => {
@@ -37,7 +86,7 @@ const ShiftAssignment = () => {
     const [isLoggingOut, setIsLoggingOut] = useState(false);
     const [showLogoutModal, setShowLogoutModal] = useState(false);
     const [showManagerInfoModal, setShowManagerInfoModal] = useState(false);
-    const [contracts, setContracts] = useState<Contract[]>([]);
+    const [contracts, setContracts] = useState<DisplayContract[]>([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
     const [managerId, setManagerId] = useState<string>('');
@@ -145,13 +194,48 @@ const ShiftAssignment = () => {
                 throw new Error(`Failed to fetch contracts: ${contractsResponse.status} - ${errorText}`);
             }
 
-            const contractsData: ContractsResponse = await contractsResponse.json();
+            const managedContractsData: ManagedContractsResponse = await contractsResponse.json();
 
-            if (contractsData.success) {
-                setContracts(contractsData.contracts || []);
-            } else {
-                setError(contractsData.errorMessage || 'Failed to load contracts');
+            if (!managedContractsData.success) {
+                setError('Failed to load contracts');
+                return;
             }
+
+            // Fetch detailed contract information for each contract
+            const displayContracts: DisplayContract[] = [];
+
+            for (const managedContract of managedContractsData.data) {
+                try {
+                    const contractDetailUrl = `${import.meta.env.VITE_API_CONTRACT_URL}/contracts/${managedContract.contractId}`;
+
+                    const contractDetailResponse = await fetch(contractDetailUrl, {
+                        headers: {
+                            'Authorization': `Bearer ${accessToken}`,
+                            'Content-Type': 'application/json',
+                        }
+                    });
+
+                    if (contractDetailResponse.ok) {
+                        const contractDetailData: ContractDetailResponse = await contractDetailResponse.json();
+
+                        if (contractDetailData.success && contractDetailData.data) {
+                            displayContracts.push({
+                                contractId: managedContract.contractId,
+                                locationName: managedContract.locationName,
+                                customerName: contractDetailData.data.customer.contactPersonName,
+                                customerAddress: contractDetailData.data.customer.address,
+                                status: contractDetailData.data.status,
+                                startDate: contractDetailData.data.startDate,
+                                endDate: contractDetailData.data.endDate
+                            });
+                        }
+                    }
+                } catch (err) {
+                    console.error(`Error fetching contract details for ${managedContract.contractId}:`, err);
+                }
+            }
+
+            setContracts(displayContracts);
 
         } catch (err) {
             setError(err instanceof Error ? err.message : 'An error occurred');
@@ -212,22 +296,27 @@ const ShiftAssignment = () => {
     const filteredContracts = contracts.filter(contract => {
         const searchLower = searchTerm.toLowerCase();
         return (
-            contract.contractNumber.toLowerCase().includes(searchLower) ||
-            contract.contractName.toLowerCase().includes(searchLower) ||
+            contract.locationName.toLowerCase().includes(searchLower) ||
             contract.customerName.toLowerCase().includes(searchLower) ||
-            contract.location.toLowerCase().includes(searchLower)
+            contract.customerAddress.toLowerCase().includes(searchLower)
         );
     });
 
     const getStatusBadge = (status: string) => {
-        switch (status.toUpperCase()) {
-            case 'ACTIVE':
+        const statusLower = status.toLowerCase();
+
+        switch (statusLower) {
+            case 'shift_generated':
                 return <span className="shift-status-badge shift-status-active">Đang hoạt động</span>;
-            case 'PENDING':
+            case 'expired':
+                return <span className="shift-status-badge shift-status-cancelled">Hết hạn</span>;
+            case 'active':
+                return <span className="shift-status-badge shift-status-active">Đang hoạt động</span>;
+            case 'pending':
                 return <span className="shift-status-badge shift-status-pending">Chờ xử lý</span>;
-            case 'COMPLETED':
+            case 'completed':
                 return <span className="shift-status-badge shift-status-completed">Hoàn thành</span>;
-            case 'CANCELLED':
+            case 'cancelled':
                 return <span className="shift-status-badge shift-status-cancelled">Đã hủy</span>;
             default:
                 return <span className="shift-status-badge">{status}</span>;
@@ -400,8 +489,7 @@ const ShiftAssignment = () => {
                                     <div key={contract.contractId} className="shift-contract-card">
                                         <div className="shift-contract-header">
                                             <div className="shift-contract-title-section">
-                                                <h3 className="shift-contract-number">{contract.contractNumber}</h3>
-                                                <p className="shift-contract-name">{contract.contractName}</p>
+                                                <h3 className="shift-contract-number">{contract.locationName}</h3>
                                             </div>
                                             {getStatusBadge(contract.status)}
                                         </div>
@@ -422,8 +510,8 @@ const ShiftAssignment = () => {
                                                     <path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z"/>
                                                 </svg>
                                                 <div className="shift-info-content">
-                                                    <span className="shift-info-label">Địa điểm:</span>
-                                                    <span className="shift-info-value">{contract.location}</span>
+                                                    <span className="shift-info-label">Địa chỉ:</span>
+                                                    <span className="shift-info-value">{contract.customerAddress}</span>
                                                 </div>
                                             </div>
 
@@ -436,18 +524,6 @@ const ShiftAssignment = () => {
                                                     <span className="shift-info-value">
                                                         {formatDate(contract.startDate)} - {formatDate(contract.endDate)}
                                                     </span>
-                                                </div>
-                                            </div>
-
-                                            <div className="shift-contract-stats">
-                                                <div className="shift-stat-item">
-                                                    <div className="shift-stat-number">{contract.assignedGuardsCount}/{contract.totalGuardsRequired}</div>
-                                                    <div className="shift-stat-label">Bảo vệ</div>
-                                                </div>
-                                                <div className="shift-stat-divider"></div>
-                                                <div className="shift-stat-item">
-                                                    <div className="shift-stat-number shift-stat-pending">{contract.pendingShiftsCount}</div>
-                                                    <div className="shift-stat-label">Ca chờ xử lý</div>
                                                 </div>
                                             </div>
                                         </div>
