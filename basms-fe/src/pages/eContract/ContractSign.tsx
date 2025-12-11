@@ -34,6 +34,7 @@ const ContractSign = () => {
     const [signatureData, setSignatureData] = useState<string | null>(null);
     const [isDrawing, setIsDrawing] = useState(false);
     const [isConfirmed, setIsConfirmed] = useState(false);
+    const [signedSuccessfully, setSignedSuccessfully] = useState(false);
     const canvasRef = useRef<HTMLCanvasElement>(null);
 
     useEffect(() => {
@@ -80,6 +81,11 @@ const ContractSign = () => {
     }, [documentId, securityToken]);
 
     const handleSign = async () => {
+        // Prevent re-signing if already signed successfully
+        if (signedSuccessfully) {
+            return;
+        }
+
         if (!documentId || !securityToken) {
             setShowSnackbarFailed(true);
             return;
@@ -119,9 +125,12 @@ const ContractSign = () => {
                 throw new Error('Không thể ký hợp đồng');
             }
             await response.json();
+
+            // Mark as signed successfully to prevent re-signing
+            setSignedSuccessfully(true);
             setShowSnackbarSuccess(true);
 
-            // Try to close window immediately after showing success message
+            // Try to close window immediately
             setTimeout(() => {
                 window.close();
             }, 1500);
@@ -134,6 +143,10 @@ const ContractSign = () => {
 
 
     const handleOpenSignatureModal = () => {
+        // Prevent opening signature modal after successful signing
+        if (signedSuccessfully) {
+            return;
+        }
         setShowSignatureModal(true);
     };
 
@@ -240,6 +253,38 @@ const ContractSign = () => {
         );
     }
 
+    // Show success page after signing
+    if (signedSuccessfully) {
+        return (
+            <div className="cs-container">
+                <header className="cs-header">
+                    <div className="cs-header-content">
+                        <div className="cs-logo">
+                            <div className="cs-logo-icon">E</div>
+                            <span className="cs-logo-text">eContract</span>
+                        </div>
+                        <h1 className="cs-header-title">Ký hợp đồng thành công</h1>
+                    </div>
+                </header>
+
+                <main className="cs-main">
+                    <div className="cs-error-container">
+                        <div className="cs-error-icon" style={{ color: '#10b981' }}>
+                            <svg viewBox="0 0 24 24" fill="currentColor">
+                                <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/>
+                            </svg>
+                        </div>
+                        <div className="cs-error-title" style={{ color: '#10b981' }}>Ký hợp đồng thành công!</div>
+                        <div className="cs-error-message">Hợp đồng đã được ký và lưu thành công. Bạn có thể đóng trang này.</div>
+                        <button className="cs-error-btn" onClick={() => window.close()}>
+                            Đóng trang
+                        </button>
+                    </div>
+                </main>
+            </div>
+        );
+    }
+
     return (
         <div className="cs-container">
             <header className="cs-header">
@@ -315,7 +360,7 @@ const ContractSign = () => {
                         <button
                             className="cs-btn cs-btn-sign"
                             onClick={handleSign}
-                            disabled={isSigning || !signatureData || !isConfirmed}
+                            disabled={isSigning || !signatureData || !isConfirmed || signedSuccessfully}
                         >
                             {isSigning ? 'Đang xử lý...' : 'Ký xác nhận'}
                         </button>
