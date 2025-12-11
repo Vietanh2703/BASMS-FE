@@ -21,7 +21,7 @@ interface ContractResponse {
 const ContractSign = () => {
     const { documentId } = useParams<{ documentId: string }>();
     const [searchParams] = useSearchParams();
-    useNavigate();
+    const navigate = useNavigate();
     const securityToken = searchParams.get('token');
 
     const [contractData, setContractData] = useState<ContractDocument | null>(null);
@@ -122,9 +122,16 @@ const ContractSign = () => {
             await response.json();
             setShowSnackbarSuccess(true);
             setTimeout(() => {
-                // Redirect to success page or close window
+                // Try to close window (only works if opened by window.open())
                 window.close();
-            }, 6000);
+
+                // Fallback: If window is still open after 500ms, redirect to home page
+                setTimeout(() => {
+                    if (!window.closed) {
+                        navigate('/');
+                    }
+                }, 500);
+            }, 3000);
         } catch (error) {
             setShowSnackbarFailed(true);
         } finally {
