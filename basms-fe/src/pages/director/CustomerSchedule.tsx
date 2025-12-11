@@ -268,9 +268,14 @@ const CustomerSchedule = () => {
     };
 
     const getShiftsForDate = (date: Date): Shift[] => {
-        const dateStr = date.toISOString().split('T')[0];
+        // Use local date string to avoid timezone issues
+        const year = date.getFullYear();
+        const month = String(date.getMonth() + 1).padStart(2, '0');
+        const day = String(date.getDate()).padStart(2, '0');
+        const dateStr = `${year}-${month}-${day}`;
+
         return shifts.filter(shift => {
-            // Extract date part from shiftDate (format: "2026-01-08T00:00:00")
+            // Extract date part from shiftDate (format: "2025-12-11T00:00:00")
             const shiftDateStr = shift.shiftDate.split('T')[0];
             return shiftDateStr === dateStr;
         }).sort((a, b) => {
