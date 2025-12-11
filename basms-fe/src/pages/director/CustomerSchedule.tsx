@@ -174,8 +174,8 @@ const CustomerSchedule = () => {
                 throw new Error('Không tìm thấy ID hợp đồng');
             }
 
-            // Get shifts using contractId directly from URL params
-            const shiftsUrl = `${import.meta.env.VITE_API_SHIFTS_URL}/shifts/get-all?contractId=${contractId}`;
+            // Get shifts using contractId directly from URL params (includeAll=true to get past shifts)
+            const shiftsUrl = `${import.meta.env.VITE_API_SHIFTS_URL}/shifts/get-all?contractId=${contractId}&includeAll=true`;
             const shiftsResponse = await fetch(shiftsUrl, {
                 headers: {
                     'Authorization': `Bearer ${token}`,
