@@ -644,13 +644,19 @@ const ShiftScheduleEdit = forwardRef<ShiftScheduleEditHandle, ShiftScheduleEditP
                 // Update existing holidays via PUT
                 for (const holiday of existingHolidays) {
                     try {
+                        // Ensure contractId is preserved when updating
+                        const updatePayload = {
+                            ...holiday,
+                            contractId: holiday.contractId || contractId
+                        };
+
                         const response = await fetch(`${apiUrl}/contracts/holidays/${holiday.id}`, {
                             method: 'PUT',
                             headers: {
                                 'Authorization': `Bearer ${token}`,
                                 'Content-Type': 'application/json',
                             },
-                            body: JSON.stringify(holiday),
+                            body: JSON.stringify(updatePayload),
                         });
 
                         if (!response.ok) {

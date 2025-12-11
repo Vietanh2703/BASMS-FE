@@ -109,6 +109,7 @@ interface ShiftSchedule {
 
 interface PublicHoliday {
     id: string;
+    contractId: string | null;
     holidayDate: string;
     holidayName: string;
     holidayNameEn: string;
