@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from 'react';
-import { useParams, useSearchParams } from 'react-router-dom';
+import { useParams, useSearchParams, useNavigate } from 'react-router-dom';
 import './ContractSign.css';
 import SnackbarChecked from "../../components/snackbar/snackbarChecked.tsx";
 import SnackbarFailed from "../../components/snackbar/snackbarFailed.tsx";
@@ -21,6 +21,7 @@ interface ContractResponse {
 const ContractSign = () => {
     const { documentId } = useParams<{ documentId: string }>();
     const [searchParams] = useSearchParams();
+    const navigate = useNavigate();
     const securityToken = searchParams.get('token');
 
     const [contractData, setContractData] = useState<ContractDocument | null>(null);
@@ -133,9 +134,9 @@ const ContractSign = () => {
             // Keep isSigning true to disable button permanently after success
             // Don't set isSigning(false) here to prevent spam clicking
 
-            // Try to close window immediately
+            // Navigate to success page after showing snackbar briefly
             setTimeout(() => {
-                window.close();
+                navigate('/e-contract/sign-complete', { replace: true });
             }, 1500);
         } catch (error) {
             setShowSnackbarFailed(true);
@@ -256,38 +257,6 @@ const ContractSign = () => {
         );
     }
 
-    // Show success page after signing
-    if (signedSuccessfully) {
-        return (
-            <div className="cs-container">
-                <header className="cs-header">
-                    <div className="cs-header-content">
-                        <div className="cs-logo">
-                            <div className="cs-logo-icon">E</div>
-                            <span className="cs-logo-text">eContract</span>
-                        </div>
-                        <h1 className="cs-header-title">Ký hợp đồng thành công</h1>
-                    </div>
-                </header>
-
-                <main className="cs-main">
-                    <div className="cs-error-container">
-                        <div className="cs-error-icon" style={{ color: '#10b981' }}>
-                            <svg viewBox="0 0 24 24" fill="currentColor">
-                                <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/>
-                            </svg>
-                        </div>
-                        <div className="cs-error-title" style={{ color: '#10b981' }}>Ký hợp đồng thành công!</div>
-                        <div className="cs-error-message">Hợp đồng đã được ký và lưu thành công. Bạn có thể đóng trang này.</div>
-                        <button className="cs-error-btn" onClick={() => window.close()}>
-                            Đóng trang
-                        </button>
-                    </div>
-                </main>
-            </div>
-        );
-    }
-
     return (
         <div className="cs-container">
             <header className="cs-header">
@@ -296,7 +265,7 @@ const ContractSign = () => {
                         <div className="cs-logo-icon">E</div>
                         <span className="cs-logo-text">eContract</span>
                     </div>
-                    <h1 className="cs-header-title">Xác nhận ký hợp đồng</h1>
+                    <h1 className="cs-header-title">Hệ thống ký hợp đồng điện tử</h1>
                 </div>
             </header>
 

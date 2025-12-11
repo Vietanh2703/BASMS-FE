@@ -31,6 +31,7 @@ import LaborContractReview from "./pages/eContract/LaborContractReview.tsx";
 import ServiceTemplateEditor from "./pages/eContract/ServiceTemplateEditor.tsx";
 import ServiceContractReview from "./pages/eContract/ServiceContractReview.tsx";
 import ContractSign from "./pages/eContract/ContractSign.tsx";
+import SignComplete from "./pages/eContract/SignComplete.tsx";
 import ContractDetail from "./pages/eContract/ContractDetail.tsx";
 import ContractApproval from "./pages/eContract/ContractApproval.tsx";
 {/* Manager Routes */}
@@ -94,6 +95,12 @@ function App() {
                     <Route path="/:documentId/sign" element={
                         <PublicRoute>
                             <ContractSign/>
+                        </PublicRoute>
+                    }/>
+
+                    <Route path="/e-contract/sign-complete" element={
+                        <PublicRoute>
+                            <SignComplete/>
                         </PublicRoute>
                     }/>
 
