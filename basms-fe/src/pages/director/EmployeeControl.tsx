@@ -249,7 +249,7 @@ const EmployeeControl = () => {
             }
 
             // Check manager's guard count limit before assigning
-            const checkResponse = await fetch(`${baseUrl}/managers/${manager.id}/check-guard-count`, {
+            const checkResponse = await fetch(`${baseUrl}/shifts/managers/${manager.id}/check-guard-count`, {
                 method: 'GET',
                 headers: {
                     'Authorization': `Bearer ${token}`,
