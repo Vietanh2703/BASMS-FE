@@ -94,7 +94,6 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         };
 
         const handleTokenRefreshed = () => {
-            console.log('Token refreshed successfully');
 
             // Restore user state from localStorage after token refresh
             const userId = localStorage.getItem('userId');

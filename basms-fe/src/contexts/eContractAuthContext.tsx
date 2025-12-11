@@ -51,7 +51,6 @@ export const EContractAuthProvider: React.FC<EContractAuthProviderProps> = ({ ch
 
                     // Kiểm tra nếu access token đã hết hạn, refresh ngay
                     if (eContractAuthService.isAccessTokenExpired()) {
-                        console.log('eContract: Access token expired, refreshing...');
                         const success = await eContractTokenManager.forceRefresh();
                         if (!success) {
                             handleLogoutCallback();
@@ -84,8 +83,6 @@ export const EContractAuthProvider: React.FC<EContractAuthProviderProps> = ({ ch
         };
 
         const handleTokenRefreshed = () => {
-            console.log('eContract: Token refreshed successfully in context');
-
             // Restore user state from localStorage after token refresh
             const userId = localStorage.getItem('eContractUserId');
             const email = localStorage.getItem('eContractEmail');
@@ -109,7 +106,6 @@ export const EContractAuthProvider: React.FC<EContractAuthProviderProps> = ({ ch
     // Xử lý khi tab/window đóng - dừng auto refresh
     useEffect(() => {
         const handleBeforeUnload = () => {
-            console.log('eContract: Tab closing, stopping auto refresh');
             eContractTokenManager.stopAutoRefresh();
         };
 

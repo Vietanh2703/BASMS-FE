@@ -62,7 +62,6 @@ class TokenManager {
 
             // Kiểm tra refresh token còn hạn không
             if (authService.isRefreshTokenExpired()) {
-                console.log('Refresh token expired, logging out...');
                 this.handleLogout();
                 return;
             }
