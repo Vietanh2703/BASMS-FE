@@ -26,9 +26,10 @@ export const PublicRoute: React.FC<PublicRouteProps> = ({ children }) => {
     const { isAuthenticated: isEContractAuthenticated, loading: eContractLoading } = useEContractAuth();
     const location = useLocation();
 
-    // Contract signing page is special - always allow access with token
+    // Contract signing pages are special - always allow access
     const isSigningPage = /^\/[^/]+\/sign$/.test(location.pathname);
-    if (isSigningPage) {
+    const isSignCompletePage = location.pathname === '/e-contract/sign-complete';
+    if (isSigningPage || isSignCompletePage) {
         return <>{children}</>;
     }
 
