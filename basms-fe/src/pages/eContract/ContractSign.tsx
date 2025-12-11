@@ -121,17 +121,11 @@ const ContractSign = () => {
             }
             await response.json();
             setShowSnackbarSuccess(true);
-            setTimeout(() => {
-                // Try to close window (only works if opened by window.open())
-                window.close();
 
-                // Fallback: If window is still open after 500ms, redirect to home page
-                setTimeout(() => {
-                    if (!window.closed) {
-                        navigate('/');
-                    }
-                }, 500);
-            }, 3000);
+            // Try to close window immediately after showing success message
+            setTimeout(() => {
+                window.close();
+            }, 1500);
         } catch (error) {
             setShowSnackbarFailed(true);
         } finally {
