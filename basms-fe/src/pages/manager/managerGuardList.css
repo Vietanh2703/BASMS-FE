@@ -33,6 +33,23 @@
     height: 20px;
 }
 
+/* Badge for pending count */
+.mgr-guard-badge {
+    position: relative;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 20px;
+    height: 20px;
+    padding: 0 6px;
+    background-color: #ef4444;
+    color: white;
+    font-size: 12px;
+    font-weight: 700;
+    border-radius: 10px;
+    margin-left: 4px;
+}
+
 .mgr-guard-controls {
     background-color: #ffffff;
     border: 1px solid #e5e7eb;

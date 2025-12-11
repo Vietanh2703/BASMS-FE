@@ -77,6 +77,7 @@ const ManagerGuardList = () => {
     const [pendingGuards, setPendingGuards] = useState<PendingGuard[]>([]);
     const [loadingPending, setLoadingPending] = useState(false);
     const [confirmingGuardId, setConfirmingGuardId] = useState<string | null>(null);
+    const [pendingCount, setPendingCount] = useState<number>(0);
 
     const profileRef = useRef<HTMLDivElement>(null);
 
@@ -107,6 +108,12 @@ const ManagerGuardList = () => {
     useEffect(() => {
         fetchGuards();
     }, []);
+
+    useEffect(() => {
+        if (managerId) {
+            fetchPendingCount();
+        }
+    }, [managerId]);
 
     const fetchGuards = async () => {
         try {
@@ -203,6 +210,45 @@ const ManagerGuardList = () => {
             setError(err instanceof Error ? err.message : 'Đã xảy ra lỗi');
         } finally {
             setLoading(false);
+        }
+    };
+
+    const fetchPendingCount = async () => {
+        if (!managerId) return;
+
+        try {
+            const userStr = localStorage.getItem('user');
+            let accessToken = localStorage.getItem('accessToken');
+
+            if (userStr && !accessToken) {
+                try {
+                    const userData = JSON.parse(userStr);
+                    accessToken = userData.accessToken;
+                } catch (e) {
+                    console.error('Error parsing user data:', e);
+                }
+            }
+
+            if (!accessToken) {
+                return;
+            }
+
+            const url = `${import.meta.env.VITE_API_SHIFTS_URL}/shifts/managers/${managerId}/guard-join-requests`;
+            const response = await fetch(url, {
+                headers: {
+                    'Authorization': `Bearer ${accessToken}`,
+                    'Content-Type': 'application/json',
+                }
+            });
+
+            if (!response.ok) {
+                return;
+            }
+
+            const data = await response.json();
+            setPendingCount(data.pendingRequests?.length || 0);
+        } catch (err) {
+            // Silently fail - pending count is not critical
         }
     };
 
@@ -382,6 +428,7 @@ const ManagerGuardList = () => {
 
             setPendingGuards(prev => prev.filter(g => g.guardId !== guardId));
             await fetchGuards();
+            await fetchPendingCount();
         } catch (err) {
             console.error('Error confirming guard:', err);
         } finally {
@@ -516,6 +563,9 @@ const ManagerGuardList = () => {
                                 <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/>
                             </svg>
                             Xác nhận bảo vệ
+                            {pendingCount > 0 && (
+                                <span className="mgr-guard-badge">{pendingCount}</span>
+                            )}
                         </button>
                     </div>
 
