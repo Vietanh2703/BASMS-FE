@@ -149,13 +149,10 @@ const ManagerAssignmentModal: React.FC<ManagerAssignmentModalProps> = ({
             if (!response.ok) {
                 throw new Error('Failed to activate contract');
             }
-
-            // Success - call callback and close modal
             onSuccess();
             onClose();
         } catch (err) {
             console.error('Error activating contract:', err);
-            // Call error callback if provided
             if (onError) {
                 onError();
             }
@@ -210,8 +207,6 @@ const ManagerAssignmentModal: React.FC<ManagerAssignmentModalProps> = ({
                                                 </div>
                                                 <div className="mgr-assign-stats">
                                                     <span>Teams: {manager.totalTeamsManaged}</span>
-                                                    <span>•</span>
-                                                    <span>Bảo vệ: {manager.totalGuardsSupervised}</span>
                                                     <span>•</span>
                                                     <span>Ca: {manager.totalShiftsCreated}</span>
                                                 </div>

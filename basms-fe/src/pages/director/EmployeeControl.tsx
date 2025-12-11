@@ -237,6 +237,7 @@ const EmployeeControl = () => {
     const handleAssignGuard = async (guard: Guard, manager: Manager) => {
         setIsAssigning(true);
         try {
+            const baseUrl = import.meta.env.VITE_API_BASE_URL;
             const shiftsUrl = import.meta.env.VITE_API_SHIFTS_URL;
             const token = localStorage.getItem('accessToken');
 
@@ -247,6 +248,29 @@ const EmployeeControl = () => {
                 return;
             }
 
+            // Check manager's guard count limit before assigning
+            const checkResponse = await fetch(`${baseUrl}/managers/${manager.id}/check-guard-count`, {
+                method: 'GET',
+                headers: {
+                    'Authorization': `Bearer ${token}`,
+                    'Content-Type': 'application/json',
+                },
+            });
+
+            if (!checkResponse.ok) {
+                throw new Error('Failed to check manager guard count');
+            }
+
+            const checkData = await checkResponse.json();
+
+            if (checkData.success && checkData.data.isOverLimit) {
+                setSnackbarFailedMessage('Số lượng bảo vệ của quản lý này đã đến giới hạn. Vui lòng phân công cho quản lý khác');
+                setSnackbarFailedOpen(true);
+                setIsAssigning(false);
+                return;
+            }
+
+            // Proceed with assigning if not over limit
             const response = await fetch(`${shiftsUrl}/shifts/guards/request-join-manager`, {
                 method: 'POST',
                 headers: {
