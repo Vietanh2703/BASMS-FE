@@ -390,6 +390,7 @@ const ContractReview = () => {
 
                                     <p className="cr-section-title">Điều 2. Công việc, địa điểm làm việc</p>
                                     <p>Bên B sẽ làm vị trí: Nhân viên bảo vệ – chịu sự quản lý của Bên A.</p>
+                                    <p>Cấp bậc: {renderFieldValue('CertificationLevel')}</p>
                                     <p>Công việc chính gồm:</p>
                                     <p>– Thực hiện nhiệm vụ bảo vệ an ninh, giám sát mục tiêu, tuần tra, kiểm soát ra/vào theo phân công.</p>
                                     <p>– Sử dụng phần mềm quản lý và chấm công của Bên A (tên phần mềm: Biometric & shift management system) để khai báo ca trực, đăng nhập khi bắt đầu ca, kết thúc ca và báo cáo theo yêu cầu.</p>
@@ -409,38 +410,33 @@ const ContractReview = () => {
                                     <p>Đối với ca đêm, tuần tra hoặc mục tiêu đặc biệt, Bên B sẽ được phụ cấp theo quy định của Bên A (nêu rõ tại Điều 4).</p>
 
                                     <p className="cr-section-title">Điều 4. Tiền lương, phụ cấp và hình thức thanh toán</p>
-                                    <p>Mức lương cơ bản: …………… VNĐ/tháng (hoặc … VNĐ/ca) được thanh toán vào ngày … hàng tháng bằng hình thức chuyển khoản hoặc tiền mặt (thỏa thuận).</p>
-                                    <p>Phụ cấp (nếu có):</p>
-                                    <p>– Phụ cấp ca đêm: …………… VNĐ/ca</p>
-                                    <p>– Phụ cấp tuần tra: …………… VNĐ/ca</p>
+                                    <p>Mức lương cơ bản: {renderFieldValue('StandardWage')} VNĐ/tháng được thanh toán vào ngày … hàng tháng bằng hình thức chuyển khoản hoặc tiền mặt (thỏa thuận).</p>
+                                    <p>Điều kiện để được thanh toán lương và phụ cấp: Bên B phải đăng nhập phần mềm chấm công, hoàn thành ca trực đúng giờ, tuân thủ quy định của Bên A. Trường hợp không chấm công, bỏ ca, trễ ca, vi phạm nội quy thì Bên A có quyền khấu trừ hoặc không thanh toán phụ cấp.</p>
+                                    <p>Bên A chịu trách nhiệm đóng bảo hiểm xã hội, bảo hiểm y tế, bảo hiểm thất nghiệp cho Bên B theo quy định pháp luật.</p>
+                                    <p>Phương thức thanh toán và nhận lương ……………………………………………………</p>
+                                    <p>Ngày trả lương: …….. hàng tháng.</p>
                                 </div>
                             </div>
 
-                            {/* Page 3 */}
+                            {/* Page 2 */}
                             <div className="cr-a4-page">
                                 <div className="cr-doc-body">
-                                    <p>– Phụ cấp sử dụng phần mềm/đăng nhập đúng giờ: …………… VNĐ/tháng</p>
-                                    <p>– Phụ cấp địa điểm đặc biệt (nếu áp dụng): …………… VNĐ/tháng</p>
-                                    <p>Điều kiện để được thanh toán lương và phụ cấp: Bên B phải đăng nhập phần mềm chấm công, hoàn thành ca trực đúng giờ, tuân thủ quy định của Bên A. Trường hợp không chấm công, bỏ ca, trễ ca, vi phạm nội quy thì Bên A có quyền khấu trừ hoặc không thanh toán phụ cấp.</p>
-                                    <p>Bên A chịu trách nhiệm đóng bảo hiểm xã hội, bảo hiểm y tế, bảo hiểm thất nghiệp cho Bên B theo quy định pháp luật.</p>
-                                    <p>Phương thức thanh toán và nhận lương: ……………………………………………………………</p>
-                                    <p>Ngày trả lương: …….. hàng tháng.</p>
 
                                     <p className="cr-section-title">Điều 5. Quyền lợi & nghĩa vụ</p>
-                                    <p><strong>5.1 Nghĩa vụ của Bên B:</strong></p>
+                                    <p className="cr-section-title">5.1 Nghĩa vụ của Bên B:</p>
                                     <p>– Thực hiện đúng chức trách vị trí bảo vệ được giao; tuần tra, giám sát, kiểm soát ra/vào, bảo vệ tài sản và người theo phân công.</p>
                                     <p>– Sử dụng phần mềm quản lý/chấm công đúng cách: đăng nhập/đăng xuất theo ca, báo cáo theo yêu cầu.</p>
                                     <p>– Chấp hành nội quy, quy định của Bên A, quy trình ca trực, an toàn lao động, phòng cháy chữa cháy (PCCC).</p>
                                     <p>– Bảo mật thông tin khách hàng, mục tiêu trực, dữ liệu phần mềm quản lý theo yêu cầu nếu có.</p>
                                     <p>– Báo cáo kịp thời cho Bên A hoặc khách hàng khi có sự cố an ninh, mất dữ liệu, vi phạm ca trực.</p>
 
-                                    <p><strong>5.2 Nghĩa vụ của Bên A:</strong></p>
+                                    <p className="cr-section-title">5.2 Nghĩa vụ của Bên A:</p>
                                     <p>– Cung cấp cho Bên B đầy đủ thiết bị cần thiết (đồng phục, thẻ, thiết bị phần mềm, máy quét nếu có) để Bên B thực hiện công việc.</p>
                                     <p>– Cung cấp thông tin ca trực, địa điểm trực, phần mềm quản lý/chấm công để Bên B thực hiện đăng nhập.</p>
                                     <p>– Thanh toán lương và phụ cấp đúng hạn; đóng bảo hiểm theo quy định; đảm bảo điều kiện làm việc an toàn.</p>
                                     <p>– Thông báo cho Bên B về việc thay đổi địa điểm, ca, phần mềm ít nhất … ngày trước khi bắt đầu áp dụng.</p>
 
-                                    <p><strong>5.3 Quyền lợi của Bên B:</strong></p>
+                                    <p className="cr-section-title">5.3 Quyền lợi của Bên B:</p>
                                     <p>– Được hưởng lương, phụ cấp, bảo hiểm, quyền nghỉ phép, nghỉ lễ theo quy định của pháp luật và nội quy Bên A.</p>
                                     <p>– Được đào tạo nghiệp vụ bảo vệ, sử dụng phần mềm quản lý, và được hỗ trợ khi làm ca trực mới tại khách hàng.</p>
                                     <p>– Được làm việc trong môi trường đảm bảo an toàn lao động và theo đúng ca trực đã ký kết.</p>

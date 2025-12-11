@@ -378,66 +378,72 @@ const LaborContractReview = () => {
                                     <p>
                                         Nếu là xác định thời hạn: thời hạn từ ngày {renderFieldValue('ContractStartDate')} đến ngày {renderFieldValue('ContractEndDate')} (không quá 36 tháng nếu theo quy định).
                                     </p>
+                                    <p>
+                                        Mọi thay đổi về vị trí, địa điểm, ca trực hoặc phần mềm quản lý sẽ được lập Phụ lục hợp đồng.
+                                    </p>
+
+                                    <p className="lcr-section-title">Điều 2. Công việc, địa điểm làm việc</p>
+                                    <p>Bên B sẽ làm vị trí: Nhân viên bảo vệ – chịu sự quản lý của Bên A.</p>
+                                    <p>Cấp bậc: {renderFieldValue('CertificationLevel')}</p>
+                                    <p>Tổng số nhân viên bảo vệ được giao quản lý/phụ trách: {renderFieldValue('TotalGuardsSupervised')} người</p>
+                                    <p>(số lượng này có thể thay đổi theo nhu cầu của Bên A và sẽ được thông báo hoặc điều chỉnh bằng Phụ lục hợp đồng hoặc trên phần mềm quản lý).</p>
+                                    <p>Công việc chính gồm:</p>
+                                    <p>– Thực hiện nhiệm vụ bảo vệ an ninh, giám sát mục tiêu, tuần tra, kiểm soát ra/vào theo phân công.</p>
+                                    <p>– Sử dụng phần mềm quản lý và chấm công của Bên A (tên phần mềm: Biometric & shift management system) để khai báo ca trực, đăng nhập khi bắt đầu ca, kết thúc ca và báo cáo theo yêu cầu.</p>
+                                    <p>– Khi Bên A giao địa điểm trực với khách hàng (sau khi ký ca trực với khách) thì Bên B sẽ tới địa điểm đó để bắt đầu ca – ghi nhận bằng phần mềm và thực hiện nhiệm vụ tại địa điểm đó.</p>
+                                    <p>– Làm các nhiệm vụ khác được giao phù hợp với vị trí bảo vệ và theo chỉ đạo của Bên A hoặc khách hàng (nếu có).</p>
+                                    <p>Địa điểm làm việc chính hiện tại là: ………………………………………………</p>
+                                    <p>Trong tương lai, Bên A có thể bố trí địa điểm trực thay đổi trong khu vực …………………………, Bên A sẽ thông báo cho Bên B ít nhất … ngày trước khi bắt đầu ca mới.</p>
+                                    <p>Bên B cam kết thực hiện công việc tại địa điểm được giao và sử dụng phần mềm đúng quy định.</p>
+
+                                    <p className="lcr-section-title">Điều 3. Thời giờ làm việc & ca trực</p>
+                                    <p>Thời giờ làm việc theo ca:</p>
+                                    <p>– Ca A: từ … giờ … phút đến … giờ … phút</p>
+                                    <p>– Ca B: từ … giờ … phút đến … giờ … phút</p>
+                                    <p>(Hai bên có thể thỏa thuận hoặc bổ sung chi tiết vào Phụ lục ca trực)</p>
+                                    <p>Bên B phải đăng nhập phần mềm quản lý/chấm công của Bên A ngay khi bắt đầu ca trực tại địa điểm được giao và đăng xuất khi kết thúc ca trực. Việc đăng nhập/trễ ca hoặc chấm công không đúng có thể ảnh hưởng tới quyền lợi lương/nhận ca.</p>
+                                    <p>Thời gian làm việc, nghỉ ngơi tuân theo luật lao động hiện hành: không quá … giờ/ngày, … giờ/tuần, làm thêm giờ, ca đêm, nghỉ lễ theo pháp luật và theo nội quy của Bên A.</p>
+                                    <p>Đối với ca đêm, tuần tra hoặc mục tiêu đặc biệt, Bên B sẽ được phụ cấp theo quy định của Bên A (nêu rõ tại Điều 4).</p>
+
+                                    <p className="lcr-section-title">Điều 4. Tiền lương, phụ cấp và hình thức thanh toán</p>
+                                    <p>Mức lương cơ bản: {renderFieldValue('StandardWage')} VNĐ/tháng được thanh toán vào ngày … hàng tháng bằng hình thức chuyển khoản hoặc tiền mặt (thỏa thuận).</p>
+                                    <p>Điều kiện để được thanh toán lương và phụ cấp: Bên B phải đăng nhập phần mềm chấm công, hoàn thành ca trực đúng giờ, tuân thủ quy định của Bên A. Trường hợp không chấm công, bỏ ca, trễ ca, vi phạm nội quy thì Bên A có quyền khấu trừ hoặc không thanh toán phụ cấp.</p>
+                                    <p>Bên A chịu trách nhiệm đóng bảo hiểm xã hội, bảo hiểm y tế, bảo hiểm thất nghiệp cho Bên B theo quy định pháp luật.</p>
+                                    <p>Phương thức thanh toán và nhận lương ……………………………………………………</p>
+                                    <p>Ngày trả lương: …….. hàng tháng.</p>
                                 </div>
                             </div>
 
                             {/* Page 2 */}
                             <div className="lcr-a4-page">
                                 <div className="lcr-doc-body">
-                                    <p>
-                                        Mọi thay đổi về vị trí, địa điểm, ca trực hoặc phần mềm quản lý sẽ được lập Phụ lục hợp đồng.
-                                    </p>
-
-                                    <p className="lcr-section-title">Điều 2. Công việc, chức vụ & địa điểm làm việc</p>
-                                    <p>Bên B giữ chức vụ: Quản lý trên phần mềm – chịu sự quản lý của Bên A.</p>
-                                    <p>Nhiệm vụ chính gồm:</p>
-                                    <p>– Quản lý và giám sát đội ngũ bảo vệ tại các mục tiêu, đảm bảo công việc diễn ra theo quy trình của Bên A.</p>
-                                    <p>– Sử dụng hệ thống phần mềm quản lý (Biometric & Shift Management System) để theo dõi, phân công ca trực, và báo cáo theo yêu cầu.</p>
-                                    <p>– Đảm bảo việc quản lý phần mềm và chấm công của các nhân viên bảo vệ dưới quyền đúng theo quy định của công ty.</p>
-                                    <p>– Cập nhật và xử lý dữ liệu trong phần mềm theo thời gian thực.</p>
-                                    <p>– Phối hợp với các bộ phận khác và báo cáo tình hình công việc cho cấp trên.</p>
-                                    <p>Địa điểm làm việc chính: ………………………………………………………………</p>
-                                    <p>Trong tương lai, Bên A có quyền điều chuyển địa điểm làm việc trong khu vực ……………… và thông báo trước … ngày.</p>
-
-                                    <p className="lcr-section-title">Điều 3. Thời giờ làm việc & ca trực</p>
-                                    <p>Thời gian làm việc theo ca và yêu cầu quản lý đội ngũ bảo vệ:</p>
-                                    <p>– Ca A: … giờ … phút đến … giờ … phút</p>
-                                    <p>– Ca B: … giờ … phút đến … giờ … phút</p>
-                                    <p>Quản lý trên phần mềm phải đảm bảo chấm công đúng thời gian quy định và xử lý các báo cáo kịp thời.</p>
-                                    <p>Làm thêm giờ, ca đêm, nghỉ theo Luật Lao động và quy định của Bên A.</p>
-
-                                    <p className="lcr-section-title">Điều 4. Tiền lương, phụ cấp & thanh toán</p>
-                                    <p>Mức lương cơ bản: …………… VNĐ/tháng.</p>
-                                    <p>Phụ cấp:</p>
-                                    <p>– Phụ cấp quản lý phần mềm: …………… VNĐ/tháng</p>
-                                    <p>– Phụ cấp ca đêm (nếu có): …………… VNĐ/ca</p>
-                                    <p>– Phụ cấp trách nhiệm quản lý hệ thống phần mềm: …………… VNĐ/tháng</p>
-                                    <p>Điều kiện nhận lương: hoàn thành công việc quản lý phần mềm, báo cáo, và quản lý ca trực đúng quy định.</p>
-                                    <p>Bên A đóng BHXH, BHYT, BHTN theo luật.</p>
-                                    <p>Ngày nhận lương: …… hàng tháng.</p>
-                                </div>
-                            </div>
-
-                            {/* Page 3 */}
-                            <div className="lcr-a4-page">
-                                <div className="lcr-doc-body">
                                     <p className="lcr-section-title">Điều 5. Quyền lợi & nghĩa vụ</p>
-                                    <p><strong>5.1 Nghĩa vụ Bên B:</strong></p>
-                                    <p>– Quản lý và giám sát việc sử dụng phần mềm quản lý và chấm công của các nhân viên.</p>
-                                    <p>– Đảm bảo các báo cáo được hoàn thành và gửi đúng hạn.</p>
-                                    <p>– Tuân thủ nội quy, quy trình bảo mật thông tin và an toàn lao động.</p>
+                                    <p className="lcr-section-title">5.1 Nghĩa vụ của Bên B:</p>
+                                    <p>– Thực hiện đúng chức trách vị trí bảo vệ được giao; tuần tra, giám sát, kiểm soát ra/vào, bảo vệ tài sản và người theo phân công.</p>
+                                    <p>– Sử dụng phần mềm quản lý/chấm công đúng cách: đăng nhập/đăng xuất theo ca, báo cáo theo yêu cầu.</p>
+                                    <p>– Chấp hành nội quy, quy định của Bên A, quy trình ca trực, an toàn lao động, phòng cháy chữa cháy (PCCC).</p>
+                                    <p>– Bảo mật thông tin khách hàng, mục tiêu trực, dữ liệu phần mềm quản lý theo yêu cầu nếu có.</p>
+                                    <p>– Báo cáo kịp thời cho Bên A hoặc khách hàng khi có sự cố an ninh, mất dữ liệu, vi phạm ca trực.</p>
 
-                                    <p><strong>5.2 Nghĩa vụ Bên A:</strong></p>
-                                    <p>– Cung cấp đầy đủ thiết bị và tài khoản phần mềm để Bên B thực hiện công việc.</p>
-                                    <p>– Thanh toán lương, phụ cấp đúng hạn và đảm bảo các quyền lợi bảo hiểm.</p>
+                                    <p className="lcr-section-title">5.2 Nghĩa vụ của Bên A:</p>
+                                    <p>– Cung cấp cho Bên B đầy đủ thiết bị cần thiết (đồng phục, thẻ, thiết bị phần mềm, máy quét nếu có) để Bên B thực hiện công việc.</p>
+                                    <p>– Cung cấp thông tin ca trực, địa điểm trực, phần mềm quản lý/chấm công để Bên B thực hiện đăng nhập.</p>
+                                    <p>– Thanh toán lương và phụ cấp đúng hạn; đóng bảo hiểm theo quy định; đảm bảo điều kiện làm việc an toàn.</p>
+                                    <p>– Thông báo cho Bên B về việc thay đổi địa điểm, ca, phần mềm ít nhất … ngày trước khi bắt đầu áp dụng.</p>
 
-                                    <p><strong>5.3 Quyền lợi Bên B:</strong></p>
-                                    <p>– Hưởng lương, phụ cấp, bảo hiểm theo luật và chính sách công ty.</p>
-                                    <p>– Được đào tạo, hỗ trợ trong việc sử dụng phần mềm quản lý và chấm công.</p>
+                                    <p className="lcr-section-title">5.3 Quyền lợi của Bên B:</p>
+                                    <p>– Được hưởng lương, phụ cấp, bảo hiểm, quyền nghỉ phép, nghỉ lễ theo quy định của pháp luật và nội quy Bên A.</p>
+                                    <p>– Được đào tạo nghiệp vụ bảo vệ, sử dụng phần mềm quản lý, và được hỗ trợ khi làm ca trực mới tại khách hàng.</p>
+                                    <p>– Được làm việc trong môi trường đảm bảo an toàn lao động và theo đúng ca trực đã ký kết.</p>
 
                                     <p className="lcr-section-title">Điều 6. Thay đổi – Chấm dứt hợp đồng</p>
-                                    <p>Hợp đồng chấm dứt theo quy định của pháp luật hoặc thỏa thuận giữa hai bên.</p>
-                                    <p>Vi phạm hợp đồng có thể dẫn đến kỷ luật, chấm dứt hợp đồng hoặc yêu cầu bồi thường thiệt hại.</p>
+                                    <p>Hai bên có thể ký Phụ lục hợp đồng khi có thay đổi về công việc, vị trí, địa điểm, ca trực, phần mềm quản lý hoặc lương, phụ cấp.</p>
+                                    <p>Hợp đồng này chấm dứt khi:</p>
+                                    <p>– Hết thời hạn hợp đồng (nếu là HĐ xác định thời hạn).</p>
+                                    <p>– Hai bên thỏa thuận chấm dứt hợp đồng.</p>
+                                    <p>– Một bên đơn phương chấm dứt theo quy định của pháp luật (ví dụ: Bên B vi phạm nội quy nghiêm trọng, Bên A không cung cấp điều kiện làm việc theo hợp đồng).</p>
+                                    <p>Trong trường hợp Bên B vi phạm hợp đồng (không đăng nhập phần mềm, trễ/không thực hiện ca trực, gây mất ca, vi phạm an ninh) thì Bên A có quyền kỷ luật, chấm dứt hợp đồng hoặc khấu trừ thiệt hại theo nội quy và hợp đồng.</p>
+                                    <p>Sau khi chấm dứt, Bên A phải hoàn tất thanh toán lương, phụ cấp, đóng bảo hiểm, bàn giao thiết bị (nếu có) và hai bên thực hiện thủ tục thanh lý hợp đồng.</p>
 
                                     <p className="lcr-section-title">Điều 7. Giải quyết tranh chấp</p>
                                     <p>Hai bên cam kết giải quyết các tranh chấp phát sinh từ hợp đồng này bằng thương lượng.</p>
@@ -448,7 +454,7 @@ const LaborContractReview = () => {
 
                                     <p className="lcr-section-title">Điều 8. Hiệu lực hợp đồng</p>
                                     <p>Hợp đồng này có hiệu lực kể từ ngày ký.</p>
-                                    <p>Hợp đồng này gồm 03(ba) tờ. Hai bên mỗi bên giữ 01 (một) bản có giá trị pháp lý như nhau.</p>
+                                    <p>Hợp đồng này gồm 03 (ba) tờ. Hai bên mỗi bên giữ 01 (một) bản có giá trị pháp lý như nhau.</p>
                                     <p>Mọi sửa đổi, bổ sung hợp đồng phải được lập thành Phụ lục hợp đồng, có chữ ký của hai bên mới có hiệu lực.</p>
                                 </div>
 
