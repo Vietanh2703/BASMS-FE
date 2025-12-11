@@ -85,6 +85,22 @@ export const EContractAuthProvider: React.FC<EContractAuthProviderProps> = ({ ch
 
         const handleTokenRefreshed = () => {
             console.log('eContract: Token refreshed successfully in context');
+
+            // Restore user state from localStorage after token refresh
+            const userId = localStorage.getItem('eContractUserId');
+            const email = localStorage.getItem('eContractEmail');
+            const fullName = localStorage.getItem('eContractFullName');
+            const roleId = localStorage.getItem('eContractRoleId');
+
+            if (userId && email && roleId === ALLOWED_ROLE_ID && eContractAuthService.isAuthenticated()) {
+                const userInfo: EContractUserInfo = {
+                    userId,
+                    email,
+                    fullName: fullName || '',
+                    roleId
+                };
+                setUser(userInfo);
+            }
         };
 
         eContractTokenManager.setCallbacks(handleTokenRefreshed, handleLogoutCallback);

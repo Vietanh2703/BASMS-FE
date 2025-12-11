@@ -95,6 +95,23 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
 
         const handleTokenRefreshed = () => {
             console.log('Token refreshed successfully');
+
+            // Restore user state from localStorage after token refresh
+            const userId = localStorage.getItem('userId');
+            const email = localStorage.getItem('email');
+            const fullName = localStorage.getItem('fullName');
+            const roleId = localStorage.getItem('roleId');
+
+            if (userId && email && authService.isAuthenticated()) {
+                const userInfo: UserInfo = {
+                    userId,
+                    email,
+                    fullName: fullName || '',
+                    roleId: roleId || '',
+                    sub: userId
+                };
+                setUser(userInfo);
+            }
         };
 
         tokenManager.setCallbacks(handleTokenRefreshed, handleLogoutCallback);
