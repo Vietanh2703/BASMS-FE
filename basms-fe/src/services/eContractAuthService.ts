@@ -54,8 +54,14 @@ class EContractAuthService {
         localStorage.setItem('eContractRefreshTokenExpiry', data.refreshTokenExpiry);
         localStorage.setItem('eContractUserId', data.userId);
         localStorage.setItem('eContractEmail', data.email);
-        localStorage.setItem('eContractFullName', data.fullName);
-        localStorage.setItem('eContractRoleId', data.roleId);
+
+        // Only save fullName and roleId if they exist (they won't exist in refresh token response)
+        if (data.fullName) {
+            localStorage.setItem('eContractFullName', data.fullName);
+        }
+        if (data.roleId) {
+            localStorage.setItem('eContractRoleId', data.roleId);
+        }
     }
 
     // Xóa tokens

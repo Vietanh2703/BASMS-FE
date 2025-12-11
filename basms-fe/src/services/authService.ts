@@ -66,6 +66,7 @@ class AuthService {
         localStorage.setItem('refreshTokenExpiry', data.refreshTokenExpiry);
         localStorage.setItem('userId', data.userId);
         localStorage.setItem('email', data.email);
+        // Note: fullName and roleId are stored separately by authContext and not part of LoginResponse
     }
 
     // Xóa tokens

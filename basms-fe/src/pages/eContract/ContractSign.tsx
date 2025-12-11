@@ -130,13 +130,16 @@ const ContractSign = () => {
             setSignedSuccessfully(true);
             setShowSnackbarSuccess(true);
 
+            // Keep isSigning true to disable button permanently after success
+            // Don't set isSigning(false) here to prevent spam clicking
+
             // Try to close window immediately
             setTimeout(() => {
                 window.close();
             }, 1500);
         } catch (error) {
             setShowSnackbarFailed(true);
-        } finally {
+            // Only reset isSigning on error so user can try again
             setIsSigning(false);
         }
     };
