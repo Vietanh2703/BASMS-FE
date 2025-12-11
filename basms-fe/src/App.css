@@ -1,0 +1,8 @@
+/* Reset CSS chung - chỉ giữ lại những style cơ bản */
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+/* Bỏ tất cả CSS cũ để không ảnh hưởng đến các pages */

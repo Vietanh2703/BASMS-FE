@@ -1,0 +1,259 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+
+/* Overlay */
+.modal-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: rgba(0, 0, 0, 0.4);
+    z-index: 9998;
+    animation: fadeIn 0.2s ease-out;
+}
+
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+    }
+    to {
+        opacity: 1;
+    }
+}
+
+/* Modal Container */
+.user-info-modal {
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    background: #ffffff;
+    border-radius: 8px;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+    z-index: 9999;
+    width: 90%;
+    max-width: 800px;
+    max-height: 85vh;
+    overflow: hidden;
+    font-family: 'Inter', sans-serif;
+}
+
+@keyframes slideIn {
+    from {
+        opacity: 0;
+        transform: translate(-50%, -48%);
+    }
+    to {
+        opacity: 1;
+        transform: translate(-50%, -50%);
+    }
+}
+
+/* Header */
+.modal-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 20px 24px;
+    border-bottom: 1px solid #e5e7eb;
+}
+
+.modal-title {
+    font-size: 20px;
+    font-weight: 600;
+    color: #1e40af;
+    margin: 0;
+    font-family: 'Inter', sans-serif;
+}
+
+.modal-close-btn {
+    background: none;
+    border: none;
+    width: 32px;
+    height: 32px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: all 0.2s;
+    color: #6b7280;
+    border-radius: 4px;
+}
+
+.modal-close-btn:hover {
+    background: #f3f4f6;
+    color: #1e40af;
+}
+
+.modal-close-btn svg {
+    width: 20px;
+    height: 20px;
+}
+
+/* Body */
+.modal-body {
+    padding: 24px;
+    overflow-y: auto;
+    max-height: calc(85vh - 140px);
+}
+
+/* Avatar Section */
+.user-avatar-section {
+    display: flex;
+    align-items: center;
+    gap: 20px;
+    padding: 20px;
+    background: #f8fafc;
+    border-radius: 6px;
+    margin-bottom: 24px;
+}
+
+.user-avatar {
+    width: 64px;
+    height: 64px;
+    border-radius: 50%;
+    background: #1e40af;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+}
+
+.user-avatar svg {
+    width: 36px;
+    height: 36px;
+    color: white;
+}
+
+.user-name {
+    font-size: 20px;
+    font-weight: 600;
+    color: #1e40af;
+    margin: 0 0 4px 0;
+    font-family: 'Inter', sans-serif;
+}
+
+.user-role-badge {
+    background: #1e40af;
+    color: white;
+    padding: 4px 12px;
+    border-radius: 4px;
+    font-size: 13px;
+    font-weight: 500;
+    display: inline-block;
+    font-family: 'Inter', sans-serif;
+}
+
+/* Info Grid */
+.user-info-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 16px;
+}
+
+.info-item {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.info-item.full-width {
+    grid-column: 1 / -1;
+}
+
+.info-label {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 13px;
+    font-weight: 500;
+    color: #6b7280;
+    font-family: 'Inter', sans-serif;
+}
+
+.info-icon {
+    width: 16px;
+    height: 16px;
+    color: #1e40af;
+}
+
+.info-value {
+    font-size: 14px;
+    color: #1f2937;
+    font-weight: 400;
+    padding: 10px 12px;
+    background: #f8fafc;
+    border-radius: 4px;
+    border: 1px solid #e5e7eb;
+    word-break: break-word;
+    font-family: 'Inter', sans-serif;
+}
+
+.info-value-code {
+    font-family: 'Inter', monospace;
+    font-size: 13px;
+    color: #1e40af;
+    background: #eff6ff;
+    border-color: #dbeafe;
+}
+
+/* Footer */
+.modal-footer {
+    padding: 16px 24px;
+    border-top: 1px solid #e5e7eb;
+    display: flex;
+    justify-content: flex-end;
+}
+
+.btn-secondary {
+    padding: 8px 20px;
+    border: 1px solid #1e40af;
+    background: white;
+    color: #1e40af;
+    border-radius: 4px;
+    font-size: 14px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s;
+    font-family: 'Inter', sans-serif;
+}
+
+.btn-secondary:hover {
+    background: #1e40af;
+    color: white;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+    .user-info-modal {
+        width: 95%;
+        max-width: none;
+    }
+
+    .modal-header {
+        padding: 16px 20px;
+    }
+
+    .modal-title {
+        font-size: 18px;
+    }
+
+    .modal-body {
+        padding: 20px;
+    }
+
+    .user-avatar-section {
+        flex-direction: column;
+        text-align: center;
+        padding: 16px;
+    }
+
+    .user-info-grid {
+        grid-template-columns: 1fr;
+        gap: 12px;
+    }
+
+    .modal-footer {
+        padding: 12px 20px;
+    }
+}

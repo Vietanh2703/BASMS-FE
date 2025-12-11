@@ -1,0 +1,637 @@
+/* Guard List Specific Styles */
+
+/* Dashboard Header with Button */
+.manager-dashboard-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 24px;
+}
+
+/* Pending Button in Header */
+.mgr-guard-pending-btn {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 12px 20px;
+    background-color: #3b82f6;
+    color: white;
+    border: none;
+    border-radius: 8px;
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.mgr-guard-pending-btn:hover {
+    background-color: #1d4ed8;
+}
+
+.mgr-guard-pending-btn svg {
+    width: 20px;
+    height: 20px;
+}
+
+/* Badge for pending count */
+.mgr-guard-badge {
+    position: relative;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 20px;
+    height: 20px;
+    padding: 0 6px;
+    background-color: #ef4444;
+    color: white;
+    font-size: 12px;
+    font-weight: 700;
+    border-radius: 10px;
+    margin-left: 4px;
+}
+
+.mgr-guard-controls {
+    background-color: #ffffff;
+    border: 1px solid #e5e7eb;
+    border-radius: 12px;
+    padding: 20px;
+    margin-bottom: 24px;
+    display: flex;
+    gap: 20px;
+    align-items: center;
+    flex-wrap: wrap;
+}
+
+.mgr-guard-search {
+    flex: 1;
+    min-width: 300px;
+    position: relative;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    background-color: #f9fafb;
+    border: 1px solid #e5e7eb;
+    border-radius: 8px;
+    padding: 12px 16px;
+}
+
+.mgr-guard-search svg {
+    width: 20px;
+    height: 20px;
+    color: #6b7280;
+    flex-shrink: 0;
+}
+
+.mgr-guard-search input {
+    flex: 1;
+    border: none;
+    background: none;
+    outline: none;
+    font-size: 14px;
+    color: #1f2937;
+}
+
+.mgr-guard-search input::placeholder {
+    color: #9ca3af;
+}
+
+.mgr-guard-stats {
+    display: flex;
+    gap: 24px;
+}
+
+.mgr-guard-stat-item {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.mgr-guard-stat-label {
+    font-size: 14px;
+    color: #6b7280;
+    font-weight: 500;
+}
+
+.mgr-guard-stat-value {
+    font-size: 18px;
+    font-weight: 700;
+    color: #1e40af;
+}
+
+.mgr-guard-loading {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 48px 24px;
+    color: #6b7280;
+}
+
+.mgr-guard-spinner {
+    width: 40px;
+    height: 40px;
+    border: 4px solid #e5e7eb;
+    border-top-color: #3b82f6;
+    border-radius: 50%;
+    animation: mgr-guard-spin 1s linear infinite;
+    margin-bottom: 16px;
+}
+
+@keyframes mgr-guard-spin {
+    to {
+        transform: rotate(360deg);
+    }
+}
+
+.mgr-guard-error,
+.mgr-guard-empty {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 48px 24px;
+    color: #6b7280;
+    text-align: center;
+}
+
+.mgr-guard-error svg,
+.mgr-guard-empty svg {
+    width: 48px;
+    height: 48px;
+    margin-bottom: 16px;
+    opacity: 0.5;
+}
+
+.mgr-guard-error {
+    color: #ef4444;
+}
+
+.mgr-guard-list {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(500px, 1fr));
+    gap: 20px;
+}
+
+.mgr-guard-card {
+    background-color: #ffffff;
+    border: 1px solid #e5e7eb;
+    border-radius: 12px;
+    overflow: hidden;
+    transition: all 0.2s ease;
+}
+
+.mgr-guard-card:hover {
+    border-color: #3b82f6;
+}
+
+.mgr-guard-card-header {
+    padding: 20px;
+    border-bottom: 1px solid #f3f4f6;
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    background-color: #f9fafb;
+}
+
+.mgr-guard-avatar {
+    width: 60px;
+    height: 60px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, #3b82f6, #1d4ed8);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    font-size: 24px;
+    font-weight: 600;
+    flex-shrink: 0;
+}
+
+.mgr-guard-basic-info {
+    flex: 1;
+}
+
+.mgr-guard-name {
+    font-size: 18px;
+    font-weight: 600;
+    color: #1f2937;
+    margin: 0 0 4px 0;
+}
+
+.mgr-guard-code {
+    font-size: 13px;
+    color: #6b7280;
+    font-weight: 500;
+    margin: 0;
+}
+
+.mgr-guard-status-badges {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    align-items: flex-end;
+}
+
+.mgr-guard-status,
+.mgr-guard-availability {
+    padding: 4px 12px;
+    border-radius: 12px;
+    font-size: 11px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.mgr-guard-status-active {
+    background-color: #dcfce7;
+    color: #15803d;
+}
+
+.mgr-guard-status-leave {
+    background-color: #fef3c7;
+    color: #92400e;
+}
+
+.mgr-guard-status-terminated {
+    background-color: #fee2e2;
+    color: #991b1b;
+}
+
+.mgr-guard-availability-available {
+    background-color: #dbeafe;
+    color: #1e40af;
+}
+
+.mgr-guard-availability-on-shift {
+    background-color: #ede9fe;
+    color: #5b21b6;
+}
+
+.mgr-guard-availability-off-duty {
+    background-color: #e5e7eb;
+    color: #374151;
+}
+
+.mgr-guard-card-body {
+    padding: 20px;
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+}
+
+.mgr-guard-info-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 16px;
+}
+
+.mgr-guard-info-item {
+    display: flex;
+    gap: 12px;
+    align-items: start;
+}
+
+.mgr-guard-info-item svg {
+    width: 18px;
+    height: 18px;
+    color: #6b7280;
+    flex-shrink: 0;
+    margin-top: 2px;
+}
+
+.mgr-guard-info-item > div {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.mgr-guard-info-label {
+    font-size: 12px;
+    color: #6b7280;
+    font-weight: 500;
+}
+
+.mgr-guard-info-value {
+    font-size: 14px;
+    color: #1f2937;
+    font-weight: 500;
+    word-break: break-word;
+}
+
+.mgr-guard-capabilities {
+    padding-top: 16px;
+    border-top: 1px solid #f3f4f6;
+}
+
+.mgr-guard-capabilities h4 {
+    font-size: 14px;
+    font-weight: 600;
+    color: #1f2937;
+    margin: 0 0 12px 0;
+}
+
+.mgr-guard-capability-list {
+    display: flex;
+    gap: 12px;
+    flex-wrap: wrap;
+}
+
+.mgr-guard-capability {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 8px 12px;
+    border-radius: 8px;
+    font-size: 13px;
+    font-weight: 500;
+    border: 1px solid;
+}
+
+.mgr-guard-capability.active {
+    background-color: #dcfce7;
+    border-color: #86efac;
+    color: #15803d;
+}
+
+.mgr-guard-capability.inactive {
+    background-color: #f3f4f6;
+    border-color: #e5e7eb;
+    color: #6b7280;
+}
+
+.mgr-guard-capability svg {
+    width: 16px;
+    height: 16px;
+}
+
+/* Pending Guards Modal */
+.mgr-guard-modal-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: rgba(0, 0, 0, 0.5);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 2000;
+}
+
+.mgr-guard-modal-content {
+    background-color: #ffffff;
+    border-radius: 12px;
+    width: 90%;
+    max-width: 800px;
+    max-height: 85vh;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+}
+
+.mgr-guard-modal-header {
+    padding: 20px 24px;
+    border-bottom: 1px solid #e5e7eb;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
+
+.mgr-guard-modal-header h3 {
+    font-size: 18px;
+    font-weight: 600;
+    color: #1e40af;
+    margin: 0;
+}
+
+.mgr-guard-modal-close {
+    background: none;
+    border: none;
+    color: #6b7280;
+    cursor: pointer;
+    padding: 4px;
+    border-radius: 4px;
+    transition: all 0.2s ease;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.mgr-guard-modal-close:hover {
+    background-color: #f3f4f6;
+    color: #1e40af;
+}
+
+.mgr-guard-modal-close svg {
+    width: 24px;
+    height: 24px;
+}
+
+.mgr-guard-modal-body {
+    padding: 24px;
+    overflow-y: auto;
+    flex: 1;
+}
+
+.mgr-guard-pending-loading,
+.mgr-guard-pending-empty {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 48px 24px;
+    color: #6b7280;
+    text-align: center;
+}
+
+.mgr-guard-pending-empty svg {
+    width: 48px;
+    height: 48px;
+    margin-bottom: 16px;
+    opacity: 0.5;
+}
+
+.mgr-guard-pending-list {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+}
+
+.mgr-guard-pending-card {
+    background-color: #f9fafb;
+    border: 1px solid #e5e7eb;
+    border-radius: 8px;
+    padding: 16px;
+}
+
+.mgr-guard-pending-header {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 16px;
+    padding-bottom: 16px;
+    border-bottom: 1px solid #e5e7eb;
+}
+
+.mgr-guard-pending-avatar {
+    width: 50px;
+    height: 50px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, #3b82f6, #1d4ed8);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    font-size: 20px;
+    font-weight: 600;
+    flex-shrink: 0;
+}
+
+.mgr-guard-pending-info h4 {
+    font-size: 16px;
+    font-weight: 600;
+    color: #1f2937;
+    margin: 0 0 4px 0;
+}
+
+.mgr-guard-pending-info p {
+    font-size: 13px;
+    color: #6b7280;
+    margin: 0;
+}
+
+.mgr-guard-pending-details {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    margin-bottom: 16px;
+}
+
+.mgr-guard-pending-row {
+    display: flex;
+    gap: 8px;
+}
+
+.mgr-guard-pending-label {
+    font-size: 13px;
+    color: #6b7280;
+    font-weight: 500;
+    min-width: 120px;
+}
+
+.mgr-guard-pending-value {
+    font-size: 14px;
+    color: #1f2937;
+    font-weight: 500;
+}
+
+.mgr-guard-pending-capabilities {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+    margin-top: 8px;
+}
+
+.mgr-guard-pending-capability {
+    padding: 6px 12px;
+    border-radius: 6px;
+    font-size: 12px;
+    font-weight: 500;
+    border: 1px solid;
+}
+
+.mgr-guard-pending-capability.active {
+    background-color: #dcfce7;
+    border-color: #86efac;
+    color: #15803d;
+}
+
+.mgr-guard-pending-capability.inactive {
+    background-color: #f3f4f6;
+    border-color: #e5e7eb;
+    color: #6b7280;
+}
+
+.mgr-guard-pending-confirm-btn {
+    width: 100%;
+    padding: 10px 16px;
+    background-color: #10b981;
+    color: white;
+    border: none;
+    border-radius: 6px;
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.mgr-guard-pending-confirm-btn:hover:not(:disabled) {
+    background-color: #059669;
+}
+
+.mgr-guard-pending-confirm-btn:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+}
+
+/* Responsive */
+@media (max-width: 1200px) {
+    .mgr-guard-list {
+        grid-template-columns: repeat(auto-fill, minmax(400px, 1fr));
+    }
+}
+
+@media (max-width: 768px) {
+    .manager-dashboard-header {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 16px;
+    }
+
+    .mgr-guard-pending-btn {
+        width: 100%;
+        justify-content: center;
+    }
+
+    .mgr-guard-controls {
+        flex-direction: column;
+        align-items: stretch;
+    }
+
+    .mgr-guard-search {
+        min-width: 100%;
+    }
+
+    .mgr-guard-stats {
+        justify-content: space-around;
+        width: 100%;
+    }
+
+    .mgr-guard-list {
+        grid-template-columns: 1fr;
+    }
+
+    .mgr-guard-card-header {
+        flex-direction: column;
+        align-items: flex-start;
+    }
+
+    .mgr-guard-status-badges {
+        align-items: flex-start;
+        flex-direction: row;
+    }
+
+    .mgr-guard-info-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .mgr-guard-modal-content {
+        width: 95%;
+        max-height: 90vh;
+    }
+
+    .mgr-guard-pending-label {
+        min-width: 100px;
+    }
+}

@@ -1,0 +1,630 @@
+.shift-schedule-edit {
+    display: flex;
+    flex-direction: column;
+    gap: 24px;
+}
+
+.shift-schedule-section {
+    background-color: white;
+    border-radius: 12px;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+    padding: 24px;
+}
+
+.shift-schedule-section-title {
+    font-size: 18px;
+    font-weight: 700;
+    color: #1f2937;
+    margin-bottom: 20px;
+    padding-bottom: 12px;
+    border-bottom: 2px solid #e5e7eb;
+}
+
+.shift-schedule-subsection-title {
+    font-size: 16px;
+    font-weight: 600;
+    color: #374151;
+    margin-top: 24px;
+    margin-bottom: 16px;
+    padding-bottom: 8px;
+    border-bottom: 1px solid #e5e7eb;
+}
+
+.shift-schedule-form-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    gap: 20px;
+}
+
+.shift-schedule-form-group {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.shift-schedule-full-width {
+    grid-column: 1 / -1;
+}
+
+.shift-schedule-label {
+    font-size: 14px;
+    font-weight: 600;
+    color: #374151;
+}
+
+.shift-schedule-input {
+    padding: 10px 14px;
+    border: 1px solid #d1d5db;
+    border-radius: 8px;
+    font-size: 14px;
+    font-family: 'Inter', sans-serif;
+    transition: border-color 0.2s ease;
+}
+
+.shift-schedule-input:focus {
+    outline: none;
+    border-color: #3b82f6;
+}
+
+.shift-schedule-input:disabled {
+    background-color: #f3f4f6;
+    color: #6b7280;
+    cursor: not-allowed;
+}
+
+.shift-schedule-textarea {
+    padding: 10px 14px;
+    border: 1px solid #d1d5db;
+    border-radius: 8px;
+    font-size: 14px;
+    font-family: 'Inter', sans-serif;
+    transition: border-color 0.2s ease;
+    resize: vertical;
+}
+
+.shift-schedule-textarea:focus {
+    outline: none;
+    border-color: #3b82f6;
+}
+
+.shift-schedule-time-picker {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.shift-schedule-time-input {
+    flex: 1;
+    padding: 10px 14px;
+    border: 1px solid #d1d5db;
+    border-radius: 8px;
+    font-size: 14px;
+    font-family: 'Inter', sans-serif;
+    transition: border-color 0.2s ease;
+    min-width: 0;
+}
+
+.shift-schedule-time-input:focus {
+    outline: none;
+    border-color: #3b82f6;
+}
+
+.shift-schedule-time-picker span {
+    font-size: 18px;
+    font-weight: 600;
+    color: #6b7280;
+}
+
+.shift-schedule-error-text {
+    font-size: 13px;
+    color: #dc2626;
+    font-weight: 500;
+}
+
+.shift-schedule-info-text {
+    font-size: 13px;
+    color: #16a34a;
+    font-weight: 500;
+    margin-top: 12px;
+    padding: 8px 12px;
+    background-color: #f0fdf4;
+    border-radius: 6px;
+    border: 1px solid #bbf7d0;
+}
+
+.shift-schedule-days-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+    gap: 16px;
+}
+
+.shift-schedule-checkboxes-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    gap: 16px;
+}
+
+.shift-schedule-checkbox-label {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-size: 14px;
+    color: #374151;
+    cursor: pointer;
+    padding: 8px 12px;
+    border-radius: 6px;
+    transition: background-color 0.2s ease;
+}
+
+.shift-schedule-checkbox-label:hover {
+    background-color: #f9fafb;
+}
+
+.shift-schedule-checkbox-label input[type="checkbox"] {
+    width: 18px;
+    height: 18px;
+    cursor: pointer;
+    accent-color: #3b82f6;
+}
+
+.shift-schedule-checkbox-label span {
+    user-select: none;
+}
+
+.shift-schedule-list {
+    margin-top: 20px;
+}
+
+.shift-schedule-cards {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+    gap: 16px;
+    margin-top: 12px;
+}
+
+.shift-schedule-card {
+    padding: 16px;
+    background-color: #f9fafb;
+    border: 2px solid #e5e7eb;
+    border-radius: 10px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.shift-schedule-card:hover {
+    background-color: #f3f4f6;
+    border-color: #3b82f6;
+    box-shadow: 0 2px 8px rgba(59, 130, 246, 0.15);
+}
+
+.shift-schedule-card-selected {
+    background-color: #eff6ff;
+    border-color: #3b82f6;
+    box-shadow: 0 2px 8px rgba(59, 130, 246, 0.2);
+}
+
+.shift-schedule-card-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 10px;
+}
+
+.shift-schedule-card-name {
+    font-size: 16px;
+    font-weight: 700;
+    color: #1f2937;
+}
+
+.shift-schedule-card-status {
+    font-size: 12px;
+    font-weight: 600;
+    padding: 4px 10px;
+    border-radius: 12px;
+}
+
+.shift-schedule-status-active {
+    background-color: #d1fae5;
+    color: #065f46;
+}
+
+.shift-schedule-status-inactive {
+    background-color: #fee2e2;
+    color: #991b1b;
+}
+
+.shift-schedule-card-time {
+    font-size: 14px;
+    color: #4b5563;
+    margin-bottom: 8px;
+    font-weight: 500;
+}
+
+.shift-schedule-card-details {
+    display: flex;
+    gap: 8px;
+    font-size: 13px;
+    color: #6b7280;
+}
+
+.shift-schedule-card-details span {
+    display: inline-block;
+}
+
+/* Public Holidays Styles */
+.shift-schedule-holidays-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+    gap: 20px;
+    margin-top: 16px;
+}
+
+.shift-schedule-holiday-card {
+    padding: 20px;
+    background-color: #ffffff;
+    border: 2px solid #e5e7eb;
+    border-radius: 12px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.shift-schedule-holiday-card:hover {
+    border-color: #3b82f6;
+    box-shadow: 0 4px 12px rgba(59, 130, 246, 0.15);
+}
+
+.shift-schedule-holiday-selected {
+    background-color: #eff6ff;
+    border-color: #3b82f6;
+    box-shadow: 0 4px 12px rgba(59, 130, 246, 0.2);
+}
+
+.shift-schedule-holiday-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    margin-bottom: 12px;
+    gap: 12px;
+}
+
+.shift-schedule-holiday-name {
+    font-size: 18px;
+    font-weight: 700;
+    color: #1f2937;
+    margin: 0;
+    flex: 1;
+}
+
+.shift-schedule-holiday-category {
+    font-size: 11px;
+    font-weight: 600;
+    padding: 4px 10px;
+    border-radius: 12px;
+    white-space: nowrap;
+}
+
+.shift-schedule-holiday-category.national {
+    background-color: #dbeafe;
+    color: #1e40af;
+}
+
+.shift-schedule-holiday-category.traditional {
+    background-color: #fef3c7;
+    color: #92400e;
+}
+
+.shift-schedule-holiday-date {
+    font-size: 15px;
+    font-weight: 600;
+    color: #3b82f6;
+    margin-bottom: 12px;
+}
+
+.shift-schedule-holiday-info {
+    margin-bottom: 12px;
+}
+
+.shift-schedule-holiday-field {
+    display: flex;
+    gap: 8px;
+    margin-bottom: 6px;
+    font-size: 13px;
+}
+
+.shift-schedule-holiday-label {
+    color: #6b7280;
+    font-weight: 500;
+}
+
+.shift-schedule-holiday-value {
+    color: #1f2937;
+    font-weight: 600;
+}
+
+.shift-schedule-holiday-badge {
+    display: inline-block;
+    padding: 4px 10px;
+    background-color: #dcfce7;
+    color: #166534;
+    font-size: 11px;
+    font-weight: 600;
+    border-radius: 12px;
+    margin-right: 6px;
+    margin-top: 6px;
+}
+
+.shift-schedule-holiday-description {
+    font-size: 13px;
+    color: #6b7280;
+    line-height: 1.5;
+    margin-top: 12px;
+    margin-bottom: 12px;
+    padding-top: 12px;
+    border-top: 1px solid #e5e7eb;
+}
+
+.shift-schedule-holiday-details {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    margin-top: 12px;
+    padding-top: 12px;
+    border-top: 1px solid #e5e7eb;
+}
+
+.shift-schedule-holiday-detail-item {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 13px;
+    color: #4b5563;
+}
+
+.shift-schedule-holiday-detail-item input[type="checkbox"] {
+    width: 16px;
+    height: 16px;
+    cursor: pointer;
+    accent-color: #3b82f6;
+}
+
+.shift-schedule-holiday-detail-item span {
+    user-select: none;
+}
+
+/* Holiday List Layout */
+.shift-schedule-section-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 20px;
+}
+
+.shift-schedule-section-header h3 {
+    font-size: 18px;
+    font-weight: 700;
+    color: #1f2937;
+    margin: 0;
+}
+
+.shift-schedule-add-button {
+    padding: 10px 20px;
+    background-color: #10b981;
+    color: white;
+    border: none;
+    border-radius: 8px;
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.shift-schedule-add-button:hover {
+    background-color: #059669;
+    box-shadow: 0 4px 12px rgba(16, 185, 129, 0.3);
+}
+
+.shift-schedule-add-button:active {
+    transform: translateY(1px);
+}
+
+.shift-schedule-holidays-list {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+    margin-top: 16px;
+}
+
+.shift-schedule-holiday-item {
+    background-color: #f9fafb;
+    border: 2px solid #e5e7eb;
+    border-radius: 12px;
+    padding: 20px;
+    transition: all 0.2s ease;
+}
+
+.shift-schedule-holiday-item:hover {
+    border-color: #d1d5db;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+}
+
+.shift-schedule-holiday-item-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 16px;
+    padding-bottom: 12px;
+    border-bottom: 2px solid #e5e7eb;
+}
+
+.shift-schedule-holiday-item-title {
+    font-size: 16px;
+    font-weight: 700;
+    color: #1f2937;
+    margin: 0;
+}
+
+.shift-schedule-delete-button {
+    padding: 8px 16px;
+    background-color: #ef4444;
+    color: white;
+    border: none;
+    border-radius: 6px;
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.shift-schedule-delete-button:hover {
+    background-color: #dc2626;
+    box-shadow: 0 4px 12px rgba(239, 68, 68, 0.3);
+}
+
+.shift-schedule-delete-button:active {
+    transform: translateY(1px);
+}
+
+.shift-schedule-remove-button {
+    padding: 8px 16px;
+    background-color: #f59e0b;
+    color: white;
+    border: none;
+    border-radius: 6px;
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.shift-schedule-remove-button:hover {
+    background-color: #d97706;
+    box-shadow: 0 4px 12px rgba(245, 158, 11, 0.3);
+}
+
+.shift-schedule-remove-button:active {
+    transform: translateY(1px);
+}
+
+/* Delete Confirmation Modal */
+.shift-schedule-modal-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: rgba(0, 0, 0, 0.5);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 1000;
+    animation: fadeIn 0.2s ease;
+}
+
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+    }
+    to {
+        opacity: 1;
+    }
+}
+
+.shift-schedule-modal-content {
+    background-color: white;
+    border-radius: 12px;
+    padding: 32px;
+    max-width: 480px;
+    width: 90%;
+    box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+    animation: slideUp 0.3s ease;
+}
+
+@keyframes slideUp {
+    from {
+        transform: translateY(20px);
+        opacity: 0;
+    }
+    to {
+        transform: translateY(0);
+        opacity: 1;
+    }
+}
+
+.shift-schedule-modal-title {
+    font-size: 20px;
+    font-weight: 700;
+    color: #1f2937;
+    margin: 0 0 16px 0;
+}
+
+.shift-schedule-modal-message {
+    font-size: 15px;
+    color: #4b5563;
+    line-height: 1.6;
+    margin: 0 0 24px 0;
+}
+
+.shift-schedule-modal-actions {
+    display: flex;
+    gap: 12px;
+    justify-content: flex-end;
+}
+
+.shift-schedule-modal-button {
+    padding: 10px 24px;
+    border: none;
+    border-radius: 8px;
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.shift-schedule-modal-button-cancel {
+    background-color: #f3f4f6;
+    color: #374151;
+}
+
+.shift-schedule-modal-button-cancel:hover {
+    background-color: #e5e7eb;
+}
+
+.shift-schedule-modal-button-confirm {
+    background-color: #ef4444;
+    color: white;
+}
+
+.shift-schedule-modal-button-confirm:hover {
+    background-color: #dc2626;
+    box-shadow: 0 4px 12px rgba(239, 68, 68, 0.3);
+}
+
+.shift-schedule-modal-button:active {
+    transform: translateY(1px);
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+    .shift-schedule-form-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .shift-schedule-days-grid {
+        grid-template-columns: repeat(2, 1fr);
+    }
+
+    .shift-schedule-checkboxes-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .shift-schedule-actions {
+        padding: 16px;
+    }
+
+    .shift-schedule-btn-save {
+        width: 100%;
+    }
+}

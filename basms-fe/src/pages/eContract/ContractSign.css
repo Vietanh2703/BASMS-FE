@@ -1,0 +1,671 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+.cs-container {
+    min-height: 100vh;
+    font-family: 'Inter', sans-serif;
+    background-color: #f9fafb;
+    display: flex;
+    flex-direction: column;
+}
+
+/* Header Styles */
+.cs-header {
+    background-color: #ffffff;
+    border-bottom: 2px solid #e5e7eb;
+    padding: 20px 24px;
+    position: sticky;
+    top: 0;
+    z-index: 100;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+}
+
+.cs-header-content {
+    max-width: 1200px;
+    margin: 0 auto;
+    display: flex;
+    align-items: center;
+    gap: 24px;
+}
+
+.cs-logo {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.cs-logo-icon {
+    width: 48px;
+    height: 48px;
+    background: linear-gradient(135deg, #059669, #047857);
+    color: white;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 10px;
+    font-weight: 700;
+    font-size: 24px;
+}
+
+.cs-logo-text {
+    font-size: 24px;
+    font-weight: 700;
+    color: #059669;
+}
+
+.cs-header-title {
+    font-size: 20px;
+    font-weight: 600;
+    color: #1f2937;
+}
+
+/* Main Content */
+.cs-main {
+    flex: 1;
+    max-width: 1200px;
+    width: 100%;
+    margin: 0 auto;
+    padding: 32px 24px;
+}
+
+/* Info Section */
+.cs-info-section {
+    margin-bottom: 24px;
+}
+
+.cs-info-card {
+    background-color: #ffffff;
+    border-radius: 12px;
+    padding: 24px;
+    border: 1px solid #e5e7eb;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+}
+
+.cs-info-title {
+    font-size: 24px;
+    font-weight: 700;
+    color: #1f2937;
+    margin-bottom: 16px;
+    word-break: break-word;
+}
+
+.cs-info-details {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    margin-bottom: 16px;
+}
+
+.cs-info-detail {
+    display: flex;
+    gap: 12px;
+}
+
+.cs-info-label {
+    font-size: 14px;
+    font-weight: 600;
+    color: #6b7280;
+}
+
+.cs-info-value {
+    font-size: 14px;
+    font-weight: 500;
+    color: #1f2937;
+}
+
+.cs-info-notice {
+    display: flex;
+    gap: 12px;
+    padding: 16px;
+    background-color: #fef3c7;
+    border-left: 4px solid #f59e0b;
+    border-radius: 8px;
+    margin-top: 20px;
+}
+
+.cs-notice-icon {
+    width: 24px;
+    height: 24px;
+    color: #f59e0b;
+    flex-shrink: 0;
+}
+
+.cs-info-notice p {
+    font-size: 14px;
+    color: #92400e;
+    line-height: 1.5;
+    margin: 0;
+}
+
+/* Document Section */
+.cs-document-section {
+    margin-bottom: 24px;
+}
+
+.cs-document-container {
+    background-color: #ffffff;
+    border-radius: 12px;
+    border: 1px solid #e5e7eb;
+    overflow: hidden;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+    position: relative;
+}
+
+.cs-pdf-viewer {
+    width: 100%;
+    height: 800px;
+    border: none;
+}
+
+.cs-no-document {
+    padding: 60px 20px;
+    text-align: center;
+    color: #6b7280;
+}
+
+/* Signature Box */
+.cs-signature-box {
+    position: absolute;
+    bottom: 120px;
+    right: 80px;
+    width: 280px;
+    height: 140px;
+    background-color: rgba(255, 255, 255, 0.95);
+    border: 3px dashed #059669;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    background-image:
+        linear-gradient(45deg, transparent 48%, #059669 48%, #059669 52%, transparent 52%),
+        linear-gradient(-45deg, transparent 48%, #059669 48%, #059669 52%, transparent 52%);
+    background-size: 10px 10px;
+    background-position: 0 0, 5px 5px;
+    background-repeat: repeat;
+}
+
+.cs-signature-box:hover {
+    transform: scale(1.05);
+    box-shadow: 0 6px 16px rgba(5, 150, 105, 0.3);
+    border-color: #047857;
+}
+
+.cs-signature-placeholder {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 8px;
+    padding: 20px;
+    background-color: rgba(255, 255, 255, 0.95);
+    border-radius: 4px;
+}
+
+.cs-signature-icon {
+    width: 40px;
+    height: 40px;
+    color: #059669;
+}
+
+.cs-signature-placeholder p {
+    margin: 0;
+    font-size: 15px;
+    font-weight: 600;
+    color: #059669;
+    text-align: center;
+}
+
+.cs-signature-preview {
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+    padding: 8px;
+}
+
+/* Actions Section */
+.cs-actions-section {
+    position: sticky;
+    bottom: 0;
+    background-color: #ffffff;
+    border-top: 2px solid #e5e7eb;
+    padding: 20px 24px;
+    box-shadow: 0 -2px 4px rgba(0, 0, 0, 0.05);
+    margin: 0 -24px -32px -24px;
+}
+
+.cs-actions-container {
+    max-width: 1200px;
+    margin: 0 auto;
+    display: flex;
+    gap: 24px;
+    justify-content: flex-end;
+    align-items: center;
+}
+
+/* Confirm Checkbox */
+.cs-confirm-checkbox-wrapper {
+    flex: 1;
+    display: flex;
+    align-items: center;
+}
+
+.cs-confirm-checkbox {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    cursor: pointer;
+    user-select: none;
+}
+
+.cs-checkbox-input {
+    position: absolute;
+    opacity: 0;
+    cursor: pointer;
+    height: 0;
+    width: 0;
+}
+
+.cs-checkbox-checkmark {
+    position: relative;
+    height: 24px;
+    width: 24px;
+    background-color: #ffffff;
+    border: 2px solid #d1d5db;
+    border-radius: 6px;
+    transition: all 0.2s ease;
+    flex-shrink: 0;
+}
+
+.cs-checkbox-input:checked ~ .cs-checkbox-checkmark {
+    background-color: #059669;
+    border-color: #059669;
+}
+
+.cs-checkbox-checkmark::after {
+    content: "";
+    position: absolute;
+    display: none;
+    left: 7px;
+    top: 3px;
+    width: 6px;
+    height: 11px;
+    border: solid white;
+    border-width: 0 2px 2px 0;
+    transform: rotate(45deg);
+}
+
+.cs-checkbox-input:checked ~ .cs-checkbox-checkmark::after {
+    display: block;
+}
+
+.cs-confirm-checkbox:hover .cs-checkbox-checkmark {
+    border-color: #059669;
+}
+
+.cs-checkbox-label {
+    font-size: 14px;
+    font-weight: 500;
+    color: #1f2937;
+    line-height: 1.5;
+}
+
+.cs-btn {
+    padding: 14px 32px;
+    border-radius: 8px;
+    font-size: 15px;
+    font-weight: 600;
+    border: none;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    font-family: 'Inter', sans-serif;
+    min-width: 140px;
+}
+
+.cs-btn:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+.cs-btn-reject {
+    background-color: #ffffff;
+    color: #dc2626;
+    border: 2px solid #dc2626;
+}
+
+.cs-btn-reject:hover:not(:disabled) {
+    background-color: #fee2e2;
+}
+
+.cs-btn-sign {
+    background-color: #059669;
+    color: white;
+}
+
+.cs-btn-sign:hover:not(:disabled) {
+    background-color: #047857;
+}
+
+/* Loading State */
+.cs-loading-container {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    min-height: 100vh;
+    gap: 24px;
+    background-color: #f9fafb;
+}
+
+.cs-loading-spinner {
+    width: 48px;
+    height: 48px;
+    border: 4px solid #e5e7eb;
+    border-top: 4px solid #059669;
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}
+
+.cs-loading-text {
+    font-size: 16px;
+    color: #6b7280;
+    font-weight: 500;
+}
+
+/* Error State */
+.cs-error-container {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    min-height: 100vh;
+    gap: 20px;
+    background-color: #f9fafb;
+    padding: 24px;
+}
+
+.cs-error-icon {
+    width: 64px;
+    height: 64px;
+    color: #dc2626;
+}
+
+.cs-error-icon svg {
+    width: 100%;
+    height: 100%;
+}
+
+.cs-error-title {
+    font-size: 24px;
+    font-weight: 700;
+    color: #1f2937;
+    text-align: center;
+}
+
+.cs-error-message {
+    font-size: 16px;
+    color: #6b7280;
+    text-align: center;
+    max-width: 500px;
+}
+
+.cs-error-btn {
+    padding: 12px 32px;
+    background-color: #059669;
+    color: white;
+    border: none;
+    border-radius: 8px;
+    font-size: 15px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    font-family: 'Inter', sans-serif;
+}
+
+.cs-error-btn:hover {
+    background-color: #047857;
+}
+
+/* Signature Modal */
+.cs-signature-modal-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: rgba(0, 0, 0, 0.6);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 2000;
+    animation: fadeIn 0.2s ease;
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; }
+    to { opacity: 1; }
+}
+
+.cs-signature-modal {
+    background-color: #ffffff;
+    border-radius: 12px;
+    box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+    width: 90%;
+    max-width: 650px;
+    overflow: hidden;
+    animation: slideUp 0.3s ease;
+}
+
+@keyframes slideUp {
+    from {
+        transform: translateY(50px);
+        opacity: 0;
+    }
+    to {
+        transform: translateY(0);
+        opacity: 1;
+    }
+}
+
+.cs-signature-modal-header {
+    padding: 20px 24px;
+    border-bottom: 1px solid #e5e7eb;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
+
+.cs-signature-modal-header h3 {
+    font-size: 20px;
+    font-weight: 700;
+    color: #1f2937;
+    margin: 0;
+}
+
+.cs-close-btn {
+    background: none;
+    border: none;
+    color: #6b7280;
+    cursor: pointer;
+    padding: 4px;
+    border-radius: 6px;
+    transition: all 0.2s ease;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.cs-close-btn:hover {
+    background-color: #f3f4f6;
+    color: #1f2937;
+}
+
+.cs-close-btn svg {
+    width: 24px;
+    height: 24px;
+}
+
+.cs-signature-modal-body {
+    padding: 24px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 16px;
+}
+
+.cs-signature-canvas {
+    border: 2px solid #e5e7eb;
+    border-radius: 8px;
+    cursor: crosshair;
+    touch-action: none;
+    background-color: #ffffff;
+}
+
+.cs-signature-hint {
+    font-size: 14px;
+    color: #6b7280;
+    margin: 0;
+    text-align: center;
+}
+
+.cs-signature-modal-footer {
+    padding: 16px 24px;
+    background-color: #f9fafb;
+    display: flex;
+    gap: 12px;
+    justify-content: flex-end;
+}
+
+.cs-btn-primary,
+.cs-btn-secondary {
+    padding: 10px 24px;
+    border-radius: 8px;
+    font-size: 14px;
+    font-weight: 600;
+    border: none;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    font-family: 'Inter', sans-serif;
+}
+
+.cs-btn-primary {
+    background-color: #059669;
+    color: white;
+}
+
+.cs-btn-primary:hover {
+    background-color: #047857;
+}
+
+.cs-btn-secondary {
+    background-color: #ffffff;
+    color: #374151;
+    border: 1px solid #d1d5db;
+}
+
+.cs-btn-secondary:hover {
+    background-color: #f3f4f6;
+}
+
+/* Responsive Styles */
+@media (max-width: 768px) {
+    .cs-header-content {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 12px;
+    }
+
+    .cs-header-title {
+        font-size: 18px;
+    }
+
+    .cs-main {
+        padding: 16px;
+    }
+
+    .cs-info-card {
+        padding: 16px;
+    }
+
+    .cs-info-title {
+        font-size: 20px;
+    }
+
+    .cs-pdf-viewer {
+        height: 600px;
+    }
+
+    .cs-actions-container {
+        flex-direction: column;
+        gap: 16px;
+    }
+
+    .cs-confirm-checkbox-wrapper {
+        width: 100%;
+    }
+
+    .cs-btn {
+        width: 100%;
+    }
+
+    .cs-actions-section {
+        margin: 0 -16px -16px -16px;
+    }
+}
+
+@media (max-width: 480px) {
+    .cs-logo-text {
+        font-size: 20px;
+    }
+
+    .cs-logo-icon {
+        width: 40px;
+        height: 40px;
+        font-size: 20px;
+    }
+
+    .cs-pdf-viewer {
+        height: 500px;
+    }
+
+    .cs-signature-box {
+        bottom: 60px;
+        right: 20px;
+        width: 200px;
+        height: 100px;
+    }
+
+    .cs-signature-icon {
+        width: 28px;
+        height: 28px;
+    }
+
+    .cs-signature-placeholder p {
+        font-size: 13px;
+    }
+
+    .cs-signature-canvas {
+        width: 100%;
+        height: 250px;
+    }
+
+    .cs-signature-modal-footer {
+        flex-direction: column;
+    }
+
+    .cs-btn-primary,
+    .cs-btn-secondary {
+        width: 100%;
+    }
+}

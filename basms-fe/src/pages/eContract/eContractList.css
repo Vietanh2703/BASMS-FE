@@ -1,0 +1,915 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+.ec-contracts-container {
+    display: flex;
+    min-height: 100vh;
+    font-family: 'Inter', sans-serif;
+    background-color: #f9fafb;
+    color: #1e40af;
+}
+
+/* Sidebar Styles */
+.ec-contracts-sidebar {
+    background-color: #ffffff;
+    border-right: 1px solid #e5e7eb;
+    transition: width 0.3s ease;
+    position: fixed;
+    left: 0;
+    top: 0;
+    height: 100vh;
+    z-index: 1000;
+    overflow: hidden;
+}
+
+.ec-contracts-sidebar-open {
+    width: 250px;
+}
+
+.ec-contracts-sidebar-closed {
+    width: 70px;
+}
+
+.ec-contracts-sidebar-header {
+    padding: 20px 15px;
+    border-bottom: 1px solid #e5e7eb;
+}
+
+.ec-contracts-sidebar-logo {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.ec-contracts-logo-icon {
+    width: 40px;
+    height: 40px;
+    background: linear-gradient(135deg, #059669, #047857);
+    color: white;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 8px;
+    font-weight: 600;
+    font-size: 18px;
+}
+
+.ec-contracts-logo-text {
+    font-size: 20px;
+    font-weight: 700;
+    color: #059669;
+    white-space: nowrap;
+}
+
+.ec-contracts-sidebar-nav {
+    padding: 20px 0;
+}
+
+.ec-contracts-nav-list {
+    list-style: none;
+}
+
+.ec-contracts-nav-item {
+    margin-bottom: 4px;
+}
+
+.ec-contracts-nav-link {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 12px 20px;
+    color: #6b7280;
+    text-decoration: none;
+    transition: all 0.2s ease;
+    position: relative;
+}
+
+.ec-contracts-nav-link:hover {
+    background-color: #f8fafc;
+    color: #059669;
+}
+
+.ec-contracts-nav-item.ec-contracts-nav-active .ec-contracts-nav-link {
+    background-color: #ecfdf5;
+    color: #059669;
+    font-weight: 500;
+}
+
+.ec-contracts-nav-item.ec-contracts-nav-active .ec-contracts-nav-link::before {
+    content: '';
+    position: absolute;
+    left: 0;
+    top: 0;
+    bottom: 0;
+    width: 4px;
+    background-color: #059669;
+}
+
+.ec-contracts-nav-icon {
+    width: 20px;
+    height: 20px;
+    flex-shrink: 0;
+}
+
+/* Main Content Styles */
+.ec-contracts-main-content {
+    transition: margin-left 0.3s ease;
+    width: 100%;
+    min-height: 100vh;
+    background-color: #f9fafb;
+}
+
+.ec-contracts-content-expanded {
+    margin-left: 250px;
+}
+
+.ec-contracts-content-collapsed {
+    margin-left: 70px;
+}
+
+/* Header Styles */
+.ec-contracts-nav-header {
+    background-color: #ffffff;
+    border-bottom: 1px solid #e5e7eb;
+    padding: 0 24px;
+    height: 70px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    position: sticky;
+    top: 0;
+    z-index: 100;
+}
+
+.ec-contracts-nav-left {
+    display: flex;
+    align-items: center;
+    gap: 24px;
+}
+
+.ec-contracts-menu-toggle {
+    background: none;
+    border: none;
+    color: #6b7280;
+    cursor: pointer;
+    padding: 8px;
+    border-radius: 6px;
+    transition: all 0.2s ease;
+}
+
+.ec-contracts-menu-toggle:hover {
+    background-color: #f3f4f6;
+    color: #059669;
+}
+
+.ec-contracts-menu-toggle svg {
+    width: 24px;
+    height: 24px;
+}
+
+.ec-contracts-datetime-display {
+    font-size: 14px;
+    font-weight: 500;
+    color: #059669;
+    background-color: #ecfdf5;
+    padding: 8px 16px;
+    border-radius: 6px;
+    border: 1px solid #d1fae5;
+}
+
+.ec-contracts-nav-right {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+}
+
+.ec-contracts-notification-btn {
+    position: relative;
+    background: none;
+    border: none;
+    color: #6b7280;
+    cursor: pointer;
+    padding: 8px;
+    border-radius: 6px;
+    transition: all 0.2s ease;
+}
+
+.ec-contracts-notification-btn:hover {
+    background-color: #f3f4f6;
+    color: #059669;
+}
+
+.ec-contracts-notification-btn svg {
+    width: 20px;
+    height: 20px;
+}
+
+.ec-contracts-notification-badge {
+    position: absolute;
+    top: 4px;
+    right: 4px;
+    background-color: #ef4444;
+    color: white;
+    font-size: 11px;
+    font-weight: 600;
+    padding: 2px 6px;
+    border-radius: 10px;
+    min-width: 18px;
+    height: 18px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.ec-contracts-user-profile {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    cursor: pointer;
+    padding: 8px 12px;
+    border-radius: 8px;
+    transition: all 0.2s ease;
+    position: relative;
+}
+
+.ec-contracts-user-profile:hover {
+    background-color: #f8fafc;
+}
+
+.ec-contracts-user-avatar {
+    width: 36px;
+    height: 36px;
+    background: linear-gradient(135deg, #059669, #047857);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    font-weight: 600;
+    font-size: 14px;
+}
+
+.ec-contracts-user-info {
+    display: flex;
+    flex-direction: column;
+}
+
+.ec-contracts-user-name {
+    font-size: 14px;
+    font-weight: 600;
+    color: #1f2937;
+    line-height: 1.2;
+}
+
+.ec-contracts-user-role {
+    font-size: 12px;
+    color: #6b7280;
+    line-height: 1.2;
+}
+
+.ec-contracts-profile-dropdown {
+    position: absolute;
+    top: calc(100% + 8px);
+    right: 0;
+    background-color: #ffffff;
+    border: 1px solid #e5e7eb;
+    border-radius: 8px;
+    box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+    min-width: 220px;
+    overflow: hidden;
+    z-index: 1000;
+}
+
+.ec-contracts-dropdown-item {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 12px 16px;
+    color: #000000;
+    font-size: 14px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.ec-contracts-dropdown-item:hover {
+    color: #ef4444;
+    background-color: #fef2f2;
+}
+
+.ec-contracts-dropdown-item.ec-contracts-disabled {
+    pointer-events: none;
+}
+
+.ec-contracts-dropdown-icon {
+    width: 18px;
+    height: 18px;
+    flex-shrink: 0;
+}
+
+/* Main Content Area */
+.ec-contracts-main {
+    padding: 32px 24px;
+}
+
+.ec-contracts-page-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 32px;
+}
+
+.ec-contracts-page-title {
+    font-size: 28px;
+    font-weight: 700;
+    color: #1f2937;
+}
+
+.ec-contracts-create-btn {
+    background-color: #059669;
+    color: white;
+    border: none;
+    padding: 12px 24px;
+    border-radius: 8px;
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.ec-contracts-create-btn:hover {
+    background-color: #047857;
+}
+
+/* Filters Section */
+.ec-contracts-filters-section {
+    background-color: #ffffff;
+    padding: 24px;
+    border-radius: 12px;
+    border: 1px solid #e5e7eb;
+    margin-bottom: 24px;
+    display: flex;
+    gap: 16px;
+    flex-wrap: wrap;
+}
+
+.ec-contracts-search-box {
+    flex: 1;
+    min-width: 300px;
+    position: relative;
+}
+
+.ec-contracts-search-icon {
+    position: absolute;
+    left: 12px;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 20px;
+    height: 20px;
+    color: #6b7280;
+    pointer-events: none;
+}
+
+.ec-contracts-search-input {
+    width: 100%;
+    padding: 12px 12px 12px 44px;
+    border: 1px solid #e5e7eb;
+    border-radius: 8px;
+    font-size: 14px;
+    font-family: 'Inter', sans-serif;
+    color: #1f2937;
+    background-color: #ffffff;
+    transition: all 0.2s ease;
+}
+
+.ec-contracts-search-input:focus {
+    outline: none;
+    border-color: #059669;
+}
+
+.ec-contracts-search-input::placeholder {
+    color: #9ca3af;
+}
+
+.ec-contracts-filter-group {
+    display: flex;
+    gap: 12px;
+    flex-wrap: wrap;
+}
+
+.ec-contracts-filter-select {
+    padding: 12px 16px;
+    border: 1px solid #e5e7eb;
+    border-radius: 8px;
+    font-size: 14px;
+    font-family: 'Inter', sans-serif;
+    color: #1f2937;
+    background-color: #ffffff;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    min-width: 180px;
+}
+
+.ec-contracts-filter-select:focus {
+    outline: none;
+    border-color: #059669;
+}
+
+/* Results Info */
+.ec-contracts-results-info {
+    font-size: 14px;
+    color: #6b7280;
+    margin-bottom: 16px;
+    font-weight: 500;
+}
+
+/* Contract List */
+.ec-contracts-list {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+    margin-bottom: 32px;
+}
+
+.ec-contracts-item {
+    background-color: #ffffff;
+    border: 1px solid #e5e7eb;
+    border-radius: 12px;
+    padding: 20px;
+    transition: all 0.2s ease;
+}
+
+.ec-contracts-item:hover {
+    border-color: #d1d5db;
+}
+
+.ec-contracts-item-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 12px;
+}
+
+.ec-contracts-item-id {
+    font-size: 14px;
+    font-weight: 600;
+    color: #059669;
+}
+
+.ec-contracts-item-status {
+    padding: 4px 12px;
+    border-radius: 6px;
+    font-size: 12px;
+    font-weight: 600;
+}
+
+.ec-contracts-status-active {
+    background-color: #d1fae5;
+    color: #047857;
+}
+
+.ec-contracts-status-pending {
+    background-color: #fef3c7;
+    color: #d97706;
+}
+
+.ec-contracts-status-expired {
+    background-color: #fee2e2;
+    color: #dc2626;
+}
+
+.ec-contracts-status-cancelled {
+    background-color: #f3f4f6;
+    color: #6b7280;
+}
+
+.ec-contracts-status-awaiting_signature {
+    background-color: #fef3c7;
+    color: #d97706;
+}
+
+.ec-contracts-status-awaiting_approval {
+    background-color: #fef3c7;
+    color: #d97706;
+}
+
+.ec-contracts-status-approved {
+    background-color: #d1fae5;
+    color: #047857;
+}
+
+.ec-contracts-item-name {
+    font-size: 18px;
+    font-weight: 600;
+    color: #1f2937;
+    margin-bottom: 16px;
+}
+
+.ec-contracts-item-details {
+    display: flex;
+    gap: 24px;
+    margin-bottom: 16px;
+    flex-wrap: wrap;
+}
+
+.ec-contracts-item-detail {
+    display: flex;
+    gap: 8px;
+}
+
+.ec-contracts-detail-label {
+    font-size: 14px;
+    color: #6b7280;
+    font-weight: 500;
+}
+
+.ec-contracts-detail-value {
+    font-size: 14px;
+    color: #1f2937;
+    font-weight: 600;
+}
+
+.ec-contracts-item-actions {
+    display: flex;
+    gap: 12px;
+    flex-wrap: wrap;
+}
+
+.ec-contracts-action-btn {
+    padding: 8px 16px;
+    border-radius: 6px;
+    font-size: 13px;
+    font-weight: 600;
+    border: none;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    font-family: 'Inter', sans-serif;
+}
+
+.ec-contracts-btn-view {
+    background-color: #ecfdf5;
+    color: #059669;
+    border: 1px solid #d1fae5;
+}
+
+.ec-contracts-btn-view:hover {
+    background-color: #d1fae5;
+}
+
+.ec-contracts-btn-approve {
+    background-color: #dbeafe;
+    color: #1e40af;
+    border: 1px solid #bfdbfe;
+}
+
+.ec-contracts-btn-approve:hover {
+    background-color: #bfdbfe;
+}
+
+.ec-contracts-btn-download {
+    background-color: #fef3c7;
+    color: #d97706;
+    border: 1px solid #fde68a;
+}
+
+.ec-contracts-btn-download:hover {
+    background-color: #fde68a;
+}
+
+.ec-contracts-btn-renew {
+    background-color: #fef3c7;
+    color: #d97706;
+    border: 1px solid #fde68a;
+}
+
+.ec-contracts-btn-renew:hover {
+    background-color: #fde68a;
+}
+
+.ec-contracts-btn-cancel {
+    background-color: #fee2e2;
+    color: #dc2626;
+    border: 1px solid #fecaca;
+}
+
+.ec-contracts-btn-cancel:hover {
+    background-color: #fecaca;
+}
+
+/* Loading State */
+.ec-contracts-loading {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    padding: 60px 20px;
+    background-color: #ffffff;
+    border: 1px solid #e5e7eb;
+    border-radius: 12px;
+}
+
+.ec-contracts-loading-text {
+    font-size: 16px;
+    color: #6b7280;
+    font-weight: 500;
+}
+
+/* Error State */
+.ec-contracts-error {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 16px;
+    padding: 60px 20px;
+    background-color: #ffffff;
+    border: 1px solid #e5e7eb;
+    border-radius: 12px;
+}
+
+.ec-contracts-error-text {
+    font-size: 16px;
+    color: #dc2626;
+    font-weight: 500;
+    text-align: center;
+}
+
+.ec-contracts-retry-btn {
+    padding: 10px 24px;
+    background-color: #059669;
+    color: white;
+    border: none;
+    border-radius: 6px;
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    font-family: 'Inter', sans-serif;
+}
+
+.ec-contracts-retry-btn:hover {
+    background-color: #047857;
+}
+
+/* Empty State */
+.ec-contracts-empty {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    padding: 60px 20px;
+    background-color: #ffffff;
+    border: 1px solid #e5e7eb;
+    border-radius: 12px;
+}
+
+.ec-contracts-empty-text {
+    font-size: 16px;
+    color: #6b7280;
+    font-weight: 500;
+}
+
+/* Pagination */
+.ec-contracts-pagination {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 12px;
+}
+
+.ec-contracts-page-btn {
+    padding: 8px 16px;
+    background-color: #ffffff;
+    border: 1px solid #e5e7eb;
+    border-radius: 6px;
+    font-size: 14px;
+    font-weight: 500;
+    color: #1f2937;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    font-family: 'Inter', sans-serif;
+}
+
+.ec-contracts-page-btn:hover:not(:disabled) {
+    background-color: #f9fafb;
+    border-color: #d1d5db;
+}
+
+.ec-contracts-page-btn:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+.ec-contracts-page-numbers {
+    display: flex;
+    gap: 8px;
+}
+
+.ec-contracts-page-number {
+    width: 36px;
+    height: 36px;
+    background-color: #ffffff;
+    border: 1px solid #e5e7eb;
+    border-radius: 6px;
+    font-size: 14px;
+    font-weight: 500;
+    color: #1f2937;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    font-family: 'Inter', sans-serif;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.ec-contracts-page-number:hover {
+    background-color: #f9fafb;
+    border-color: #d1d5db;
+}
+
+.ec-contracts-page-number.ec-contracts-page-active {
+    background-color: #059669;
+    color: white;
+    border-color: #059669;
+}
+
+/* Modal Styles */
+.ec-contracts-modal-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: rgba(0, 0, 0, 0.5);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 2000;
+}
+
+.ec-contracts-modal-content {
+    background-color: #ffffff;
+    border-radius: 12px;
+    box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+    width: 90%;
+    max-width: 400px;
+    overflow: hidden;
+}
+
+.ec-contracts-modal-header {
+    padding: 20px 24px;
+    border-bottom: 1px solid #e5e7eb;
+}
+
+.ec-contracts-modal-header h3 {
+    font-size: 18px;
+    font-weight: 600;
+    color: #1f2937;
+    margin: 0;
+}
+
+.ec-contracts-modal-body {
+    padding: 24px;
+}
+
+.ec-contracts-modal-body p {
+    font-size: 14px;
+    color: #6b7280;
+    margin: 0;
+    line-height: 1.5;
+}
+
+.ec-contracts-modal-footer {
+    padding: 16px 24px;
+    background-color: #f9fafb;
+    display: flex;
+    gap: 12px;
+    justify-content: flex-end;
+}
+
+.ec-contracts-btn-cancel-modal,
+.ec-contracts-btn-confirm-modal {
+    font-size: 14px;
+    font-weight: 500;
+    padding: 10px 20px;
+    border-radius: 6px;
+    border: none;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    font-family: 'Inter', sans-serif;
+}
+
+.ec-contracts-btn-cancel-modal {
+    background-color: #ffffff;
+    color: #374151;
+    border: 1px solid #d1d5db;
+}
+
+.ec-contracts-btn-cancel-modal:hover {
+    background-color: #f3f4f6;
+}
+
+.ec-contracts-btn-confirm-modal {
+    background-color: #ef4444;
+    color: #ffffff;
+}
+
+.ec-contracts-btn-confirm-modal:hover {
+    background-color: #dc2626;
+}
+
+/* Responsive Styles */
+@media (max-width: 768px) {
+    .ec-contracts-content-expanded,
+    .ec-contracts-content-collapsed {
+        margin-left: 0;
+    }
+
+    .ec-contracts-sidebar {
+        transform: translateX(-100%);
+    }
+
+    .ec-contracts-sidebar-open {
+        transform: translateX(0);
+    }
+
+    .ec-contracts-datetime-display {
+        display: none;
+    }
+
+    .ec-contracts-user-info {
+        display: none;
+    }
+
+    .ec-contracts-main {
+        padding: 16px;
+    }
+
+    .ec-contracts-page-header {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 16px;
+    }
+
+    .ec-contracts-create-btn {
+        width: 100%;
+    }
+
+    .ec-contracts-filters-section {
+        padding: 16px;
+    }
+
+    .ec-contracts-search-box {
+        min-width: 100%;
+    }
+
+    .ec-contracts-filter-select {
+        min-width: 100%;
+    }
+
+    .ec-contracts-item {
+        padding: 16px;
+    }
+
+    .ec-contracts-item-details {
+        flex-direction: column;
+        gap: 8px;
+    }
+
+    .ec-contracts-item-actions {
+        flex-direction: column;
+    }
+
+    .ec-contracts-action-btn {
+        width: 100%;
+        text-align: center;
+    }
+
+    .ec-contracts-pagination {
+        flex-wrap: wrap;
+    }
+
+    .ec-contracts-page-numbers {
+        flex-wrap: wrap;
+    }
+}
+
+@media (max-width: 1024px) and (min-width: 769px) {
+    .ec-contracts-filters-section {
+        flex-direction: column;
+    }
+
+    .ec-contracts-search-box {
+        width: 100%;
+    }
+
+    .ec-contracts-filter-group {
+        width: 100%;
+    }
+
+    .ec-contracts-filter-select {
+        flex: 1;
+    }
+}

@@ -1,0 +1,59 @@
+.snackbar-checked {
+    position: fixed;
+    top: 24px;
+    right: -500px;
+    background-color: #10b981;
+    color: white;
+    padding: 20px 32px;
+    border-radius: 12px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    min-width: 400px;
+    max-width: 500px;
+    z-index: 9999;
+    transition: right 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    overflow: hidden;
+}
+
+.snackbar-checked.visible {
+    right: 24px;
+}
+
+.snackbar-checked.exiting {
+    right: -500px;
+}
+
+.snackbar-content {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+}
+
+.check-icon {
+    width: 32px;
+    height: 32px;
+    flex-shrink: 0;
+}
+
+.snackbar-message {
+    font-size: 16px;
+    font-weight: 500;
+    line-height: 1.5;
+}
+
+.snackbar-progress {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    height: 4px;
+    background-color: rgba(255, 255, 255, 0.7);
+    animation: progressBar linear forwards;
+}
+
+@keyframes progressBar {
+    from {
+        width: 100%;
+    }
+    to {
+        width: 0%;
+    }
+}
