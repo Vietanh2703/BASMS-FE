@@ -440,7 +440,7 @@ const TemplateEditor = () => {
         localStorage.setItem('contractReviewData', JSON.stringify(contractData));
 
         // Navigate to review page
-        navigate(`/econtract/contract-review?template=${templateId}`);
+        navigate(`/econtract/guard-template-review?template=${templateId}`);
     };
 
     const handleBack = () => {
