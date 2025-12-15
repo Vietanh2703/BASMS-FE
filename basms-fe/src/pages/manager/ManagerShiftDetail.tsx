@@ -644,11 +644,21 @@ const ManagerShiftDetail = () => {
                 throw new Error(errorData.message || 'Không thể phân công ca trực');
             }
 
-            setSnackbarMessage('Phân công ca trực thành công!');
-            setShowSuccessSnackbar(true);
-            setShowConfirmModal(false);
-            setSelectedTeam(null);
-            setSelectedGroup(null);
+            const responseData = await response.json();
+
+            if (responseData.totalShiftsAssigned === 0) {
+                setSnackbarMessage('Không thể phân công cho đội này làm hai ca liên tiếp nhau');
+                setShowErrorSnackbar(true);
+                setShowConfirmModal(false);
+                setSelectedTeam(null);
+                setSelectedGroup(null);
+            } else {
+                setSnackbarMessage('Phân công ca trực thành công!');
+                setShowSuccessSnackbar(true);
+                setShowConfirmModal(false);
+                setSelectedTeam(null);
+                setSelectedGroup(null);
+            }
         } catch (err) {
             console.error('Error assigning team:', err);
             setSnackbarMessage(err instanceof Error ? err.message : 'Lỗi khi phân công ca trực');
