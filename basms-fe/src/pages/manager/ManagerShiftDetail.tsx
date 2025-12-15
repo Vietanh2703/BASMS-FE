@@ -2,6 +2,8 @@
 import { useState, useEffect, useRef } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '../../hooks/useAuth';
+import SnackbarChecked from '../../components/snackbar/snackbarChecked';
+import SnackbarFailed from '../../components/snackbar/snackbarFailed';
 import './ManagerShiftDetail.css';
 
 interface Shift {
@@ -72,6 +74,42 @@ interface Shift {
     version: number;
 }
 
+interface UnassignedGroup {
+    representativeShiftId: string;
+    shiftTemplateId: string;
+    contractId: string;
+    templateName: string;
+    templateCode: string;
+    contractNumber: string | null;
+    contractTitle: string | null;
+    locationId: string;
+    locationName: string;
+    locationAddress: string;
+    shiftStart: string;
+    shiftEnd: string;
+    workDurationHours: number;
+    unassignedShiftCount: number;
+    requiredGuards: number;
+    nearestShiftDate: string;
+    farthestShiftDate: string;
+    isNightShift: boolean;
+    shiftType: string;
+}
+
+interface Team {
+    teamId: string;
+    teamCode: string;
+    teamName: string;
+    managerId: string;
+    managerName: string;
+    specialization: string;
+    currentMemberCount: number;
+    minMembers: number;
+    maxMembers: number;
+    isActive: boolean;
+    createdAt: string;
+}
+
 const ManagerShiftDetail = () => {
     const { contractId } = useParams<{ contractId: string }>();
     const navigate = useNavigate();
@@ -94,6 +132,17 @@ const ManagerShiftDetail = () => {
     const [mapError, setMapError] = useState<string | null>(null);
     const [mapLoading, setMapLoading] = useState(false);
     const mapInstanceRef = useRef<H.Map | null>(null);
+
+    const [showAssignModal, setShowAssignModal] = useState(false);
+    const [unassignedGroups, setUnassignedGroups] = useState<UnassignedGroup[]>([]);
+    const [teams, setTeams] = useState<Team[]>([]);
+    const [selectedGroup, setSelectedGroup] = useState<UnassignedGroup | null>(null);
+    const [loadingGroups, setLoadingGroups] = useState(false);
+    const [loadingTeams, setLoadingTeams] = useState(false);
+    const [assigningTeamId, setAssigningTeamId] = useState<string | null>(null);
+    const [showSuccessSnackbar, setShowSuccessSnackbar] = useState(false);
+    const [showErrorSnackbar, setShowErrorSnackbar] = useState(false);
+    const [snackbarMessage, setSnackbarMessage] = useState('');
 
     useEffect(() => {
         const timer = setInterval(() => {
@@ -444,6 +493,126 @@ const ManagerShiftDetail = () => {
         return statusMap[status] || status;
     };
 
+    const handleOpenAssignModal = async () => {
+        setShowAssignModal(true);
+        setSelectedGroup(null);
+        await fetchUnassignedGroups();
+        await fetchTeams();
+    };
+
+    const handleCloseAssignModal = () => {
+        setShowAssignModal(false);
+        setSelectedGroup(null);
+        setUnassignedGroups([]);
+        setTeams([]);
+    };
+
+    const fetchUnassignedGroups = async () => {
+        if (!contractId || shifts.length === 0) return;
+
+        try {
+            setLoadingGroups(true);
+            const token = localStorage.getItem('accessToken');
+            if (!token) throw new Error('Không tìm thấy token xác thực');
+
+            const managerId = shifts[0].managerId;
+            const url = `${import.meta.env.VITE_API_SHIFTS_URL}/shifts/unassigned-groups?managerId=${managerId}&contractId=${contractId}`;
+
+            const response = await fetch(url, {
+                headers: {
+                    'Authorization': `Bearer ${token}`,
+                    'Content-Type': 'application/json',
+                }
+            });
+
+            if (!response.ok) throw new Error('Không thể tải danh sách ca trực chưa phân công');
+
+            const data = await response.json();
+            setUnassignedGroups(data.data || []);
+        } catch (err) {
+            console.error('Error fetching unassigned groups:', err);
+            setSnackbarMessage(err instanceof Error ? err.message : 'Lỗi khi tải danh sách ca trực');
+            setShowErrorSnackbar(true);
+        } finally {
+            setLoadingGroups(false);
+        }
+    };
+
+    const fetchTeams = async () => {
+        if (shifts.length === 0) return;
+
+        try {
+            setLoadingTeams(true);
+            const token = localStorage.getItem('accessToken');
+            if (!token) throw new Error('Không tìm thấy token xác thực');
+
+            const managerId = shifts[0].managerId;
+            const url = `${import.meta.env.VITE_API_SHIFTS_URL}/shifts/teams?managerId=${managerId}`;
+
+            const response = await fetch(url, {
+                headers: {
+                    'Authorization': `Bearer ${token}`,
+                    'Content-Type': 'application/json',
+                }
+            });
+
+            if (!response.ok) throw new Error('Không thể tải danh sách team');
+
+            const data = await response.json();
+            setTeams(data.teams || []);
+        } catch (err) {
+            console.error('Error fetching teams:', err);
+            setSnackbarMessage(err instanceof Error ? err.message : 'Lỗi khi tải danh sách team');
+            setShowErrorSnackbar(true);
+        } finally {
+            setLoadingTeams(false);
+        }
+    };
+
+    const handleAssignTeam = async (teamId: string) => {
+        if (!selectedGroup) return;
+
+        try {
+            setAssigningTeamId(teamId);
+            const token = localStorage.getItem('accessToken');
+            if (!token) throw new Error('Không tìm thấy token xác thực');
+
+            const url = `${import.meta.env.VITE_API_SHIFTS_URL}/shifts/teams/${teamId}/assign`;
+
+            const response = await fetch(url, {
+                method: 'POST',
+                headers: {
+                    'Authorization': `Bearer ${token}`,
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    shiftTemplateId: selectedGroup.shiftTemplateId,
+                    representativeShiftId: selectedGroup.representativeShiftId
+                })
+            });
+
+            if (!response.ok) {
+                const errorData = await response.json();
+                throw new Error(errorData.message || 'Không thể phân công ca trực');
+            }
+
+            setSnackbarMessage('Phân công ca trực thành công!');
+            setShowSuccessSnackbar(true);
+            handleCloseAssignModal();
+        } catch (err) {
+            console.error('Error assigning team:', err);
+            setSnackbarMessage(err instanceof Error ? err.message : 'Lỗi khi phân công ca trực');
+            setShowErrorSnackbar(true);
+        } finally {
+            setAssigningTeamId(null);
+        }
+    };
+
+    const handleSuccessSnackbarClose = () => {
+        setShowSuccessSnackbar(false);
+        window.location.reload();
+    };
+
     const weekDates = getWeekDates(selectedWeekStart);
     const dayLabels = ['Thứ 2', 'Thứ 3', 'Thứ 4', 'Thứ 5', 'Thứ 6', 'Thứ 7', 'Chủ nhật'];
 
@@ -568,6 +737,12 @@ const ManagerShiftDetail = () => {
                                 ← Quay lại danh sách
                             </button>
                         </div>
+                        <button
+                            className="mgr-shift-detail-assign-btn"
+                            onClick={handleOpenAssignModal}
+                        >
+                            Phân công ca trực
+                        </button>
                     </div>
 
                     <div className="mgr-shift-detail-controls">
@@ -799,6 +974,108 @@ const ManagerShiftDetail = () => {
                     </div>
                 </div>
             )}
+
+            {showAssignModal && (
+                <div className="mgr-shift-assign-modal-overlay" onClick={handleCloseAssignModal}>
+                    <div className="mgr-shift-assign-modal-box" onClick={(e) => e.stopPropagation()}>
+                        <div className="mgr-shift-assign-modal-header">
+                            <h2>Phân công ca trực</h2>
+                            <button className="mgr-shift-assign-close-btn" onClick={handleCloseAssignModal}>
+                                <svg viewBox="0 0 24 24" fill="currentColor">
+                                    <path d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/>
+                                </svg>
+                            </button>
+                        </div>
+
+                        <div className="mgr-shift-assign-modal-content">
+                            <div className="mgr-shift-assign-column">
+                                <h3 className="mgr-shift-assign-column-title">Ca trực chưa phân công</h3>
+                                {loadingGroups ? (
+                                    <div className="mgr-shift-assign-loading">
+                                        <div className="mgr-shift-assign-spinner"></div>
+                                        <p>Đang tải...</p>
+                                    </div>
+                                ) : unassignedGroups.length === 0 ? (
+                                    <div className="mgr-shift-assign-empty">
+                                        <p>Không có ca trực chưa phân công</p>
+                                    </div>
+                                ) : (
+                                    <div className="mgr-shift-assign-list">
+                                        {unassignedGroups.map((group) => (
+                                            <div
+                                                key={group.representativeShiftId}
+                                                className={`mgr-shift-assign-group-item ${selectedGroup?.representativeShiftId === group.representativeShiftId ? 'mgr-shift-assign-selected' : ''}`}
+                                                onClick={() => setSelectedGroup(group)}
+                                            >
+                                                <div className="mgr-shift-assign-group-name">{group.templateName}</div>
+                                                <div className="mgr-shift-assign-group-code">{group.templateCode}</div>
+                                                <div className="mgr-shift-assign-group-time">
+                                                    {formatTime(group.shiftStart)} - {formatTime(group.shiftEnd)}
+                                                </div>
+                                                <div className="mgr-shift-assign-group-info">
+                                                    <span>Số ca: {group.unassignedShiftCount}</span>
+                                                    <span>Yêu cầu: {group.requiredGuards} bảo vệ</span>
+                                                </div>
+                                                <div className="mgr-shift-assign-group-duration">
+                                                    Thời gian: {group.workDurationHours} giờ
+                                                </div>
+                                            </div>
+                                        ))}
+                                    </div>
+                                )}
+                            </div>
+
+                            <div className="mgr-shift-assign-column">
+                                <h3 className="mgr-shift-assign-column-title">Danh sách Team</h3>
+                                {loadingTeams ? (
+                                    <div className="mgr-shift-assign-loading">
+                                        <div className="mgr-shift-assign-spinner"></div>
+                                        <p>Đang tải...</p>
+                                    </div>
+                                ) : teams.length === 0 ? (
+                                    <div className="mgr-shift-assign-empty">
+                                        <p>Không có team nào</p>
+                                    </div>
+                                ) : (
+                                    <div className="mgr-shift-assign-list">
+                                        {teams.map((team) => (
+                                            <div key={team.teamId} className="mgr-shift-assign-team-item">
+                                                <div className="mgr-shift-assign-team-name">{team.teamName}</div>
+                                                <div className="mgr-shift-assign-team-code">{team.teamCode}</div>
+                                                <div className="mgr-shift-assign-team-info">
+                                                    <span>Thành viên: {team.currentMemberCount}</span>
+                                                    <span>Trạng thái: {team.isActive ? 'Hoạt động' : 'Không hoạt động'}</span>
+                                                </div>
+                                                {selectedGroup && (
+                                                    <button
+                                                        className="mgr-shift-assign-action-btn"
+                                                        onClick={() => handleAssignTeam(team.teamId)}
+                                                        disabled={assigningTeamId === team.teamId}
+                                                    >
+                                                        {assigningTeamId === team.teamId ? 'Đang phân công...' : 'Phân công'}
+                                                    </button>
+                                                )}
+                                            </div>
+                                        ))}
+                                    </div>
+                                )}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            )}
+
+            <SnackbarChecked
+                message={snackbarMessage}
+                isOpen={showSuccessSnackbar}
+                onClose={handleSuccessSnackbarClose}
+            />
+
+            <SnackbarFailed
+                message={snackbarMessage}
+                isOpen={showErrorSnackbar}
+                onClose={() => setShowErrorSnackbar(false)}
+            />
         </div>
     );
 };
