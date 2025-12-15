@@ -139,10 +139,15 @@ const ManagerShiftDetail = () => {
     const [selectedGroup, setSelectedGroup] = useState<UnassignedGroup | null>(null);
     const [loadingGroups, setLoadingGroups] = useState(false);
     const [loadingTeams, setLoadingTeams] = useState(false);
-    const [assigningTeamId, setAssigningTeamId] = useState<string | null>(null);
     const [showSuccessSnackbar, setShowSuccessSnackbar] = useState(false);
     const [showErrorSnackbar, setShowErrorSnackbar] = useState(false);
     const [snackbarMessage, setSnackbarMessage] = useState('');
+
+    const [showConfirmModal, setShowConfirmModal] = useState(false);
+    const [selectedTeam, setSelectedTeam] = useState<Team | null>(null);
+    const [assignmentType, setAssignmentType] = useState<'REGULAR' | 'ONEDAY'>('REGULAR');
+    const [assignmentNotes, setAssignmentNotes] = useState('');
+    const [isAssigning, setIsAssigning] = useState(false);
 
     useEffect(() => {
         const timer = setInterval(() => {
@@ -569,15 +574,42 @@ const ManagerShiftDetail = () => {
         }
     };
 
-    const handleAssignTeam = async (teamId: string) => {
+    const handleAssignTeam = (team: Team) => {
         if (!selectedGroup) return;
+        setSelectedTeam(team);
+        setShowAssignModal(false);
+        setShowConfirmModal(true);
+        setAssignmentType('REGULAR');
+        setAssignmentNotes('');
+    };
+
+    const handleBackToList = () => {
+        setShowConfirmModal(false);
+        setShowAssignModal(true);
+        setSelectedTeam(null);
+        setAssignmentType('REGULAR');
+        setAssignmentNotes('');
+    };
+
+    const handleConfirmAssign = async () => {
+        if (!selectedGroup || !selectedTeam) return;
 
         try {
-            setAssigningTeamId(teamId);
+            setIsAssigning(true);
             const token = localStorage.getItem('accessToken');
             if (!token) throw new Error('Không tìm thấy token xác thực');
 
-            const url = `${import.meta.env.VITE_API_SHIFTS_URL}/shifts/teams/${teamId}/assign`;
+            const url = `${import.meta.env.VITE_API_SHIFTS_URL}/shifts/teams/${selectedTeam.teamId}/assign`;
+
+            const requestBody = {
+                startDate: selectedGroup.nearestShiftDate.split('T')[0],
+                endDate: selectedGroup.farthestShiftDate.split('T')[0],
+                shiftTimeSlot: "",
+                locationId: selectedGroup.locationId,
+                contractId: selectedGroup.contractId,
+                assignmentType: assignmentType,
+                assignmentNotes: assignmentNotes
+            };
 
             const response = await fetch(url, {
                 method: 'POST',
@@ -585,10 +617,7 @@ const ManagerShiftDetail = () => {
                     'Authorization': `Bearer ${token}`,
                     'Content-Type': 'application/json',
                 },
-                body: JSON.stringify({
-                    shiftTemplateId: selectedGroup.shiftTemplateId,
-                    representativeShiftId: selectedGroup.representativeShiftId
-                })
+                body: JSON.stringify(requestBody)
             });
 
             if (!response.ok) {
@@ -598,13 +627,15 @@ const ManagerShiftDetail = () => {
 
             setSnackbarMessage('Phân công ca trực thành công!');
             setShowSuccessSnackbar(true);
-            handleCloseAssignModal();
+            setShowConfirmModal(false);
+            setSelectedTeam(null);
+            setSelectedGroup(null);
         } catch (err) {
             console.error('Error assigning team:', err);
             setSnackbarMessage(err instanceof Error ? err.message : 'Lỗi khi phân công ca trực');
             setShowErrorSnackbar(true);
         } finally {
-            setAssigningTeamId(null);
+            setIsAssigning(false);
         }
     };
 
@@ -1049,10 +1080,9 @@ const ManagerShiftDetail = () => {
                                                 {selectedGroup && (
                                                     <button
                                                         className="mgr-shift-assign-action-btn"
-                                                        onClick={() => handleAssignTeam(team.teamId)}
-                                                        disabled={assigningTeamId === team.teamId}
+                                                        onClick={() => handleAssignTeam(team)}
                                                     >
-                                                        {assigningTeamId === team.teamId ? 'Đang phân công...' : 'Phân công'}
+                                                        Phân công
                                                     </button>
                                                 )}
                                             </div>
@@ -1060,6 +1090,102 @@ const ManagerShiftDetail = () => {
                                     </div>
                                 )}
                             </div>
+                        </div>
+                    </div>
+                </div>
+            )}
+
+            {showConfirmModal && selectedGroup && selectedTeam && (
+                <div className="mgr-shift-confirm-modal-overlay">
+                    <div className="mgr-shift-confirm-modal-box">
+                        <div className="mgr-shift-confirm-modal-header">
+                            <h2>Xác nhận phân công ca trực</h2>
+                        </div>
+
+                        <div className="mgr-shift-confirm-modal-content">
+                            <div className="mgr-shift-confirm-info-section">
+                                <h3 className="mgr-shift-confirm-section-title">Thông tin ca trực</h3>
+                                <div className="mgr-shift-confirm-info-grid">
+                                    <div className="mgr-shift-confirm-info-item">
+                                        <span className="mgr-shift-confirm-label">Tên ca:</span>
+                                        <span className="mgr-shift-confirm-value">{selectedGroup.templateName}</span>
+                                    </div>
+                                    <div className="mgr-shift-confirm-info-item">
+                                        <span className="mgr-shift-confirm-label">Mã ca:</span>
+                                        <span className="mgr-shift-confirm-value">{selectedGroup.templateCode}</span>
+                                    </div>
+                                    <div className="mgr-shift-confirm-info-item">
+                                        <span className="mgr-shift-confirm-label">Giờ làm việc:</span>
+                                        <span className="mgr-shift-confirm-value">
+                                            {formatTime(selectedGroup.shiftStart)} - {formatTime(selectedGroup.shiftEnd)}
+                                        </span>
+                                    </div>
+                                    <div className="mgr-shift-confirm-info-item">
+                                        <span className="mgr-shift-confirm-label">Số ca:</span>
+                                        <span className="mgr-shift-confirm-value">{selectedGroup.unassignedShiftCount} ca</span>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div className="mgr-shift-confirm-info-section">
+                                <h3 className="mgr-shift-confirm-section-title">Thông tin Team</h3>
+                                <div className="mgr-shift-confirm-info-grid">
+                                    <div className="mgr-shift-confirm-info-item">
+                                        <span className="mgr-shift-confirm-label">Tên team:</span>
+                                        <span className="mgr-shift-confirm-value">{selectedTeam.teamName}</span>
+                                    </div>
+                                    <div className="mgr-shift-confirm-info-item">
+                                        <span className="mgr-shift-confirm-label">Mã team:</span>
+                                        <span className="mgr-shift-confirm-value">{selectedTeam.teamCode}</span>
+                                    </div>
+                                    <div className="mgr-shift-confirm-info-item">
+                                        <span className="mgr-shift-confirm-label">Số thành viên:</span>
+                                        <span className="mgr-shift-confirm-value">{selectedTeam.currentMemberCount}</span>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div className="mgr-shift-confirm-form-section">
+                                <div className="mgr-shift-confirm-form-group">
+                                    <label className="mgr-shift-confirm-form-label">Loại phân công</label>
+                                    <select
+                                        className="mgr-shift-confirm-form-select"
+                                        value={assignmentType}
+                                        onChange={(e) => setAssignmentType(e.target.value as 'REGULAR' | 'ONEDAY')}
+                                    >
+                                        <option value="REGULAR">Thường ngày</option>
+                                        <option value="ONEDAY">1 ngày</option>
+                                    </select>
+                                </div>
+
+                                <div className="mgr-shift-confirm-form-group">
+                                    <label className="mgr-shift-confirm-form-label">Ghi chú</label>
+                                    <textarea
+                                        className="mgr-shift-confirm-form-textarea"
+                                        placeholder="Nhập ghi chú cho phân công..."
+                                        value={assignmentNotes}
+                                        onChange={(e) => setAssignmentNotes(e.target.value)}
+                                        rows={4}
+                                    />
+                                </div>
+                            </div>
+                        </div>
+
+                        <div className="mgr-shift-confirm-modal-footer">
+                            <button
+                                className="mgr-shift-confirm-btn-back"
+                                onClick={handleBackToList}
+                                disabled={isAssigning}
+                            >
+                                Quay lại
+                            </button>
+                            <button
+                                className="mgr-shift-confirm-btn-submit"
+                                onClick={handleConfirmAssign}
+                                disabled={isAssigning}
+                            >
+                                {isAssigning ? 'Đang phân công...' : 'Xác nhận phân công'}
+                            </button>
                         </div>
                     </div>
                 </div>
