@@ -498,6 +498,23 @@ const ManagerShiftDetail = () => {
         return statusMap[status] || status;
     };
 
+    const getShiftTimeSlot = (templateName: string): string => {
+        const nameLower = templateName.toLowerCase();
+        if (nameLower.includes('sáng')) return 'MORNING';
+        if (nameLower.includes('chiều')) return 'AFTERNOON';
+        if (nameLower.includes('đêm') || nameLower.includes('tối')) return 'EVENING';
+        return '';
+    };
+
+    const getShiftTimeSlotLabel = (shiftTimeSlot: string): string => {
+        const labelMap: { [key: string]: string } = {
+            'MORNING': 'Ca sáng',
+            'AFTERNOON': 'Ca chiều',
+            'EVENING': 'Ca đêm'
+        };
+        return labelMap[shiftTimeSlot] || 'Không xác định';
+    };
+
     const handleOpenAssignModal = async () => {
         setShowAssignModal(true);
         setSelectedGroup(null);
@@ -601,10 +618,12 @@ const ManagerShiftDetail = () => {
 
             const url = `${import.meta.env.VITE_API_SHIFTS_URL}/shifts/teams/${selectedTeam.teamId}/assign`;
 
+            const shiftTimeSlot = getShiftTimeSlot(selectedGroup.templateName);
+
             const requestBody = {
                 startDate: selectedGroup.nearestShiftDate.split('T')[0],
                 endDate: selectedGroup.farthestShiftDate.split('T')[0],
-                shiftTimeSlot: "",
+                shiftTimeSlot: shiftTimeSlot,
                 locationId: selectedGroup.locationId,
                 contractId: selectedGroup.contractId,
                 assignmentType: assignmentType,
@@ -1115,6 +1134,10 @@ const ManagerShiftDetail = () => {
                                         <span className="mgr-shift-confirm-value">{selectedGroup.templateCode}</span>
                                     </div>
                                     <div className="mgr-shift-confirm-info-item">
+                                        <span className="mgr-shift-confirm-label">Loại ca:</span>
+                                        <span className="mgr-shift-confirm-value">{getShiftTimeSlotLabel(getShiftTimeSlot(selectedGroup.templateName))}</span>
+                                    </div>
+                                    <div className="mgr-shift-confirm-info-item">
                                         <span className="mgr-shift-confirm-label">Giờ làm việc:</span>
                                         <span className="mgr-shift-confirm-value">
                                             {formatTime(selectedGroup.shiftStart)} - {formatTime(selectedGroup.shiftEnd)}
@@ -1123,6 +1146,12 @@ const ManagerShiftDetail = () => {
                                     <div className="mgr-shift-confirm-info-item">
                                         <span className="mgr-shift-confirm-label">Số ca:</span>
                                         <span className="mgr-shift-confirm-value">{selectedGroup.unassignedShiftCount} ca</span>
+                                    </div>
+                                    <div className="mgr-shift-confirm-info-item">
+                                        <span className="mgr-shift-confirm-label">Thời gian:</span>
+                                        <span className="mgr-shift-confirm-value">
+                                            {formatFullDate(selectedGroup.nearestShiftDate)} - {formatFullDate(selectedGroup.farthestShiftDate)}
+                                        </span>
                                     </div>
                                 </div>
                             </div>
