@@ -20,6 +20,7 @@ interface Guard {
     employmentStatus: string;
     hireDate: string;
     contractType: string;
+    certificationLevel: string;
     terminationDate: string | null;
     terminationReason: string | null;
     maxWeeklyHours: number;
@@ -47,6 +48,7 @@ interface PendingGuard {
     employmentStatus: string;
     hireDate: string;
     contractType: string;
+    certificationLevel: string;
     preferredShiftType: string | null;
     canWorkOvertime: boolean;
     canWorkWeekends: boolean;
@@ -662,7 +664,21 @@ const ManagerGuardList = () => {
     };
 
     const handleSelectLeader = (guard: Guard) => {
+        if (guard.certificationLevel === 'I') {
+            setSnackbarMessage('Không phân công bảo vệ cấp bậc I thành trưởng nhóm');
+            setShowErrorSnackbar(true);
+            return;
+        }
         setSelectedLeader(guard);
+    };
+
+    const getCertificationLevelLabel = (level: string): string => {
+        const labels: { [key: string]: string } = {
+            'I': 'Cấp bậc I',
+            'II': 'Cấp bậc II',
+            'III': 'Cấp bậc III'
+        };
+        return labels[level] || level;
     };
 
     const handleSelectMember = (guard: Guard) => {
@@ -1429,7 +1445,10 @@ const ManagerGuardList = () => {
                                                     </div>
                                                     <div className="mgr-assign-guard-info">
                                                         <div className="mgr-assign-guard-name">{guard.fullName}</div>
-                                                        <div className="mgr-assign-guard-code">{guard.employeeCode}</div>
+                                                        <div className="mgr-assign-guard-details">
+                                                            <span className="mgr-assign-guard-code">{guard.employeeCode}</span>
+                                                            <span className="mgr-assign-guard-level">{getCertificationLevelLabel(guard.certificationLevel)}</span>
+                                                        </div>
                                                     </div>
                                                     {!isSelected && !isFullyAssigned && (
                                                         <button
@@ -1471,7 +1490,10 @@ const ManagerGuardList = () => {
                                                 </div>
                                                 <div className="mgr-assign-guard-info">
                                                     <div className="mgr-assign-guard-name">{selectedLeader.fullName}</div>
-                                                    <div className="mgr-assign-guard-code">{selectedLeader.employeeCode}</div>
+                                                    <div className="mgr-assign-guard-details">
+                                                        <span className="mgr-assign-guard-code">{selectedLeader.employeeCode}</span>
+                                                        <span className="mgr-assign-guard-level">{getCertificationLevelLabel(selectedLeader.certificationLevel)}</span>
+                                                    </div>
                                                 </div>
                                                 <button
                                                     className="mgr-assign-guard-remove-btn"
@@ -1504,7 +1526,10 @@ const ManagerGuardList = () => {
                                                     </div>
                                                     <div className="mgr-assign-guard-info">
                                                         <div className="mgr-assign-guard-name">{member.fullName}</div>
-                                                        <div className="mgr-assign-guard-code">{member.employeeCode}</div>
+                                                        <div className="mgr-assign-guard-details">
+                                                            <span className="mgr-assign-guard-code">{member.employeeCode}</span>
+                                                            <span className="mgr-assign-guard-level">{getCertificationLevelLabel(member.certificationLevel)}</span>
+                                                        </div>
                                                     </div>
                                                     <button
                                                         className="mgr-assign-guard-remove-btn"
