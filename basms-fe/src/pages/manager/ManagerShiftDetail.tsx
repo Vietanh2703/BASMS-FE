@@ -915,8 +915,8 @@ const ManagerShiftDetail = () => {
                                                     onClick={() => handleShiftClick(shift)}
                                                     style={{
                                                         cursor: 'pointer',
-                                                        backgroundColor: shift.status === 'Cancelled' ? '#e0e0e0' : undefined,
-                                                        opacity: shift.status === 'Cancelled' ? 0.7 : 1
+                                                        backgroundColor: shift.status?.toUpperCase() === 'CANCELLED' ? '#e0e0e0' : undefined,
+                                                        opacity: shift.status?.toUpperCase() === 'CANCELLED' ? 0.7 : 1
                                                     }}
                                                 >
                                                     <div className="mgr-shift-detail-shift-type">
@@ -971,7 +971,7 @@ const ManagerShiftDetail = () => {
                         <div className="mgr-shift-detail-detail-header">
                             <h2>Chi tiết ca trực</h2>
                             <div style={{ display: 'flex', gap: '10px', alignItems: 'center' }}>
-                                {selectedShift.status === 'Cancelled' ? (
+                                {selectedShift.status?.toUpperCase() === 'CANCELLED' ? (
                                     <span style={{
                                         padding: '8px 16px',
                                         backgroundColor: '#6c757d',
