@@ -110,6 +110,36 @@ interface Team {
     createdAt: string;
 }
 
+interface AssignedGuard {
+    guardId: string;
+    employeeCode: string;
+    fullName: string;
+    avatarUrl: string;
+    email: string;
+    phoneNumber: string;
+    gender: string;
+    employmentStatus: string;
+    role: string;
+    isLeader: boolean;
+    assignmentId: string;
+    assignmentStatus: string;
+    assignmentType: string;
+    assignedAt: string;
+    confirmedAt: string | null;
+    certificationLevel: string;
+}
+
+interface ShiftGuardsResponse {
+    success: boolean;
+    data: {
+        shiftId: string;
+        teamId: string;
+        teamName: string;
+        guards: AssignedGuard[];
+        totalGuards: number;
+    };
+}
+
 const ManagerShiftDetail = () => {
     const { contractId } = useParams<{ contractId: string }>();
     const navigate = useNavigate();
@@ -128,6 +158,8 @@ const ManagerShiftDetail = () => {
     const [locationName, setLocationName] = useState<string>('');
     const [selectedShift, setSelectedShift] = useState<Shift | null>(null);
     const [showShiftDetail, setShowShiftDetail] = useState(false);
+    const [assignedGuards, setAssignedGuards] = useState<AssignedGuard[]>([]);
+    const [loadingGuards, setLoadingGuards] = useState(false);
     const mapRef = useRef<HTMLDivElement>(null);
     const [mapError, setMapError] = useState<string | null>(null);
     const [mapLoading, setMapLoading] = useState(false);
@@ -364,14 +396,55 @@ const ManagerShiftDetail = () => {
         return '';
     };
 
-    const handleShiftClick = (shift: Shift) => {
+    const handleShiftClick = async (shift: Shift) => {
         setSelectedShift(shift);
         setShowShiftDetail(true);
+        await fetchAssignedGuards(shift.id);
     };
 
     const closeShiftDetail = () => {
         setShowShiftDetail(false);
         setSelectedShift(null);
+        setAssignedGuards([]);
+    };
+
+    const fetchAssignedGuards = async (shiftId: string) => {
+        try {
+            setLoadingGuards(true);
+            const token = localStorage.getItem('accessToken');
+            if (!token) throw new Error('Không tìm thấy token xác thực');
+
+            const url = `${import.meta.env.VITE_API_SHIFTS_URL}/shifts/${shiftId}/guards`;
+
+            const response = await fetch(url, {
+                headers: {
+                    'Authorization': `Bearer ${token}`,
+                    'Content-Type': 'application/json',
+                }
+            });
+
+            if (!response.ok) {
+                // Nếu shift chưa có guards, trả về empty array
+                setAssignedGuards([]);
+                return;
+            }
+
+            const data: ShiftGuardsResponse = await response.json();
+            setAssignedGuards(data.data?.guards || []);
+        } catch (err) {
+            console.error('Error fetching assigned guards:', err);
+            setAssignedGuards([]);
+        } finally {
+            setLoadingGuards(false);
+        }
+    };
+
+    const formatPhoneNumber = (phone: string): string => {
+        return phone.replace(/^\+84/, '0');
+    };
+
+    const getRoleLabel = (role: string): string => {
+        return role === 'LEADER' ? 'Trưởng nhóm' : 'Thành viên';
     };
 
     const loadHereMapsAndInitialize = async () => {
@@ -1053,15 +1126,40 @@ const ManagerShiftDetail = () => {
                                         <span className="mgr-shift-detail-detail-label">Đã phân công:</span>
                                         <span className="mgr-shift-detail-detail-value">{selectedShift.assignedGuardsCount} bảo vệ</span>
                                     </div>
-                                    <div className="mgr-shift-detail-detail-item">
-                                        <span className="mgr-shift-detail-detail-label">Đã xác nhận:</span>
-                                        <span className="mgr-shift-detail-detail-value">{selectedShift.confirmedGuardsCount} bảo vệ</span>
-                                    </div>
-                                    <div className="mgr-shift-detail-detail-item">
-                                        <span className="mgr-shift-detail-detail-label">Tỷ lệ nhân sự:</span>
-                                        <span className="mgr-shift-detail-detail-value">{selectedShift.staffingPercentage}%</span>
-                                    </div>
                                 </div>
+
+                                {loadingGuards ? (
+                                    <div className="mgr-shift-detail-guards-loading">
+                                        <div className="mgr-shift-detail-spinner"></div>
+                                        <p>Đang tải danh sách bảo vệ...</p>
+                                    </div>
+                                ) : assignedGuards.length > 0 ? (
+                                    <div className="mgr-shift-detail-guards-list">
+                                        {assignedGuards.map((guard) => (
+                                            <div key={guard.guardId} className="mgr-shift-detail-guard-item">
+                                                <div className="mgr-shift-detail-guard-avatar">
+                                                    {guard.avatarUrl ? (
+                                                        <img src={guard.avatarUrl} alt={guard.fullName} />
+                                                    ) : (
+                                                        <span>{guard.fullName.charAt(0).toUpperCase()}</span>
+                                                    )}
+                                                </div>
+                                                <div className="mgr-shift-detail-guard-info">
+                                                    <div className="mgr-shift-detail-guard-name">{guard.fullName}</div>
+                                                    <div className="mgr-shift-detail-guard-role">{getRoleLabel(guard.role)}</div>
+                                                    <div className="mgr-shift-detail-guard-contact">
+                                                        <span>{formatPhoneNumber(guard.phoneNumber)}</span>
+                                                        <span>{guard.email}</span>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        ))}
+                                    </div>
+                                ) : selectedShift.assignedGuardsCount > 0 ? (
+                                    <div className="mgr-shift-detail-guards-empty">
+                                        <p>Không thể tải danh sách bảo vệ</p>
+                                    </div>
+                                ) : null}
                             </div>
 
                             <div className="mgr-shift-detail-detail-section">

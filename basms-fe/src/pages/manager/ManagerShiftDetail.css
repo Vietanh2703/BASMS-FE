@@ -1324,3 +1324,85 @@
         grid-template-columns: 1fr;
     }
 }
+
+/* Shift Detail Assigned Guards List */
+.mgr-shift-detail-guards-loading {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 30px;
+    color: #6b7280;
+}
+
+.mgr-shift-detail-guards-list {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    margin-top: 16px;
+}
+
+.mgr-shift-detail-guard-item {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 12px;
+    background-color: #ffffff;
+}
+
+.mgr-shift-detail-guard-avatar {
+    width: 48px;
+    height: 48px;
+    border-radius: 50%;
+    background-color: #3b82f6;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #ffffff;
+    font-size: 16px;
+    font-weight: 600;
+    flex-shrink: 0;
+    overflow: hidden;
+}
+
+.mgr-shift-detail-guard-avatar img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.mgr-shift-detail-guard-info {
+    flex: 1;
+}
+
+.mgr-shift-detail-guard-name {
+    font-size: 14px;
+    font-weight: 600;
+    color: #1e40af;
+    margin-bottom: 3px;
+}
+
+.mgr-shift-detail-guard-role {
+    font-size: 12px;
+    font-weight: 500;
+    color: #3b82f6;
+    margin-bottom: 5px;
+}
+
+.mgr-shift-detail-guard-contact {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+}
+
+.mgr-shift-detail-guard-contact span {
+    font-size: 11px;
+    color: #6b7280;
+}
+
+.mgr-shift-detail-guards-empty {
+    padding: 30px;
+    text-align: center;
+    color: #6b7280;
+    font-size: 13px;
+}
