@@ -1410,10 +1410,11 @@
 .mgr-shift-detail-guard-attendance-badge {
     padding: 4px 10px;
     border-radius: 4px;
-    color: #ffffff;
     font-size: 11px;
     font-weight: 600;
     white-space: nowrap;
+    border: 2px solid;
+    background-color: transparent;
 }
 
 .mgr-shift-detail-guard-actions {
@@ -1486,9 +1487,10 @@
 .mgr-shift-attendance-status-badge {
     padding: 6px 12px;
     border-radius: 4px;
-    color: #ffffff;
     font-size: 12px;
     font-weight: 600;
+    border: 2px solid;
+    background-color: transparent;
 }
 
 .mgr-shift-attendance-close-btn {

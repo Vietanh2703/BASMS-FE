@@ -534,6 +534,7 @@ const ManagerShiftDetail = () => {
         const attendance = guardAttendances.get(guardId);
         if (attendance) {
             setSelectedAttendance(attendance);
+            setShowShiftDetail(false);
             setShowAttendanceDetailModal(true);
         }
     };
@@ -541,6 +542,7 @@ const ManagerShiftDetail = () => {
     const handleCloseAttendanceDetail = () => {
         setShowAttendanceDetailModal(false);
         setSelectedAttendance(null);
+        setShowShiftDetail(true);
     };
 
     const getAttendanceStatusLabel = (status: string): string => {
@@ -1286,7 +1288,10 @@ const ManagerShiftDetail = () => {
                                                     {attendance && (
                                                         <div
                                                             className="mgr-shift-detail-guard-attendance-badge"
-                                                            style={{ backgroundColor: getAttendanceStatusColor(attendance.status) }}
+                                                            style={{
+                                                                color: getAttendanceStatusColor(attendance.status),
+                                                                borderColor: getAttendanceStatusColor(attendance.status)
+                                                            }}
                                                         >
                                                             {getAttendanceStatusLabel(attendance.status)}
                                                         </div>
