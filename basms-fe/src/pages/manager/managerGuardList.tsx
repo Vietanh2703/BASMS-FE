@@ -498,6 +498,7 @@ const ManagerGuardList = () => {
     const getSpecializationLabel = (spec: string): string => {
         const labels: { [key: string]: string } = {
             'RESIDENTIAL': 'Khu dân cư',
+            'SUPERMARKET': 'Siêu thị',
             'RESTAURANT': 'Quán ăn',
             'HOTEL': 'Khách sạn',
             'SCHOOL': 'Trường học',
