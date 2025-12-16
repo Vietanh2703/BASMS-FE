@@ -1082,6 +1082,7 @@ const ManagerGuardList = () => {
                                 <label>Chuyên môn <span style={{ color: '#dc3545' }}>*</span></label>
                                 <select value={specialization} onChange={(e) => setSpecialization(e.target.value)}>
                                     <option value="">-- Chọn chuyên môn --</option>
+                                    <option value="SUPERMARKET">Siêu thị</option>
                                     <option value="RESIDENTIAL">Khu dân cư</option>
                                     <option value="RESTAURANT">Quán ăn</option>
                                     <option value="HOTEL">Khách sạn</option>
