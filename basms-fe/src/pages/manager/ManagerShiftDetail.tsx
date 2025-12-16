@@ -140,6 +140,58 @@ interface ShiftGuardsResponse {
     };
 }
 
+interface AttendanceStatus {
+    id: string;
+    shiftAssignmentId: string;
+    guardId: string;
+    shiftId: string;
+    checkInTime: string | null;
+    checkInLatitude: number | null;
+    checkInLongitude: number | null;
+    checkInLocationAccuracy: number | null;
+    checkInDistanceFromSite: number | null;
+    checkInDeviceId: string | null;
+    checkInFaceImageUrl: string | null;
+    checkInFaceMatchScore: number | null;
+    checkOutTime: string | null;
+    checkOutLatitude: number | null;
+    checkOutLongitude: number | null;
+    checkOutLocationAccuracy: number | null;
+    checkOutDistanceFromSite: number | null;
+    checkOutDeviceId: string | null;
+    checkOutFaceImageUrl: string | null;
+    checkOutFaceMatchScore: number | null;
+    scheduledStartTime: string;
+    scheduledEndTime: string;
+    actualWorkDurationMinutes: number | null;
+    breakDurationMinutes: number;
+    totalHours: number | null;
+    status: string;
+    isLate: boolean;
+    isEarlyLeave: boolean;
+    hasOvertime: boolean;
+    isIncomplete: boolean;
+    isVerified: boolean;
+    lateMinutes: number | null;
+    earlyLeaveMinutes: number | null;
+    overtimeMinutes: number | null;
+    verifiedBy: string | null;
+    verifiedAt: string | null;
+    verificationStatus: string;
+    notes: string | null;
+    managerNotes: string | null;
+    autoDetected: boolean;
+    flagsForReview: boolean;
+    flagReason: string | null;
+    createdAt: string;
+    updatedAt: string | null;
+}
+
+interface AttendanceResponse {
+    success: boolean;
+    data: AttendanceStatus;
+}
+
 const ManagerShiftDetail = () => {
     const { contractId } = useParams<{ contractId: string }>();
     const navigate = useNavigate();
@@ -160,6 +212,9 @@ const ManagerShiftDetail = () => {
     const [showShiftDetail, setShowShiftDetail] = useState(false);
     const [assignedGuards, setAssignedGuards] = useState<AssignedGuard[]>([]);
     const [loadingGuards, setLoadingGuards] = useState(false);
+    const [guardAttendances, setGuardAttendances] = useState<Map<string, AttendanceStatus>>(new Map());
+    const [showAttendanceDetailModal, setShowAttendanceDetailModal] = useState(false);
+    const [selectedAttendance, setSelectedAttendance] = useState<AttendanceStatus | null>(null);
     const mapRef = useRef<HTMLDivElement>(null);
     const [mapError, setMapError] = useState<string | null>(null);
     const [mapLoading, setMapLoading] = useState(false);
@@ -430,13 +485,86 @@ const ManagerShiftDetail = () => {
             }
 
             const data: ShiftGuardsResponse = await response.json();
-            setAssignedGuards(data.data?.guards || []);
+            const guards = data.data?.guards || [];
+            setAssignedGuards(guards);
+
+            // Fetch attendance status for each guard
+            await fetchGuardsAttendances(guards, shiftId);
         } catch (err) {
             console.error('Error fetching assigned guards:', err);
             setAssignedGuards([]);
         } finally {
             setLoadingGuards(false);
         }
+    };
+
+    const fetchGuardsAttendances = async (guards: AssignedGuard[], shiftId: string) => {
+        const token = localStorage.getItem('accessToken');
+        if (!token) return;
+
+        const attendanceMap = new Map<string, AttendanceStatus>();
+
+        await Promise.all(
+            guards.map(async (guard) => {
+                try {
+                    const url = `${import.meta.env.VITE_API_SHIFTS_URL}/attendances/status?guardId=${guard.guardId}&shiftId=${shiftId}`;
+                    const response = await fetch(url, {
+                        headers: {
+                            'Authorization': `Bearer ${token}`,
+                            'Content-Type': 'application/json',
+                        }
+                    });
+
+                    if (response.ok) {
+                        const data: AttendanceResponse = await response.json();
+                        attendanceMap.set(guard.guardId, data.data);
+                    }
+                } catch (err) {
+                    console.error(`Error fetching attendance for guard ${guard.guardId}:`, err);
+                }
+            })
+        );
+
+        setGuardAttendances(attendanceMap);
+    };
+
+    const handleOpenAttendanceDetail = async (guardId: string) => {
+        if (!selectedShift) return;
+
+        const attendance = guardAttendances.get(guardId);
+        if (attendance) {
+            setSelectedAttendance(attendance);
+            setShowAttendanceDetailModal(true);
+        }
+    };
+
+    const handleCloseAttendanceDetail = () => {
+        setShowAttendanceDetailModal(false);
+        setSelectedAttendance(null);
+    };
+
+    const getAttendanceStatusLabel = (status: string): string => {
+        const labels: { [key: string]: string } = {
+            'PENDING': 'Chưa điểm danh',
+            'CHECKED_IN': 'Bắt đầu ca',
+            'CHECKED-IN': 'Bắt đầu ca',
+            'CHECKED_OUT': 'Kết thúc ca',
+            'CHECKED-OUT': 'Kết thúc ca',
+            'ABSENT': 'Vắng mặt'
+        };
+        return labels[status] || status;
+    };
+
+    const getAttendanceStatusColor = (status: string): string => {
+        const colors: { [key: string]: string } = {
+            'PENDING': '#f59e0b',
+            'CHECKED_IN': '#3b82f6',
+            'CHECKED-IN': '#3b82f6',
+            'CHECKED_OUT': '#10b981',
+            'CHECKED-OUT': '#10b981',
+            'ABSENT': '#ef4444'
+        };
+        return colors[status] || '#6b7280';
     };
 
     const formatPhoneNumber = (phone: string): string => {
@@ -1135,25 +1263,49 @@ const ManagerShiftDetail = () => {
                                     </div>
                                 ) : assignedGuards.length > 0 ? (
                                     <div className="mgr-shift-detail-guards-list">
-                                        {assignedGuards.map((guard) => (
-                                            <div key={guard.guardId} className="mgr-shift-detail-guard-item">
-                                                <div className="mgr-shift-detail-guard-avatar">
-                                                    {guard.avatarUrl ? (
-                                                        <img src={guard.avatarUrl} alt={guard.fullName} />
-                                                    ) : (
-                                                        <span>{guard.fullName.charAt(0).toUpperCase()}</span>
+                                        {assignedGuards.map((guard) => {
+                                            const attendance = guardAttendances.get(guard.guardId);
+
+                                            return (
+                                                <div key={guard.guardId} className="mgr-shift-detail-guard-item">
+                                                    <div className="mgr-shift-detail-guard-avatar">
+                                                        {guard.avatarUrl ? (
+                                                            <img src={guard.avatarUrl} alt={guard.fullName} />
+                                                        ) : (
+                                                            <span>{guard.fullName.charAt(0).toUpperCase()}</span>
+                                                        )}
+                                                    </div>
+                                                    <div className="mgr-shift-detail-guard-info">
+                                                        <div className="mgr-shift-detail-guard-name">{guard.fullName}</div>
+                                                        <div className="mgr-shift-detail-guard-role">{getRoleLabel(guard.role)}</div>
+                                                        <div className="mgr-shift-detail-guard-contact">
+                                                            <span>{formatPhoneNumber(guard.phoneNumber)}</span>
+                                                            <span>{guard.email}</span>
+                                                        </div>
+                                                    </div>
+                                                    {attendance && (
+                                                        <div
+                                                            className="mgr-shift-detail-guard-attendance-badge"
+                                                            style={{ backgroundColor: getAttendanceStatusColor(attendance.status) }}
+                                                        >
+                                                            {getAttendanceStatusLabel(attendance.status)}
+                                                        </div>
                                                     )}
-                                                </div>
-                                                <div className="mgr-shift-detail-guard-info">
-                                                    <div className="mgr-shift-detail-guard-name">{guard.fullName}</div>
-                                                    <div className="mgr-shift-detail-guard-role">{getRoleLabel(guard.role)}</div>
-                                                    <div className="mgr-shift-detail-guard-contact">
-                                                        <span>{formatPhoneNumber(guard.phoneNumber)}</span>
-                                                        <span>{guard.email}</span>
+                                                    <div className="mgr-shift-detail-guard-actions">
+                                                        <button className="mgr-shift-detail-guard-transfer-btn">
+                                                            Chuyển bảo vệ
+                                                        </button>
+                                                        <button
+                                                            className="mgr-shift-detail-guard-detail-btn"
+                                                            onClick={() => handleOpenAttendanceDetail(guard.guardId)}
+                                                            disabled={!attendance}
+                                                        >
+                                                            Chi tiết điểm danh
+                                                        </button>
                                                     </div>
                                                 </div>
-                                            </div>
-                                        ))}
+                                            );
+                                        })}
                                     </div>
                                 ) : selectedShift.assignedGuardsCount > 0 ? (
                                     <div className="mgr-shift-detail-guards-empty">
@@ -1485,6 +1637,134 @@ const ManagerShiftDetail = () => {
                                 }}
                             >
                                 {isCancelling ? 'Đang hủy...' : 'Hủy ca trực'}
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
+
+            {showAttendanceDetailModal && selectedAttendance && (
+                <div className="mgr-shift-attendance-modal-overlay" onClick={handleCloseAttendanceDetail}>
+                    <div className="mgr-shift-attendance-modal-content" onClick={(e) => e.stopPropagation()}>
+                        <div className="mgr-shift-attendance-modal-header">
+                            <h2>Chi tiết chấm công</h2>
+                            <div
+                                className="mgr-shift-attendance-status-badge"
+                                style={{ backgroundColor: getAttendanceStatusColor(selectedAttendance.status) }}
+                            >
+                                Trạng thái: {getAttendanceStatusLabel(selectedAttendance.status)}
+                            </div>
+                            <button className="mgr-shift-attendance-close-btn" onClick={handleCloseAttendanceDetail}>
+                                <svg viewBox="0 0 24 24" fill="currentColor">
+                                    <path d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/>
+                                </svg>
+                            </button>
+                        </div>
+
+                        <div className="mgr-shift-attendance-modal-body">
+                            <div className="mgr-shift-attendance-section">
+                                <h3>Chấm công vào ca</h3>
+                                <div className="mgr-shift-attendance-time-header">
+                                    Vào ca - {formatTime(selectedAttendance.scheduledStartTime)}
+                                </div>
+                                <div className="mgr-shift-attendance-info-grid">
+                                    <div className="mgr-shift-attendance-info-item">
+                                        <span className="mgr-shift-attendance-label">Thời gian check-in:</span>
+                                        <span className="mgr-shift-attendance-value">
+                                            {selectedAttendance.checkInTime ? formatTime(selectedAttendance.checkInTime) : 'Chưa có thông tin'}
+                                        </span>
+                                    </div>
+                                    <div className="mgr-shift-attendance-info-item">
+                                        <span className="mgr-shift-attendance-label">Tọa độ:</span>
+                                        <span className="mgr-shift-attendance-value">
+                                            {selectedAttendance.checkInLatitude && selectedAttendance.checkInLongitude
+                                                ? `${selectedAttendance.checkInLatitude.toFixed(6)}, ${selectedAttendance.checkInLongitude.toFixed(6)}`
+                                                : 'Chưa có thông tin'
+                                            }
+                                        </span>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div className="mgr-shift-attendance-section">
+                                <h3>Chấm công hết ca</h3>
+                                <div className="mgr-shift-attendance-time-header">
+                                    Hết ca - {formatTime(selectedAttendance.scheduledEndTime)}
+                                </div>
+                                <div className="mgr-shift-attendance-info-grid">
+                                    <div className="mgr-shift-attendance-info-item">
+                                        <span className="mgr-shift-attendance-label">Thời gian check-out:</span>
+                                        <span className="mgr-shift-attendance-value">
+                                            {selectedAttendance.checkOutTime ? formatTime(selectedAttendance.checkOutTime) : 'Chưa có thông tin'}
+                                        </span>
+                                    </div>
+                                    <div className="mgr-shift-attendance-info-item">
+                                        <span className="mgr-shift-attendance-label">Tọa độ:</span>
+                                        <span className="mgr-shift-attendance-value">
+                                            {selectedAttendance.checkOutLatitude && selectedAttendance.checkOutLongitude
+                                                ? `${selectedAttendance.checkOutLatitude.toFixed(6)}, ${selectedAttendance.checkOutLongitude.toFixed(6)}`
+                                                : 'Chưa có thông tin'
+                                            }
+                                        </span>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div className="mgr-shift-attendance-section">
+                                <h3>Thông tin tổng hợp</h3>
+                                <div className="mgr-shift-attendance-info-grid">
+                                    <div className="mgr-shift-attendance-info-item">
+                                        <span className="mgr-shift-attendance-label">Tổng giờ làm:</span>
+                                        <span className="mgr-shift-attendance-value">
+                                            {selectedAttendance.totalHours ? `${selectedAttendance.totalHours} giờ` : 'Chưa có thông tin'}
+                                        </span>
+                                    </div>
+                                    <div className="mgr-shift-attendance-info-item">
+                                        <span className="mgr-shift-attendance-label">Đi muộn:</span>
+                                        <span className="mgr-shift-attendance-value">
+                                            {selectedAttendance.isLate ? 'Có' : 'Không'}
+                                            {selectedAttendance.lateMinutes ? ` (${selectedAttendance.lateMinutes} phút)` : ''}
+                                        </span>
+                                    </div>
+                                    <div className="mgr-shift-attendance-info-item">
+                                        <span className="mgr-shift-attendance-label">Về sớm:</span>
+                                        <span className="mgr-shift-attendance-value">
+                                            {selectedAttendance.isEarlyLeave ? 'Có' : 'Không'}
+                                            {selectedAttendance.earlyLeaveMinutes ? ` (${selectedAttendance.earlyLeaveMinutes} phút)` : ''}
+                                        </span>
+                                    </div>
+                                    <div className="mgr-shift-attendance-info-item">
+                                        <span className="mgr-shift-attendance-label">Làm thêm giờ:</span>
+                                        <span className="mgr-shift-attendance-value">
+                                            {selectedAttendance.hasOvertime ? 'Có' : 'Không'}
+                                            {selectedAttendance.overtimeMinutes ? ` (${selectedAttendance.overtimeMinutes} phút)` : ''}
+                                        </span>
+                                    </div>
+                                    <div className="mgr-shift-attendance-info-item">
+                                        <span className="mgr-shift-attendance-label">Chưa hoàn thành:</span>
+                                        <span className="mgr-shift-attendance-value">
+                                            {selectedAttendance.isIncomplete ? 'Có' : 'Không'}
+                                        </span>
+                                    </div>
+                                    <div className="mgr-shift-attendance-info-item">
+                                        <span className="mgr-shift-attendance-label">Trạng thái xác nhận:</span>
+                                        <span className="mgr-shift-attendance-value">
+                                            {selectedAttendance.verificationStatus === 'VERIFIED' ? 'Đã xác nhận' : 'Chưa xác nhận'}
+                                        </span>
+                                    </div>
+                                    <div className="mgr-shift-attendance-info-item">
+                                        <span className="mgr-shift-attendance-label">Thời gian xác nhận:</span>
+                                        <span className="mgr-shift-attendance-value">
+                                            {selectedAttendance.verifiedAt ? formatTime(selectedAttendance.verifiedAt) : 'Chưa có thông tin'}
+                                        </span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div className="mgr-shift-attendance-modal-footer">
+                            <button className="mgr-shift-attendance-verify-btn">
+                                Xác nhận tiến độ
                             </button>
                         </div>
                     </div>

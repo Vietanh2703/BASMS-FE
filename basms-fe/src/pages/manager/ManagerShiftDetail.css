@@ -1406,3 +1406,175 @@
     color: #6b7280;
     font-size: 13px;
 }
+
+.mgr-shift-detail-guard-attendance-badge {
+    padding: 4px 10px;
+    border-radius: 4px;
+    color: #ffffff;
+    font-size: 11px;
+    font-weight: 600;
+    white-space: nowrap;
+}
+
+.mgr-shift-detail-guard-actions {
+    display: flex;
+    gap: 8px;
+}
+
+.mgr-shift-detail-guard-transfer-btn,
+.mgr-shift-detail-guard-detail-btn {
+    padding: 6px 12px;
+    border: none;
+    border-radius: 4px;
+    font-size: 12px;
+    font-weight: 500;
+    cursor: pointer;
+    background-color: #3b82f6;
+    color: #ffffff;
+}
+
+.mgr-shift-detail-guard-transfer-btn:hover,
+.mgr-shift-detail-guard-detail-btn:hover:not(:disabled) {
+    opacity: 0.9;
+}
+
+.mgr-shift-detail-guard-detail-btn:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+/* Attendance Detail Modal */
+.mgr-shift-attendance-modal-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: rgba(0, 0, 0, 0.5);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 1003;
+}
+
+.mgr-shift-attendance-modal-content {
+    background-color: #ffffff;
+    width: 90%;
+    max-width: 800px;
+    max-height: 85vh;
+    display: flex;
+    flex-direction: column;
+    border-radius: 8px;
+    overflow: hidden;
+}
+
+.mgr-shift-attendance-modal-header {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    padding: 20px;
+    border-bottom: 1px solid #e5e7eb;
+}
+
+.mgr-shift-attendance-modal-header h2 {
+    margin: 0;
+    font-size: 18px;
+    font-weight: 600;
+    color: #1e40af;
+}
+
+.mgr-shift-attendance-status-badge {
+    padding: 6px 12px;
+    border-radius: 4px;
+    color: #ffffff;
+    font-size: 12px;
+    font-weight: 600;
+}
+
+.mgr-shift-attendance-close-btn {
+    margin-left: auto;
+    background: none;
+    border: none;
+    cursor: pointer;
+    padding: 4px;
+    color: #6b7280;
+}
+
+.mgr-shift-attendance-close-btn svg {
+    width: 24px;
+    height: 24px;
+}
+
+.mgr-shift-attendance-modal-body {
+    flex: 1;
+    overflow-y: auto;
+    padding: 20px;
+}
+
+.mgr-shift-attendance-section {
+    margin-bottom: 24px;
+}
+
+.mgr-shift-attendance-section:last-child {
+    margin-bottom: 0;
+}
+
+.mgr-shift-attendance-section h3 {
+    margin: 0 0 12px 0;
+    font-size: 16px;
+    font-weight: 600;
+    color: #1e40af;
+}
+
+.mgr-shift-attendance-time-header {
+    font-size: 14px;
+    font-weight: 500;
+    color: #3b82f6;
+    margin-bottom: 12px;
+}
+
+.mgr-shift-attendance-info-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 12px;
+}
+
+.mgr-shift-attendance-info-item {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.mgr-shift-attendance-label {
+    font-size: 12px;
+    font-weight: 500;
+    color: #6b7280;
+}
+
+.mgr-shift-attendance-value {
+    font-size: 13px;
+    font-weight: 500;
+    color: #1e40af;
+}
+
+.mgr-shift-attendance-modal-footer {
+    padding: 16px 20px;
+    border-top: 1px solid #e5e7eb;
+    display: flex;
+    justify-content: flex-end;
+}
+
+.mgr-shift-attendance-verify-btn {
+    padding: 10px 24px;
+    background-color: #3b82f6;
+    color: #ffffff;
+    border: none;
+    border-radius: 4px;
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+}
+
+.mgr-shift-attendance-verify-btn:hover {
+    opacity: 0.9;
+}
