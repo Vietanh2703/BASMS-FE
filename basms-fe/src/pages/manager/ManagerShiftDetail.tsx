@@ -151,6 +151,7 @@ const ManagerShiftDetail = () => {
 
     const [showCancelModal, setShowCancelModal] = useState(false);
     const [isCancelling, setIsCancelling] = useState(false);
+    const [cancellationReason, setCancellationReason] = useState('');
 
     useEffect(() => {
         const timer = setInterval(() => {
@@ -686,12 +687,19 @@ const ManagerShiftDetail = () => {
 
             const url = `${import.meta.env.VITE_API_SHIFTS_URL}/shifts/${selectedShift.id}/cancel`;
 
+            const requestBody = {
+                ShiftId: selectedShift.id,
+                CancellationReason: cancellationReason.trim(),
+                CancelledBy: user?.userId || ''
+            };
+
             const response = await fetch(url, {
                 method: 'POST',
                 headers: {
                     'Authorization': `Bearer ${token}`,
                     'Content-Type': 'application/json',
-                }
+                },
+                body: JSON.stringify(requestBody)
             });
 
             if (!response.ok) {
@@ -701,6 +709,7 @@ const ManagerShiftDetail = () => {
             // Success - close all modals and show success snackbar
             setShowCancelModal(false);
             setShowShiftDetail(false);
+            setCancellationReason('');
             setSnackbarMessage(`Đã hủy ca trực ${formatFullDate(selectedShift.shiftDate)} - ${formatTime(selectedShift.shiftStart)} - ${formatTime(selectedShift.shiftEnd)}`);
             setShowSuccessSnackbar(true);
         } catch (err) {
@@ -960,7 +969,10 @@ const ManagerShiftDetail = () => {
                             <div style={{ display: 'flex', gap: '10px', alignItems: 'center' }}>
                                 <button
                                     className="mgr-shift-detail-cancel-shift-btn"
-                                    onClick={() => setShowCancelModal(true)}
+                                    onClick={() => {
+                                        setCancellationReason('');
+                                        setShowCancelModal(true);
+                                    }}
                                     style={{
                                         padding: '8px 16px',
                                         backgroundColor: '#dc3545',
@@ -1288,7 +1300,10 @@ const ManagerShiftDetail = () => {
             )}
 
             {showCancelModal && selectedShift && (
-                <div className="mgr-shift-detail-modal-overlay" onClick={() => setShowCancelModal(false)}>
+                <div className="mgr-shift-detail-modal-overlay" onClick={() => {
+                    setShowCancelModal(false);
+                    setCancellationReason('');
+                }}>
                     <div className="mgr-shift-detail-modal-content" onClick={(e) => e.stopPropagation()}>
                         <div className="mgr-shift-detail-modal-header">
                             <h3>Xác nhận hủy ca trực</h3>
@@ -1297,11 +1312,35 @@ const ManagerShiftDetail = () => {
                             <p>
                                 Bạn có chắc hủy ca trực {formatFullDate(selectedShift.shiftDate)} - {formatTime(selectedShift.shiftStart)} - {formatTime(selectedShift.shiftEnd)}?
                             </p>
+                            <div style={{ marginTop: '16px' }}>
+                                <label style={{ display: 'block', marginBottom: '8px', fontWeight: '500' }}>
+                                    Lý do hủy ca <span style={{ color: '#dc3545' }}>*</span>
+                                </label>
+                                <textarea
+                                    value={cancellationReason}
+                                    onChange={(e) => setCancellationReason(e.target.value)}
+                                    placeholder="Nhập lý do hủy ca trực..."
+                                    rows={4}
+                                    style={{
+                                        width: '100%',
+                                        padding: '8px 12px',
+                                        border: '1px solid #ddd',
+                                        borderRadius: '4px',
+                                        fontSize: '14px',
+                                        resize: 'vertical',
+                                        fontFamily: 'inherit'
+                                    }}
+                                    disabled={isCancelling}
+                                />
+                            </div>
                         </div>
                         <div className="mgr-shift-detail-modal-footer">
                             <button
                                 className="mgr-shift-detail-btn-cancel"
-                                onClick={() => setShowCancelModal(false)}
+                                onClick={() => {
+                                    setShowCancelModal(false);
+                                    setCancellationReason('');
+                                }}
                                 disabled={isCancelling}
                             >
                                 Không
@@ -1309,8 +1348,12 @@ const ManagerShiftDetail = () => {
                             <button
                                 className="mgr-shift-detail-btn-confirm"
                                 onClick={handleCancelShift}
-                                disabled={isCancelling}
-                                style={{ backgroundColor: '#dc3545' }}
+                                disabled={isCancelling || !cancellationReason.trim()}
+                                style={{
+                                    backgroundColor: '#dc3545',
+                                    opacity: (isCancelling || !cancellationReason.trim()) ? 0.6 : 1,
+                                    cursor: (isCancelling || !cancellationReason.trim()) ? 'not-allowed' : 'pointer'
+                                }}
                             >
                                 {isCancelling ? 'Đang hủy...' : 'Hủy ca trực'}
                             </button>
