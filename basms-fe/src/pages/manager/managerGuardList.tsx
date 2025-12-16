@@ -3,6 +3,7 @@ import { useAuth } from '../../hooks/useAuth.ts';
 import ManagerInfoModal from "../../components/managerInfoModal/managerInfoModal.tsx";
 import SnackbarChecked from '../../components/snackbar/snackbarChecked';
 import SnackbarFailed from '../../components/snackbar/snackbarFailed';
+import SnackbarWarning from '../../components/snackbar/snackbarWarning';
 import './managerGuardList.css';
 
 interface Guard {
@@ -108,7 +109,18 @@ const ManagerGuardList = () => {
     const [creatingTeam, setCreatingTeam] = useState(false);
     const [showSuccessSnackbar, setShowSuccessSnackbar] = useState(false);
     const [showErrorSnackbar, setShowErrorSnackbar] = useState(false);
+    const [showWarningSnackbar, setShowWarningSnackbar] = useState(false);
     const [snackbarMessage, setSnackbarMessage] = useState('');
+
+    const [showAssignGuardsModal, setShowAssignGuardsModal] = useState(false);
+    const [selectedTeamForAssign, setSelectedTeamForAssign] = useState<Team | null>(null);
+    const [guardsForAssign, setGuardsForAssign] = useState<Guard[]>([]);
+    const [loadingGuardsForAssign, setLoadingGuardsForAssign] = useState(false);
+    const [assigningGuardId, setAssigningGuardId] = useState<string | null>(null);
+
+    const [showDeleteTeamModal, setShowDeleteTeamModal] = useState(false);
+    const [selectedTeamForDelete, setSelectedTeamForDelete] = useState<Team | null>(null);
+    const [deletingTeam, setDeletingTeam] = useState(false);
 
     const profileRef = useRef<HTMLDivElement>(null);
 
@@ -492,7 +504,9 @@ const ManagerGuardList = () => {
 
     const handleSuccessSnackbarClose = () => {
         setShowSuccessSnackbar(false);
-        fetchTeams();
+        if (showTeamsModal) {
+            fetchTeams();
+        }
     };
 
     const getSpecializationLabel = (spec: string): string => {
@@ -589,6 +603,167 @@ const ManagerGuardList = () => {
             console.error('Error confirming guard:', err);
         } finally {
             setConfirmingGuardId(null);
+        }
+    };
+
+    const handleOpenAssignGuardsModal = async (team: Team) => {
+        setSelectedTeamForAssign(team);
+        setShowAssignGuardsModal(true);
+        await fetchGuardsForAssign();
+    };
+
+    const handleCloseAssignGuardsModal = () => {
+        setShowAssignGuardsModal(false);
+        setSelectedTeamForAssign(null);
+        setGuardsForAssign([]);
+    };
+
+    const fetchGuardsForAssign = async () => {
+        if (!managerId) return;
+
+        try {
+            setLoadingGuardsForAssign(true);
+            const accessToken = localStorage.getItem('accessToken');
+
+            if (!accessToken) {
+                console.error('No access token found');
+                return;
+            }
+
+            const url = `${import.meta.env.VITE_API_SHIFTS_URL}/shifts/guards/joined/${managerId}`;
+            const response = await fetch(url, {
+                headers: {
+                    'Authorization': `Bearer ${accessToken}`,
+                    'Content-Type': 'application/json',
+                }
+            });
+
+            if (!response.ok) {
+                throw new Error(`Failed to fetch guards: ${response.status}`);
+            }
+
+            const data = await response.json();
+            setGuardsForAssign(data.guards || []);
+        } catch (err) {
+            console.error('Error fetching guards for assign:', err);
+            setSnackbarMessage('Không thể tải danh sách bảo vệ');
+            setShowErrorSnackbar(true);
+        } finally {
+            setLoadingGuardsForAssign(false);
+        }
+    };
+
+    const handleAssignGuardToTeam = async (guardId: string) => {
+        if (!selectedTeamForAssign || !user?.userId) return;
+
+        try {
+            setAssigningGuardId(guardId);
+            const accessToken = localStorage.getItem('accessToken');
+
+            if (!accessToken) {
+                throw new Error('No access token found');
+            }
+
+            const url = `${import.meta.env.VITE_API_SHIFTS_URL}/shifts/teams/${selectedTeamForAssign.teamId}/members`;
+            const requestBody = {
+                guardId: guardId,
+                addedBy: user.userId
+            };
+
+            const response = await fetch(url, {
+                method: 'POST',
+                headers: {
+                    'Authorization': `Bearer ${accessToken}`,
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify(requestBody)
+            });
+
+            const responseText = await response.text();
+
+            if (!response.ok) {
+                if (responseText.includes('đã đầy') || responseText.includes('đủ thành viên')) {
+                    setSnackbarMessage('Nhóm đã đủ thành viên, không thể phân công thêm');
+                    setShowWarningSnackbar(true);
+                } else {
+                    setSnackbarMessage('Phân công bảo vệ vào nhóm thất bại');
+                    setShowErrorSnackbar(true);
+                }
+                return;
+            }
+
+            setSnackbarMessage('Phân công bảo vệ vào nhóm thành công');
+            setShowSuccessSnackbar(true);
+            handleCloseAssignGuardsModal();
+        } catch (err) {
+            console.error('Error assigning guard to team:', err);
+            setSnackbarMessage('Phân công bảo vệ vào nhóm thất bại');
+            setShowErrorSnackbar(true);
+        } finally {
+            setAssigningGuardId(null);
+        }
+    };
+
+    const handleOpenDeleteTeamModal = (team: Team) => {
+        setSelectedTeamForDelete(team);
+        setShowDeleteTeamModal(true);
+    };
+
+    const handleCloseDeleteTeamModal = () => {
+        setShowDeleteTeamModal(false);
+        setSelectedTeamForDelete(null);
+    };
+
+    const handleDeleteTeam = async () => {
+        if (!selectedTeamForDelete || !user?.userId) return;
+
+        try {
+            setDeletingTeam(true);
+            const accessToken = localStorage.getItem('accessToken');
+
+            if (!accessToken) {
+                throw new Error('No access token found');
+            }
+
+            const url = `${import.meta.env.VITE_API_SHIFTS_URL}/shifts/teams/${selectedTeamForDelete.teamId}/delete`;
+            const requestBody = {
+                TeamId: selectedTeamForDelete.teamId,
+                DeletedBy: user.userId
+            };
+
+            const response = await fetch(url, {
+                method: 'DELETE',
+                headers: {
+                    'Authorization': `Bearer ${accessToken}`,
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify(requestBody)
+            });
+
+            const responseText = await response.text();
+
+            if (!response.ok) {
+                if (responseText.includes('được phân công') || responseText.includes('ca trực')) {
+                    setSnackbarMessage('Nhóm hiện đã được phân công ca trực. Không thể xóa');
+                    setShowErrorSnackbar(true);
+                } else {
+                    setSnackbarMessage('Xóa nhóm thất bại');
+                    setShowErrorSnackbar(true);
+                }
+                handleCloseDeleteTeamModal();
+                return;
+            }
+
+            setSnackbarMessage('Xóa nhóm thành công');
+            setShowSuccessSnackbar(true);
+            handleCloseDeleteTeamModal();
+        } catch (err) {
+            console.error('Error deleting team:', err);
+            setSnackbarMessage('Xóa nhóm thất bại');
+            setShowErrorSnackbar(true);
+            handleCloseDeleteTeamModal();
+        } finally {
+            setDeletingTeam(false);
         }
     };
 
@@ -1044,6 +1219,20 @@ const ManagerGuardList = () => {
                                                 <span>Chuyên môn: {getSpecializationLabel(team.specialization)}</span>
                                                 <span>Trạng thái: {team.isActive ? 'Hoạt động' : 'Không hoạt động'}</span>
                                             </div>
+                                            <div className="mgr-teams-item-actions">
+                                                <button
+                                                    className="mgr-teams-assign-btn"
+                                                    onClick={() => handleOpenAssignGuardsModal(team)}
+                                                >
+                                                    Phân công
+                                                </button>
+                                                <button
+                                                    className="mgr-teams-delete-btn"
+                                                    onClick={() => handleOpenDeleteTeamModal(team)}
+                                                >
+                                                    Xóa nhóm
+                                                </button>
+                                            </div>
                                         </div>
                                     ))
                             )}
@@ -1144,6 +1333,84 @@ const ManagerGuardList = () => {
                 </div>
             )}
 
+            {showAssignGuardsModal && selectedTeamForAssign && (
+                <div className="mgr-assign-guards-modal-overlay" onClick={handleCloseAssignGuardsModal}>
+                    <div className="mgr-assign-guards-modal-box" onClick={(e) => e.stopPropagation()}>
+                        <div className="mgr-assign-guards-modal-header">
+                            <h2>Phân công bảo vệ vào nhóm {selectedTeamForAssign.teamName}</h2>
+                            <button className="mgr-assign-guards-close-btn" onClick={handleCloseAssignGuardsModal}>
+                                <svg viewBox="0 0 24 24" fill="currentColor">
+                                    <path d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/>
+                                </svg>
+                            </button>
+                        </div>
+
+                        <div className="mgr-assign-guards-list-container">
+                            {loadingGuardsForAssign ? (
+                                <div className="mgr-assign-guards-loading">
+                                    <div className="mgr-guard-spinner"></div>
+                                    <p>Đang tải danh sách bảo vệ...</p>
+                                </div>
+                            ) : guardsForAssign.length === 0 ? (
+                                <div className="mgr-assign-guards-empty">
+                                    <p>Không có bảo vệ nào</p>
+                                </div>
+                            ) : (
+                                <div className="mgr-assign-guards-list">
+                                    {guardsForAssign.map(guard => (
+                                        <div key={guard.id} className="mgr-assign-guard-item">
+                                            <div className="mgr-assign-guard-avatar">
+                                                {guard.fullName.charAt(0).toUpperCase()}
+                                            </div>
+                                            <div className="mgr-assign-guard-info">
+                                                <div className="mgr-assign-guard-name">{guard.fullName}</div>
+                                                <div className="mgr-assign-guard-code">{guard.employeeCode}</div>
+                                            </div>
+                                            <button
+                                                className="mgr-assign-guard-btn"
+                                                onClick={() => handleAssignGuardToTeam(guard.id)}
+                                                disabled={assigningGuardId === guard.id}
+                                            >
+                                                {assigningGuardId === guard.id ? 'Đang phân công...' : 'Phân công'}
+                                            </button>
+                                        </div>
+                                    ))}
+                                </div>
+                            )}
+                        </div>
+                    </div>
+                </div>
+            )}
+
+            {showDeleteTeamModal && selectedTeamForDelete && (
+                <div className="mgr-delete-team-modal-overlay" onClick={handleCloseDeleteTeamModal}>
+                    <div className="mgr-delete-team-modal-box" onClick={(e) => e.stopPropagation()}>
+                        <div className="mgr-delete-team-modal-header">
+                            <h2>Xác nhận xóa nhóm</h2>
+                        </div>
+                        <div className="mgr-delete-team-modal-body">
+                            <p>Bạn có chắc xóa nhóm <strong>{selectedTeamForDelete.teamName}</strong>?</p>
+                        </div>
+                        <div className="mgr-delete-team-modal-footer">
+                            <button
+                                className="mgr-delete-team-cancel-btn"
+                                onClick={handleCloseDeleteTeamModal}
+                                disabled={deletingTeam}
+                            >
+                                Quay lại
+                            </button>
+                            <button
+                                className="mgr-delete-team-confirm-btn"
+                                onClick={handleDeleteTeam}
+                                disabled={deletingTeam}
+                            >
+                                {deletingTeam ? 'Đang xóa...' : 'Xóa'}
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
+
             <SnackbarChecked
                 message={snackbarMessage}
                 isOpen={showSuccessSnackbar}
@@ -1154,6 +1421,12 @@ const ManagerGuardList = () => {
                 message={snackbarMessage}
                 isOpen={showErrorSnackbar}
                 onClose={() => setShowErrorSnackbar(false)}
+            />
+
+            <SnackbarWarning
+                message={snackbarMessage}
+                isOpen={showWarningSnackbar}
+                onClose={() => setShowWarningSnackbar(false)}
             />
 
             <ManagerInfoModal
