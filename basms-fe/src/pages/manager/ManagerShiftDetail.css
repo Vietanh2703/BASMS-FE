@@ -1486,10 +1486,8 @@
 
 .mgr-shift-attendance-status-badge {
     padding: 6px 12px;
-    border-radius: 4px;
-    font-size: 12px;
-    font-weight: 600;
-    border: 2px solid;
+    font-size: 14px;
+    font-weight: 800;
     background-color: transparent;
 }
 
