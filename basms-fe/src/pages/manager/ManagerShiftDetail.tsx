@@ -149,6 +149,9 @@ const ManagerShiftDetail = () => {
     const [assignmentNotes, setAssignmentNotes] = useState('');
     const [isAssigning, setIsAssigning] = useState(false);
 
+    const [showCancelModal, setShowCancelModal] = useState(false);
+    const [isCancelling, setIsCancelling] = useState(false);
+
     useEffect(() => {
         const timer = setInterval(() => {
             setCurrentTime(new Date());
@@ -673,6 +676,42 @@ const ManagerShiftDetail = () => {
         window.location.reload();
     };
 
+    const handleCancelShift = async () => {
+        if (!selectedShift) return;
+
+        try {
+            setIsCancelling(true);
+            const token = localStorage.getItem('accessToken');
+            if (!token) throw new Error('Không tìm thấy token xác thực');
+
+            const url = `${import.meta.env.VITE_API_SHIFTS_URL}/shifts/${selectedShift.id}/cancel`;
+
+            const response = await fetch(url, {
+                method: 'POST',
+                headers: {
+                    'Authorization': `Bearer ${token}`,
+                    'Content-Type': 'application/json',
+                }
+            });
+
+            if (!response.ok) {
+                throw new Error('Không thể hủy ca trực');
+            }
+
+            // Success - close all modals and show success snackbar
+            setShowCancelModal(false);
+            setShowShiftDetail(false);
+            setSnackbarMessage(`Đã hủy ca trực ${formatFullDate(selectedShift.shiftDate)} - ${formatTime(selectedShift.shiftStart)} - ${formatTime(selectedShift.shiftEnd)}`);
+            setShowSuccessSnackbar(true);
+        } catch (err) {
+            console.error('Error cancelling shift:', err);
+            setSnackbarMessage(`Hủy ca trực ${formatFullDate(selectedShift.shiftDate)} - ${formatTime(selectedShift.shiftStart)} - ${formatTime(selectedShift.shiftEnd)} không thành công`);
+            setShowErrorSnackbar(true);
+        } finally {
+            setIsCancelling(false);
+        }
+    };
+
     const weekDates = getWeekDates(selectedWeekStart);
     const dayLabels = ['Thứ 2', 'Thứ 3', 'Thứ 4', 'Thứ 5', 'Thứ 6', 'Thứ 7', 'Chủ nhật'];
 
@@ -918,11 +957,29 @@ const ManagerShiftDetail = () => {
                     <div className="mgr-shift-detail-detail-box" onClick={(e) => e.stopPropagation()}>
                         <div className="mgr-shift-detail-detail-header">
                             <h2>Chi tiết ca trực</h2>
-                            <button className="mgr-shift-detail-close-btn" onClick={closeShiftDetail}>
-                                <svg viewBox="0 0 24 24" fill="currentColor">
-                                    <path d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/>
-                                </svg>
-                            </button>
+                            <div style={{ display: 'flex', gap: '10px', alignItems: 'center' }}>
+                                <button
+                                    className="mgr-shift-detail-cancel-shift-btn"
+                                    onClick={() => setShowCancelModal(true)}
+                                    style={{
+                                        padding: '8px 16px',
+                                        backgroundColor: '#dc3545',
+                                        color: 'white',
+                                        border: 'none',
+                                        borderRadius: '4px',
+                                        cursor: 'pointer',
+                                        fontSize: '14px',
+                                        fontWeight: '500'
+                                    }}
+                                >
+                                    Hủy ca trực
+                                </button>
+                                <button className="mgr-shift-detail-close-btn" onClick={closeShiftDetail}>
+                                    <svg viewBox="0 0 24 24" fill="currentColor">
+                                        <path d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/>
+                                    </svg>
+                                </button>
+                            </div>
                         </div>
 
                         <div className="mgr-shift-detail-detail-content">
@@ -1224,6 +1281,38 @@ const ManagerShiftDetail = () => {
                                 disabled={isAssigning}
                             >
                                 {isAssigning ? 'Đang phân công...' : 'Xác nhận phân công'}
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
+
+            {showCancelModal && selectedShift && (
+                <div className="mgr-shift-detail-modal-overlay" onClick={() => setShowCancelModal(false)}>
+                    <div className="mgr-shift-detail-modal-content" onClick={(e) => e.stopPropagation()}>
+                        <div className="mgr-shift-detail-modal-header">
+                            <h3>Xác nhận hủy ca trực</h3>
+                        </div>
+                        <div className="mgr-shift-detail-modal-body">
+                            <p>
+                                Bạn có chắc hủy ca trực {formatFullDate(selectedShift.shiftDate)} - {formatTime(selectedShift.shiftStart)} - {formatTime(selectedShift.shiftEnd)}?
+                            </p>
+                        </div>
+                        <div className="mgr-shift-detail-modal-footer">
+                            <button
+                                className="mgr-shift-detail-btn-cancel"
+                                onClick={() => setShowCancelModal(false)}
+                                disabled={isCancelling}
+                            >
+                                Không
+                            </button>
+                            <button
+                                className="mgr-shift-detail-btn-confirm"
+                                onClick={handleCancelShift}
+                                disabled={isCancelling}
+                                style={{ backgroundColor: '#dc3545' }}
+                            >
+                                {isCancelling ? 'Đang hủy...' : 'Hủy ca trực'}
                             </button>
                         </div>
                     </div>
