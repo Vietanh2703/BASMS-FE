@@ -635,3 +635,286 @@
         min-width: 100px;
     }
 }
+
+/* Teams Modal Styles */
+.mgr-guard-team-btn {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 10px 20px;
+    background-color: #28a745;
+    color: white;
+    border: none;
+    border-radius: 4px;
+    font-size: 14px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: background-color 0.2s;
+}
+
+.mgr-guard-team-btn:hover {
+    background-color: #218838;
+}
+
+.mgr-guard-team-btn svg {
+    width: 20px;
+    height: 20px;
+}
+
+.mgr-teams-modal-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: rgba(0, 0, 0, 0.5);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 1000;
+}
+
+.mgr-teams-modal-box {
+    background-color: white;
+    width: 90%;
+    max-width: 800px;
+    max-height: 80vh;
+    display: flex;
+    flex-direction: column;
+    border-radius: 8px;
+    overflow: hidden;
+}
+
+.mgr-teams-modal-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 20px;
+    border-bottom: 1px solid #e0e0e0;
+}
+
+.mgr-teams-modal-header h2 {
+    margin: 0;
+    font-size: 20px;
+    color: #333;
+}
+
+.mgr-teams-create-btn {
+    padding: 8px 16px;
+    background-color: #007bff;
+    color: white;
+    border: none;
+    border-radius: 4px;
+    font-size: 14px;
+    cursor: pointer;
+    transition: background-color 0.2s;
+}
+
+.mgr-teams-create-btn:hover {
+    background-color: #0056b3;
+}
+
+.mgr-teams-close-btn {
+    background: none;
+    border: none;
+    cursor: pointer;
+    padding: 4px;
+    color: #666;
+}
+
+.mgr-teams-close-btn svg {
+    width: 24px;
+    height: 24px;
+}
+
+.mgr-teams-search-container {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 16px 20px;
+    border-bottom: 1px solid #e0e0e0;
+    background-color: #f8f9fa;
+}
+
+.mgr-teams-search-container svg {
+    width: 20px;
+    height: 20px;
+    color: #666;
+}
+
+.mgr-teams-search-container input {
+    flex: 1;
+    padding: 8px 12px;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    font-size: 14px;
+}
+
+.mgr-teams-list-container {
+    flex: 1;
+    overflow-y: auto;
+    padding: 20px;
+}
+
+.mgr-teams-loading,
+.mgr-teams-empty {
+    text-align: center;
+    padding: 40px 20px;
+    color: #666;
+}
+
+.mgr-teams-item {
+    padding: 16px;
+    border: 1px solid #e0e0e0;
+    border-radius: 4px;
+    margin-bottom: 12px;
+    background-color: #fff;
+}
+
+.mgr-teams-item-main {
+    margin-bottom: 8px;
+}
+
+.mgr-teams-item-name {
+    font-size: 16px;
+    font-weight: 600;
+    color: #333;
+    margin-bottom: 4px;
+}
+
+.mgr-teams-item-code {
+    font-size: 13px;
+    color: #666;
+}
+
+.mgr-teams-item-info {
+    display: flex;
+    gap: 16px;
+    flex-wrap: wrap;
+    font-size: 13px;
+    color: #666;
+}
+
+/* Create Team Modal Styles */
+.mgr-create-team-modal-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: rgba(0, 0, 0, 0.5);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 1001;
+}
+
+.mgr-create-team-modal-box {
+    background-color: white;
+    width: 90%;
+    max-width: 600px;
+    max-height: 90vh;
+    display: flex;
+    flex-direction: column;
+    border-radius: 8px;
+    overflow: hidden;
+}
+
+.mgr-create-team-modal-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 20px;
+    border-bottom: 1px solid #e0e0e0;
+}
+
+.mgr-create-team-modal-header h2 {
+    margin: 0;
+    font-size: 20px;
+    color: #333;
+}
+
+.mgr-create-team-close-btn {
+    background: none;
+    border: none;
+    cursor: pointer;
+    padding: 4px;
+    color: #666;
+}
+
+.mgr-create-team-close-btn svg {
+    width: 24px;
+    height: 24px;
+}
+
+.mgr-create-team-form {
+    flex: 1;
+    overflow-y: auto;
+    padding: 20px;
+}
+
+.mgr-create-team-field {
+    margin-bottom: 16px;
+}
+
+.mgr-create-team-field label {
+    display: block;
+    margin-bottom: 6px;
+    font-size: 14px;
+    font-weight: 500;
+    color: #333;
+}
+
+.mgr-create-team-field input,
+.mgr-create-team-field select,
+.mgr-create-team-field textarea {
+    width: 100%;
+    padding: 8px 12px;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    font-size: 14px;
+    font-family: inherit;
+}
+
+.mgr-create-team-field textarea {
+    resize: vertical;
+}
+
+.mgr-create-team-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 16px;
+}
+
+.mgr-create-team-error {
+    padding: 10px;
+    background-color: #f8d7da;
+    color: #721c24;
+    border: 1px solid #f5c6cb;
+    border-radius: 4px;
+    font-size: 13px;
+    margin-bottom: 16px;
+}
+
+.mgr-create-team-submit-btn {
+    width: 100%;
+    padding: 12px;
+    background-color: #007bff;
+    color: white;
+    border: none;
+    border-radius: 4px;
+    font-size: 14px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: background-color 0.2s;
+}
+
+.mgr-create-team-submit-btn:hover:not(:disabled) {
+    background-color: #0056b3;
+}
+
+.mgr-create-team-submit-btn:disabled {
+    background-color: #6c757d;
+    cursor: not-allowed;
+    opacity: 0.6;
+}
