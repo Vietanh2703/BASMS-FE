@@ -805,7 +805,7 @@ const ManagerGuardList = () => {
             };
 
             const response = await fetch(url, {
-                method: 'DELETE',
+                method: 'PUT',
                 headers: {
                     'Authorization': `Bearer ${accessToken}`,
                     'Content-Type': 'application/json',
