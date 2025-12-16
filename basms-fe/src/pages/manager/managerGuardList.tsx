@@ -116,7 +116,9 @@ const ManagerGuardList = () => {
     const [selectedTeamForAssign, setSelectedTeamForAssign] = useState<Team | null>(null);
     const [guardsForAssign, setGuardsForAssign] = useState<Guard[]>([]);
     const [loadingGuardsForAssign, setLoadingGuardsForAssign] = useState(false);
-    const [assigningGuardId, setAssigningGuardId] = useState<string | null>(null);
+    const [selectedLeader, setSelectedLeader] = useState<Guard | null>(null);
+    const [selectedMembers, setSelectedMembers] = useState<Guard[]>([]);
+    const [isAssigningTeam, setIsAssigningTeam] = useState(false);
 
     const [showDeleteTeamModal, setShowDeleteTeamModal] = useState(false);
     const [selectedTeamForDelete, setSelectedTeamForDelete] = useState<Team | null>(null);
@@ -608,7 +610,10 @@ const ManagerGuardList = () => {
 
     const handleOpenAssignGuardsModal = async (team: Team) => {
         setSelectedTeamForAssign(team);
+        setShowTeamsModal(false);
         setShowAssignGuardsModal(true);
+        setSelectedLeader(null);
+        setSelectedMembers([]);
         await fetchGuardsForAssign();
     };
 
@@ -616,6 +621,9 @@ const ManagerGuardList = () => {
         setShowAssignGuardsModal(false);
         setSelectedTeamForAssign(null);
         setGuardsForAssign([]);
+        setSelectedLeader(null);
+        setSelectedMembers([]);
+        setShowTeamsModal(true);
     };
 
     const fetchGuardsForAssign = async () => {
@@ -653,54 +661,103 @@ const ManagerGuardList = () => {
         }
     };
 
-    const handleAssignGuardToTeam = async (guardId: string) => {
+    const handleSelectLeader = (guard: Guard) => {
+        setSelectedLeader(guard);
+    };
+
+    const handleSelectMember = (guard: Guard) => {
+        if (!selectedTeamForAssign) return;
+
+        const maxMembers = selectedTeamForAssign.maxMembers;
+        const needsLeader = maxMembers > 1;
+        const maxMembersSlots = needsLeader ? maxMembers - 1 : maxMembers;
+
+        if (selectedMembers.length < maxMembersSlots) {
+            setSelectedMembers([...selectedMembers, guard]);
+        }
+    };
+
+    const handleRemoveLeader = () => {
+        setSelectedLeader(null);
+    };
+
+    const handleRemoveMember = (guardId: string) => {
+        setSelectedMembers(selectedMembers.filter(g => g.id !== guardId));
+    };
+
+    const isGuardSelected = (guardId: string) => {
+        return selectedLeader?.id === guardId || selectedMembers.some(g => g.id === guardId);
+    };
+
+    const canConfirmAssignment = () => {
+        if (!selectedTeamForAssign) return false;
+
+        const maxMembers = selectedTeamForAssign.maxMembers;
+        const needsLeader = maxMembers > 1;
+
+        if (needsLeader) {
+            const maxMembersSlots = maxMembers - 1;
+            return selectedLeader !== null && selectedMembers.length === maxMembersSlots;
+        } else {
+            return selectedMembers.length === 1;
+        }
+    };
+
+    const handleConfirmAssignment = async () => {
         if (!selectedTeamForAssign || !user?.userId) return;
 
         try {
-            setAssigningGuardId(guardId);
+            setIsAssigningTeam(true);
             const accessToken = localStorage.getItem('accessToken');
 
             if (!accessToken) {
                 throw new Error('No access token found');
             }
 
-            const url = `${import.meta.env.VITE_API_SHIFTS_URL}/shifts/teams/${selectedTeamForAssign.teamId}/members`;
-            const requestBody = {
-                guardId: guardId,
-                addedBy: user.userId
-            };
+            const assignments: Array<{guardId: string, role: string, joiningNotes: string}> = [];
 
-            const response = await fetch(url, {
-                method: 'POST',
-                headers: {
-                    'Authorization': `Bearer ${accessToken}`,
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify(requestBody)
-            });
-
-            const responseText = await response.text();
-
-            if (!response.ok) {
-                if (responseText.includes('đã đầy') || responseText.includes('đủ thành viên')) {
-                    setSnackbarMessage('Nhóm đã đủ thành viên, không thể phân công thêm');
-                    setShowWarningSnackbar(true);
-                } else {
-                    setSnackbarMessage('Phân công bảo vệ vào nhóm thất bại');
-                    setShowErrorSnackbar(true);
-                }
-                return;
+            if (selectedLeader) {
+                assignments.push({
+                    guardId: selectedLeader.id,
+                    role: 'LEADER',
+                    joiningNotes: 'Phân công đội trưởng'
+                });
             }
 
-            setSnackbarMessage('Phân công bảo vệ vào nhóm thành công');
+            selectedMembers.forEach(member => {
+                assignments.push({
+                    guardId: member.id,
+                    role: 'MEMBER',
+                    joiningNotes: 'Phân công thành viên'
+                });
+            });
+
+            const url = `${import.meta.env.VITE_API_SHIFTS_URL}/shifts/teams/${selectedTeamForAssign.teamId}/members`;
+
+            for (const assignment of assignments) {
+                const response = await fetch(url, {
+                    method: 'POST',
+                    headers: {
+                        'Authorization': `Bearer ${accessToken}`,
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify(assignment)
+                });
+
+                if (!response.ok) {
+                    throw new Error('Failed to assign guard');
+                }
+            }
+
+            setSnackbarMessage('Phân công thành công');
             setShowSuccessSnackbar(true);
             handleCloseAssignGuardsModal();
         } catch (err) {
-            console.error('Error assigning guard to team:', err);
-            setSnackbarMessage('Phân công bảo vệ vào nhóm thất bại');
+            console.error('Error assigning guards to team:', err);
+            setSnackbarMessage('Phân công thất bại');
             setShowErrorSnackbar(true);
         } finally {
-            setAssigningGuardId(null);
+            setIsAssigningTeam(false);
         }
     };
 
@@ -1220,12 +1277,14 @@ const ManagerGuardList = () => {
                                                 <span>Trạng thái: {team.isActive ? 'Hoạt động' : 'Không hoạt động'}</span>
                                             </div>
                                             <div className="mgr-teams-item-actions">
-                                                <button
-                                                    className="mgr-teams-assign-btn"
-                                                    onClick={() => handleOpenAssignGuardsModal(team)}
-                                                >
-                                                    Phân công
-                                                </button>
+                                                {team.currentMemberCount < team.maxMembers && (
+                                                    <button
+                                                        className="mgr-teams-assign-btn"
+                                                        onClick={() => handleOpenAssignGuardsModal(team)}
+                                                    >
+                                                        Phân công
+                                                    </button>
+                                                )}
                                                 <button
                                                     className="mgr-teams-delete-btn"
                                                     onClick={() => handleOpenDeleteTeamModal(team)}
@@ -1334,7 +1393,7 @@ const ManagerGuardList = () => {
             )}
 
             {showAssignGuardsModal && selectedTeamForAssign && (
-                <div className="mgr-assign-guards-modal-overlay" onClick={handleCloseAssignGuardsModal}>
+                <div className="mgr-assign-guards-modal-overlay">
                     <div className="mgr-assign-guards-modal-box" onClick={(e) => e.stopPropagation()}>
                         <div className="mgr-assign-guards-modal-header">
                             <h2>Phân công bảo vệ vào nhóm {selectedTeamForAssign.teamName}</h2>
@@ -1345,38 +1404,137 @@ const ManagerGuardList = () => {
                             </button>
                         </div>
 
-                        <div className="mgr-assign-guards-list-container">
-                            {loadingGuardsForAssign ? (
-                                <div className="mgr-assign-guards-loading">
-                                    <div className="mgr-guard-spinner"></div>
-                                    <p>Đang tải danh sách bảo vệ...</p>
-                                </div>
-                            ) : guardsForAssign.length === 0 ? (
-                                <div className="mgr-assign-guards-empty">
-                                    <p>Không có bảo vệ nào</p>
-                                </div>
-                            ) : (
-                                <div className="mgr-assign-guards-list">
-                                    {guardsForAssign.map(guard => (
-                                        <div key={guard.id} className="mgr-assign-guard-item">
-                                            <div className="mgr-assign-guard-avatar">
-                                                {guard.fullName.charAt(0).toUpperCase()}
-                                            </div>
-                                            <div className="mgr-assign-guard-info">
-                                                <div className="mgr-assign-guard-name">{guard.fullName}</div>
-                                                <div className="mgr-assign-guard-code">{guard.employeeCode}</div>
-                                            </div>
-                                            <button
-                                                className="mgr-assign-guard-btn"
-                                                onClick={() => handleAssignGuardToTeam(guard.id)}
-                                                disabled={assigningGuardId === guard.id}
-                                            >
-                                                {assigningGuardId === guard.id ? 'Đang phân công...' : 'Phân công'}
-                                            </button>
+                        <div className="mgr-assign-guards-body">
+                            <div className="mgr-assign-guards-left">
+                                <h3>Danh sách bảo vệ</h3>
+                                {loadingGuardsForAssign ? (
+                                    <div className="mgr-assign-guards-loading">
+                                        <div className="mgr-guard-spinner"></div>
+                                        <p>Đang tải...</p>
+                                    </div>
+                                ) : guardsForAssign.length === 0 ? (
+                                    <div className="mgr-assign-guards-empty">
+                                        <p>Không có bảo vệ nào</p>
+                                    </div>
+                                ) : (
+                                    <div className="mgr-assign-guards-available-list">
+                                        {guardsForAssign.map(guard => {
+                                            const isSelected = isGuardSelected(guard.id);
+                                            const isFullyAssigned = canConfirmAssignment();
+
+                                            return (
+                                                <div key={guard.id} className="mgr-assign-guard-available-item">
+                                                    <div className="mgr-assign-guard-avatar">
+                                                        {guard.fullName.charAt(0).toUpperCase()}
+                                                    </div>
+                                                    <div className="mgr-assign-guard-info">
+                                                        <div className="mgr-assign-guard-name">{guard.fullName}</div>
+                                                        <div className="mgr-assign-guard-code">{guard.employeeCode}</div>
+                                                    </div>
+                                                    {!isSelected && !isFullyAssigned && (
+                                                        <button
+                                                            className="mgr-assign-guard-select-btn"
+                                                            onClick={() => {
+                                                                const needsLeader = selectedTeamForAssign.maxMembers > 1;
+                                                                if (needsLeader && !selectedLeader) {
+                                                                    handleSelectLeader(guard);
+                                                                } else {
+                                                                    handleSelectMember(guard);
+                                                                }
+                                                            }}
+                                                        >
+                                                            Phân công
+                                                        </button>
+                                                    )}
+                                                </div>
+                                            );
+                                        })}
+                                    </div>
+                                )}
+                            </div>
+
+                            <div className="mgr-assign-guards-right">
+                                <h3>Đã chọn phân công</h3>
+
+                                {selectedTeamForAssign.maxMembers > 1 && (
+                                    <div className="mgr-assign-guards-section">
+                                        <div className="mgr-assign-guards-section-header">
+                                            <span>Trưởng nhóm</span>
+                                            <span className="mgr-assign-guards-count">
+                                                {selectedLeader ? 1 : 0}/1
+                                            </span>
                                         </div>
-                                    ))}
+                                        {selectedLeader ? (
+                                            <div className="mgr-assign-guard-selected-item">
+                                                <div className="mgr-assign-guard-avatar">
+                                                    {selectedLeader.fullName.charAt(0).toUpperCase()}
+                                                </div>
+                                                <div className="mgr-assign-guard-info">
+                                                    <div className="mgr-assign-guard-name">{selectedLeader.fullName}</div>
+                                                    <div className="mgr-assign-guard-code">{selectedLeader.employeeCode}</div>
+                                                </div>
+                                                <button
+                                                    className="mgr-assign-guard-remove-btn"
+                                                    onClick={handleRemoveLeader}
+                                                >
+                                                    Xóa
+                                                </button>
+                                            </div>
+                                        ) : (
+                                            <div className="mgr-assign-guards-placeholder">
+                                                Vui lòng phân công 1 bảo vệ bậc II hoặc III
+                                            </div>
+                                        )}
+                                    </div>
+                                )}
+
+                                <div className="mgr-assign-guards-section">
+                                    <div className="mgr-assign-guards-section-header">
+                                        <span>Thành viên nhóm</span>
+                                        <span className="mgr-assign-guards-count">
+                                            {selectedMembers.length}/{selectedTeamForAssign.maxMembers > 1 ? selectedTeamForAssign.maxMembers - 1 : selectedTeamForAssign.maxMembers}
+                                        </span>
+                                    </div>
+                                    {selectedMembers.length > 0 ? (
+                                        <div className="mgr-assign-guards-selected-list">
+                                            {selectedMembers.map(member => (
+                                                <div key={member.id} className="mgr-assign-guard-selected-item">
+                                                    <div className="mgr-assign-guard-avatar">
+                                                        {member.fullName.charAt(0).toUpperCase()}
+                                                    </div>
+                                                    <div className="mgr-assign-guard-info">
+                                                        <div className="mgr-assign-guard-name">{member.fullName}</div>
+                                                        <div className="mgr-assign-guard-code">{member.employeeCode}</div>
+                                                    </div>
+                                                    <button
+                                                        className="mgr-assign-guard-remove-btn"
+                                                        onClick={() => handleRemoveMember(member.id)}
+                                                    >
+                                                        Xóa
+                                                    </button>
+                                                </div>
+                                            ))}
+                                        </div>
+                                    ) : (
+                                        <div className="mgr-assign-guards-placeholder">
+                                            {selectedTeamForAssign.maxMembers === 1
+                                                ? 'Vui lòng phân công 1 bảo vệ bậc II hoặc III'
+                                                : 'Chưa có thành viên nào trong nhóm'
+                                            }
+                                        </div>
+                                    )}
                                 </div>
-                            )}
+                            </div>
+                        </div>
+
+                        <div className="mgr-assign-guards-footer">
+                            <button
+                                className="mgr-assign-guards-confirm-btn"
+                                onClick={handleConfirmAssignment}
+                                disabled={!canConfirmAssignment() || isAssigningTeam}
+                            >
+                                {isAssigningTeam ? 'Đang phân công...' : 'Xác nhận phân công'}
+                            </button>
                         </div>
                     </div>
                 </div>
