@@ -688,6 +688,13 @@ const ManagerGuardList = () => {
         const needsLeader = maxMembers > 1;
         const maxMembersSlots = needsLeader ? maxMembers - 1 : maxMembers;
 
+        // Kiểm tra nếu team chỉ có 1 người và guard cấp bậc I
+        if (maxMembers === 1 && guard.certificationLevel === 'I') {
+            setSnackbarMessage('Nhóm 1 người chỉ có thể phân công cho cấp bậc II hoặc cấp bậc III');
+            setShowErrorSnackbar(true);
+            return;
+        }
+
         if (selectedMembers.length < maxMembersSlots) {
             setSelectedMembers([...selectedMembers, guard]);
         }
