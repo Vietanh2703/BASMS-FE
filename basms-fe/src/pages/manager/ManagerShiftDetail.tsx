@@ -913,7 +913,11 @@ const ManagerShiftDetail = () => {
                                                     key={shift.id}
                                                     className={`mgr-shift-detail-shift-card ${getShiftStatusClass(shift)}`}
                                                     onClick={() => handleShiftClick(shift)}
-                                                    style={{ cursor: 'pointer' }}
+                                                    style={{
+                                                        cursor: 'pointer',
+                                                        backgroundColor: shift.status === 'Cancelled' ? '#e0e0e0' : undefined,
+                                                        opacity: shift.status === 'Cancelled' ? 0.7 : 1
+                                                    }}
                                                 >
                                                     <div className="mgr-shift-detail-shift-type">
                                                         {getShiftTypeLabel(shift)}
@@ -967,25 +971,38 @@ const ManagerShiftDetail = () => {
                         <div className="mgr-shift-detail-detail-header">
                             <h2>Chi tiết ca trực</h2>
                             <div style={{ display: 'flex', gap: '10px', alignItems: 'center' }}>
-                                <button
-                                    className="mgr-shift-detail-cancel-shift-btn"
-                                    onClick={() => {
-                                        setCancellationReason('');
-                                        setShowCancelModal(true);
-                                    }}
-                                    style={{
+                                {selectedShift.status === 'Cancelled' ? (
+                                    <span style={{
                                         padding: '8px 16px',
-                                        backgroundColor: '#dc3545',
+                                        backgroundColor: '#6c757d',
                                         color: 'white',
-                                        border: 'none',
                                         borderRadius: '4px',
-                                        cursor: 'pointer',
                                         fontSize: '14px',
                                         fontWeight: '500'
-                                    }}
-                                >
-                                    Hủy ca trực
-                                </button>
+                                    }}>
+                                        Ca trực đã hủy
+                                    </span>
+                                ) : (
+                                    <button
+                                        className="mgr-shift-detail-cancel-shift-btn"
+                                        onClick={() => {
+                                            setCancellationReason('');
+                                            setShowCancelModal(true);
+                                        }}
+                                        style={{
+                                            padding: '8px 16px',
+                                            backgroundColor: '#dc3545',
+                                            color: 'white',
+                                            border: 'none',
+                                            borderRadius: '4px',
+                                            cursor: 'pointer',
+                                            fontSize: '14px',
+                                            fontWeight: '500'
+                                        }}
+                                    >
+                                        Hủy ca trực
+                                    </button>
+                                )}
                                 <button className="mgr-shift-detail-close-btn" onClick={closeShiftDetail}>
                                     <svg viewBox="0 0 24 24" fill="currentColor">
                                         <path d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/>
