@@ -1289,8 +1289,7 @@ const ManagerShiftDetail = () => {
                                                         <div
                                                             className="mgr-shift-detail-guard-attendance-badge"
                                                             style={{
-                                                                color: getAttendanceStatusColor(attendance.status),
-                                                                borderColor: getAttendanceStatusColor(attendance.status)
+                                                                color: getAttendanceStatusColor(attendance.status)
                                                             }}
                                                         >
                                                             {getAttendanceStatusLabel(attendance.status)}
@@ -1655,7 +1654,7 @@ const ManagerShiftDetail = () => {
                             <h2>Chi tiết chấm công</h2>
                             <div
                                 className="mgr-shift-attendance-status-badge"
-                                style={{ backgroundColor: getAttendanceStatusColor(selectedAttendance.status) }}
+                                style={{ color: getAttendanceStatusColor(selectedAttendance.status) }}
                             >
                                 Trạng thái: {getAttendanceStatusLabel(selectedAttendance.status)}
                             </div>
