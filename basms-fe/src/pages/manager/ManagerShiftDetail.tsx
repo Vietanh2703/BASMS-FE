@@ -1184,24 +1184,38 @@ const ManagerShiftDetail = () => {
                                     </div>
                                 ) : (
                                     <div className="mgr-shift-assign-list">
-                                        {teams.map((team) => (
-                                            <div key={team.teamId} className="mgr-shift-assign-team-item">
-                                                <div className="mgr-shift-assign-team-name">{team.teamName}</div>
-                                                <div className="mgr-shift-assign-team-code">{team.teamCode}</div>
-                                                <div className="mgr-shift-assign-team-info">
-                                                    <span>Thành viên: {team.currentMemberCount}</span>
-                                                    <span>Trạng thái: {team.isActive ? 'Hoạt động' : 'Không hoạt động'}</span>
+                                        {teams.map((team) => {
+                                            const canAssignTeam = selectedGroup && (() => {
+                                                const required = selectedGroup.requiredGuards;
+                                                const current = team.currentMemberCount;
+
+                                                if (required > 1) {
+                                                    return current === required || (current < required && current >= 2);
+                                                } else if (required === 1) {
+                                                    return current === 1;
+                                                }
+                                                return false;
+                                            })();
+
+                                            return (
+                                                <div key={team.teamId} className="mgr-shift-assign-team-item">
+                                                    <div className="mgr-shift-assign-team-name">{team.teamName}</div>
+                                                    <div className="mgr-shift-assign-team-code">{team.teamCode}</div>
+                                                    <div className="mgr-shift-assign-team-info">
+                                                        <span>Thành viên: {team.currentMemberCount}</span>
+                                                        <span>Trạng thái: {team.isActive ? 'Hoạt động' : 'Không hoạt động'}</span>
+                                                    </div>
+                                                    {canAssignTeam && (
+                                                        <button
+                                                            className="mgr-shift-assign-action-btn"
+                                                            onClick={() => handleAssignTeam(team)}
+                                                        >
+                                                            Phân công
+                                                        </button>
+                                                    )}
                                                 </div>
-                                                {selectedGroup && (
-                                                    <button
-                                                        className="mgr-shift-assign-action-btn"
-                                                        onClick={() => handleAssignTeam(team)}
-                                                    >
-                                                        Phân công
-                                                    </button>
-                                                )}
-                                            </div>
-                                        ))}
+                                            );
+                                        })}
                                     </div>
                                 )}
                             </div>
