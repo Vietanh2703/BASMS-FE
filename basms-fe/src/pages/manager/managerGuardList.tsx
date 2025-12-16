@@ -498,13 +498,10 @@ const ManagerGuardList = () => {
     const getSpecializationLabel = (spec: string): string => {
         const labels: { [key: string]: string } = {
             'RESIDENTIAL': 'Khu dân cư',
-            'SUPERMARKET': 'Siêu thị',
-            'RESTAURANT': 'Quán ăn',
-            'HOTEL': 'Khách sạn',
-            'SCHOOL': 'Trường học',
-            'HOSPITAL': 'Bệnh viện',
-            'FACTORY': 'Xí nghiệp',
-            'COMPANY': 'Công ty'
+            'COMMERCIAL': 'Thương mại',
+            'EVENT': 'Sự kiện',
+            'VIP': 'VIP',
+            'INDUSTRIAL': 'Công nghiệp'
         };
         return labels[spec] || spec;
     };
@@ -1082,14 +1079,11 @@ const ManagerGuardList = () => {
                                 <label>Chuyên môn <span style={{ color: '#dc3545' }}>*</span></label>
                                 <select value={specialization} onChange={(e) => setSpecialization(e.target.value)}>
                                     <option value="">-- Chọn chuyên môn --</option>
-                                    <option value="SUPERMARKET">Siêu thị</option>
                                     <option value="RESIDENTIAL">Khu dân cư</option>
-                                    <option value="RESTAURANT">Quán ăn</option>
-                                    <option value="HOTEL">Khách sạn</option>
-                                    <option value="SCHOOL">Trường học</option>
-                                    <option value="HOSPITAL">Bệnh viện</option>
-                                    <option value="FACTORY">Xí nghiệp</option>
-                                    <option value="COMPANY">Công ty</option>
+                                    <option value="COMMERCIAL">Thương mại</option>
+                                    <option value="EVENT">Sự kiện</option>
+                                    <option value="VIP">VIP</option>
+                                    <option value="INDUSTRIAL">Công nghiệp</option>
                                 </select>
                             </div>
 
