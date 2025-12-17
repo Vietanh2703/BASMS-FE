@@ -210,6 +210,7 @@ interface GuardIssue {
     endDate: string;
     issueDate: string;
     evidenceFileUrl: string;
+    evidenceFilePresignedUrl: string;
     totalShiftsAffected: number;
     totalGuardsAffected: number;
     createdAt: string;
@@ -1687,7 +1688,7 @@ const ManagerShiftDetail = () => {
                                                                 if (!issues || issues.length === 0) {
                                                                     return <div className="mgr-shift-detail-guard-issue-loading">Đang tải thông tin nghỉ phép...</div>;
                                                                 }
-                                                                const issue = issues[0]; // Display first issue
+                                                                const issue = issues[0];
                                                                 return (
                                                                     <div className="mgr-shift-detail-guard-issue-info">
                                                                         <div className="mgr-shift-detail-guard-issue-type">
@@ -2235,7 +2236,7 @@ const ManagerShiftDetail = () => {
                                 <p className="mgr-issue-detail-reason">{selectedIssue.reason}</p>
                             </div>
 
-                            {selectedIssue.evidenceFileUrl && (
+                            {selectedIssue.evidenceFilePresignedUrl && (
                                 <div className="mgr-issue-detail-section">
                                     <h4>Tài liệu đính kèm</h4>
                                     <div className="mgr-issue-detail-evidence">
@@ -2245,7 +2246,7 @@ const ManagerShiftDetail = () => {
                                             if (fileType.startsWith('image/')) {
                                                 return (
                                                     <img
-                                                        src={selectedIssue.evidenceFileUrl}
+                                                        src={selectedIssue.evidenceFilePresignedUrl}
                                                         alt="Evidence"
                                                         className="mgr-issue-detail-evidence-image"
                                                     />
@@ -2253,7 +2254,7 @@ const ManagerShiftDetail = () => {
                                             } else if (fileType.startsWith('video/')) {
                                                 return (
                                                     <video
-                                                        src={selectedIssue.evidenceFileUrl}
+                                                        src={selectedIssue.evidenceFilePresignedUrl}
                                                         controls
                                                         className="mgr-issue-detail-evidence-video"
                                                     />
@@ -2262,12 +2263,12 @@ const ManagerShiftDetail = () => {
                                                 return (
                                                     <div className="mgr-issue-detail-evidence-pdf">
                                                         <iframe
-                                                            src={selectedIssue.evidenceFileUrl}
+                                                            src={selectedIssue.evidenceFilePresignedUrl}
                                                             className="mgr-issue-detail-evidence-pdf-viewer"
                                                             title="PDF Document"
                                                         />
                                                         <a
-                                                            href={selectedIssue.evidenceFileUrl}
+                                                            href={selectedIssue.evidenceFilePresignedUrl}
                                                             target="_blank"
                                                             rel="noopener noreferrer"
                                                             className="mgr-issue-detail-evidence-download"
@@ -2279,7 +2280,7 @@ const ManagerShiftDetail = () => {
                                             } else {
                                                 return (
                                                     <a
-                                                        href={selectedIssue.evidenceFileUrl}
+                                                        href={selectedIssue.evidenceFilePresignedUrl}
                                                         target="_blank"
                                                         rel="noopener noreferrer"
                                                         className="mgr-issue-detail-evidence-download"
