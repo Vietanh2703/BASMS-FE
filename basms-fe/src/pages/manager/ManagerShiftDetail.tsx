@@ -522,7 +522,7 @@ const ManagerShiftDetail = () => {
             const token = localStorage.getItem('accessToken');
             if (!token) return;
 
-            const url = `${import.meta.env.VITE_API_SHIFTS_URL}/api/guards/${guardId}/shift-issues`;
+            const url = `${import.meta.env.VITE_API_SHIFTS_URL}/shifts/guards/${guardId}/shift-issues`;
 
             const response = await fetch(url, {
                 headers: {
