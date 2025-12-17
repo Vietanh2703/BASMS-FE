@@ -192,49 +192,12 @@ interface AttendanceResponse {
     data: AttendanceStatus;
 }
 
-interface ShiftSchedule {
-    id: string;
-    contractId: string;
-    locationId: string;
-    scheduleName: string;
-    scheduleType: string;
-    shiftStartTime: string;
-    shiftEndTime: string;
-    crossesMidnight: boolean;
-    durationHours: number;
-    breakMinutes: number;
-    guardsPerShift: number;
-    recurrenceType: string;
-    appliesMonday: boolean;
-    appliesTuesday: boolean;
-    appliesWednesday: boolean;
-    appliesThursday: boolean;
-    appliesFriday: boolean;
-    appliesSaturday: boolean;
-    appliesSunday: boolean;
-    monthlyDates: string | null;
-    appliesOnPublicHolidays: boolean;
-    appliesOnCustomerHolidays: boolean;
-    appliesOnWeekends: boolean;
-    skipWhenLocationClosed: boolean;
-    requiresArmedGuard: boolean;
-    requiresSupervisor: boolean;
-    minimumExperienceMonths: number;
-    requiredCertifications: string | null;
-    autoGenerateEnabled: boolean;
-    generateAdvanceDays: number;
-    effectiveFrom: string;
-    effectiveTo: string;
-    isActive: boolean;
-    notes: string | null;
-}
-
-interface ContractSchedulesResponse {
+interface ContractDatesResponse {
     success: boolean;
-    errorMessage: string | null;
-    contractId: string;
-    contractCode: string;
-    shiftSchedules: ShiftSchedule[];
+    data: {
+        startDate: string;
+        endDate: string;
+    };
 }
 
 const ManagerShiftDetail = () => {
@@ -295,7 +258,8 @@ const ManagerShiftDetail = () => {
     const [leaveFile, setLeaveFile] = useState<File | null>(null);
     const [leaveFilePreview, setLeaveFilePreview] = useState<string | null>(null);
     const [isSubmittingLeave, setIsSubmittingLeave] = useState(false);
-    const [contractEffectiveTo, setContractEffectiveTo] = useState<string | null>(null);
+    const [contractStartDate, setContractStartDate] = useState<string | null>(null);
+    const [contractEndDate, setContractEndDate] = useState<string | null>(null);
     const [fromDateError, setFromDateError] = useState<string>('');
     const [toDateError, setToDateError] = useState<string>('');
     const [loadingContractInfo, setLoadingContractInfo] = useState(false);
@@ -984,13 +948,13 @@ const ManagerShiftDetail = () => {
         }
     };
 
-    const fetchContractSchedules = async (contractId: string) => {
+    const fetchContractDates = async (contractId: string) => {
         try {
             setLoadingContractInfo(true);
             const token = localStorage.getItem('accessToken');
             if (!token) throw new Error('Không tìm thấy token xác thực');
 
-            const url = `${import.meta.env.VITE_API_SHIFTS_URL}/contracts/${contractId}/shift-schedules`;
+            const url = `${import.meta.env.VITE_API_SHIFTS_URL}/contracts/${contractId}/dates`;
 
             const response = await fetch(url, {
                 headers: {
@@ -1003,14 +967,14 @@ const ManagerShiftDetail = () => {
                 throw new Error('Không thể lấy thông tin hợp đồng');
             }
 
-            const data: ContractSchedulesResponse = await response.json();
+            const data: ContractDatesResponse = await response.json();
 
-            // Get effectiveTo from the first shift schedule (they should all have the same effectiveTo)
-            if (data.shiftSchedules && data.shiftSchedules.length > 0) {
-                setContractEffectiveTo(data.shiftSchedules[0].effectiveTo);
+            if (data.success && data.data) {
+                setContractStartDate(data.data.startDate);
+                setContractEndDate(data.data.endDate);
             }
         } catch (err) {
-            console.error('Error fetching contract schedules:', err);
+            console.error('Error fetching contract dates:', err);
             setSnackbarMessage('Không thể lấy thông tin hợp đồng');
             setShowErrorSnackbar(true);
         } finally {
@@ -1028,12 +992,13 @@ const ManagerShiftDetail = () => {
         setLeaveFilePreview(null);
         setFromDateError('');
         setToDateError('');
-        setContractEffectiveTo(null);
+        setContractStartDate(null);
+        setContractEndDate(null);
         setShowLeaveModal(true);
 
         // Fetch contract info
         if (selectedShift?.contractId) {
-            await fetchContractSchedules(selectedShift.contractId);
+            await fetchContractDates(selectedShift.contractId);
         }
     };
 
@@ -1048,7 +1013,8 @@ const ManagerShiftDetail = () => {
         setLeaveFilePreview(null);
         setFromDateError('');
         setToDateError('');
-        setContractEffectiveTo(null);
+        setContractStartDate(null);
+        setContractEndDate(null);
     };
 
     const validateFromDate = (date: string): boolean => {
@@ -1070,13 +1036,15 @@ const ManagerShiftDetail = () => {
             return false;
         }
 
-        // Check against effectiveTo
-        if (contractEffectiveTo) {
-            const effectiveToDate = new Date(contractEffectiveTo);
-            effectiveToDate.setHours(0, 0, 0, 0);
+        // Check against contract date range
+        if (contractStartDate && contractEndDate) {
+            const startDate = new Date(contractStartDate);
+            const endDate = new Date(contractEndDate);
+            startDate.setHours(0, 0, 0, 0);
+            endDate.setHours(0, 0, 0, 0);
 
-            if (selectedDate >= effectiveToDate) {
-                setFromDateError('Từ ngày phải trước ngày kết thúc hợp đồng');
+            if (selectedDate < startDate || selectedDate > endDate) {
+                setFromDateError('Từ ngày phải nằm trong khoảng thời gian hợp đồng');
                 return false;
             }
         }
@@ -1114,13 +1082,15 @@ const ManagerShiftDetail = () => {
             }
         }
 
-        // Check against effectiveTo
-        if (contractEffectiveTo) {
-            const effectiveToDate = new Date(contractEffectiveTo);
-            effectiveToDate.setHours(0, 0, 0, 0);
+        // Check against contract date range
+        if (contractStartDate && contractEndDate) {
+            const startDate = new Date(contractStartDate);
+            const endDate = new Date(contractEndDate);
+            startDate.setHours(0, 0, 0, 0);
+            endDate.setHours(0, 0, 0, 0);
 
-            if (selectedDate >= effectiveToDate) {
-                setToDateError('Đến ngày phải trước ngày kết thúc hợp đồng');
+            if (selectedDate < startDate || selectedDate > endDate) {
+                setToDateError('Đến ngày phải nằm trong khoảng thời gian hợp đồng');
                 return false;
             }
         }
@@ -2146,11 +2116,7 @@ const ManagerShiftDetail = () => {
                                                 tomorrow.setDate(tomorrow.getDate() + 1);
                                                 return tomorrow.toISOString().split('T')[0];
                                             })()}
-                                            max={contractEffectiveTo ? (() => {
-                                                const maxDate = new Date(contractEffectiveTo);
-                                                maxDate.setDate(maxDate.getDate() - 1);
-                                                return maxDate.toISOString().split('T')[0];
-                                            })() : undefined}
+                                            max={contractEndDate || undefined}
                                         />
                                         {fromDateError && <span className="mgr-leave-error-message">{fromDateError}</span>}
                                     </div>
@@ -2163,11 +2129,7 @@ const ManagerShiftDetail = () => {
                                             onChange={(e) => handleToDateChange(e.target.value)}
                                             disabled={isSubmittingLeave || loadingContractInfo}
                                             min={leaveFromDate || new Date().toISOString().split('T')[0]}
-                                            max={contractEffectiveTo ? (() => {
-                                                const maxDate = new Date(contractEffectiveTo);
-                                                maxDate.setDate(maxDate.getDate() - 1);
-                                                return maxDate.toISOString().split('T')[0];
-                                            })() : undefined}
+                                            max={contractEndDate || undefined}
                                         />
                                         {toDateError && <span className="mgr-leave-error-message">{toDateError}</span>}
                                     </div>
