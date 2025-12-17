@@ -240,6 +240,17 @@ const ManagerShiftDetail = () => {
     const [isCancelling, setIsCancelling] = useState(false);
     const [cancellationReason, setCancellationReason] = useState('');
 
+    // Leave confirmation modal states
+    const [showLeaveModal, setShowLeaveModal] = useState(false);
+    const [selectedGuardForLeave, setSelectedGuardForLeave] = useState<AssignedGuard | null>(null);
+    const [leaveFromDate, setLeaveFromDate] = useState('');
+    const [leaveToDate, setLeaveToDate] = useState('');
+    const [leaveReason, setLeaveReason] = useState('');
+    const [leaveType, setLeaveType] = useState<'SICK_LEAVE' | 'MATERNITY_LEAVE' | 'LONG_TERM_LEAVE'>('SICK_LEAVE');
+    const [leaveFile, setLeaveFile] = useState<File | null>(null);
+    const [leaveFilePreview, setLeaveFilePreview] = useState<string | null>(null);
+    const [isSubmittingLeave, setIsSubmittingLeave] = useState(false);
+
     useEffect(() => {
         const timer = setInterval(() => {
             setCurrentTime(new Date());
@@ -924,6 +935,114 @@ const ManagerShiftDetail = () => {
         }
     };
 
+    const handleOpenLeaveModal = (guard: AssignedGuard) => {
+        setSelectedGuardForLeave(guard);
+        setLeaveFromDate('');
+        setLeaveToDate('');
+        setLeaveReason('');
+        setLeaveType('SICK_LEAVE');
+        setLeaveFile(null);
+        setLeaveFilePreview(null);
+        setShowLeaveModal(true);
+    };
+
+    const handleCloseLeaveModal = () => {
+        setShowLeaveModal(false);
+        setSelectedGuardForLeave(null);
+        setLeaveFromDate('');
+        setLeaveToDate('');
+        setLeaveReason('');
+        setLeaveType('SICK_LEAVE');
+        setLeaveFile(null);
+        setLeaveFilePreview(null);
+    };
+
+    const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+        const file = e.target.files?.[0];
+        if (!file) return;
+
+        const allowedTypes = [
+            'image/jpeg',
+            'image/png',
+            'image/gif',
+            'application/pdf',
+            'application/msword',
+            'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+            'video/mp4',
+            'video/x-msvideo',
+            'video/quicktime'
+        ];
+
+        if (!allowedTypes.includes(file.type)) {
+            setSnackbarMessage('Định dạng file không được hỗ trợ');
+            setShowErrorSnackbar(true);
+            return;
+        }
+
+        setLeaveFile(file);
+
+        // Create preview for image and video files
+        const previewTypes = ['image/png', 'image/gif', 'video/mp4', 'video/x-msvideo', 'video/quicktime'];
+        if (previewTypes.includes(file.type)) {
+            const reader = new FileReader();
+            reader.onloadend = () => {
+                setLeaveFilePreview(reader.result as string);
+            };
+            reader.readAsDataURL(file);
+        } else {
+            setLeaveFilePreview(null);
+        }
+    };
+
+    const handleSubmitLeave = async () => {
+        if (!selectedGuardForLeave || !leaveFile) return;
+
+        try {
+            setIsSubmittingLeave(true);
+            const token = localStorage.getItem('accessToken');
+            if (!token) throw new Error('Không tìm thấy token xác thực');
+
+            const formData = new FormData();
+
+            const dataObj = {
+                guardId: selectedGuardForLeave.guardId,
+                fromDate: leaveFromDate,
+                toDate: leaveToDate,
+                cancellationReason: leaveReason,
+                leaveType: leaveType,
+                cancelledBy: user?.userId || ''
+            };
+
+            formData.append('data', JSON.stringify(dataObj));
+            formData.append('file', leaveFile);
+
+            const url = `${import.meta.env.VITE_API_SHIFTS_URL}/shifts/bulk-cancel`;
+
+            const response = await fetch(url, {
+                method: 'POST',
+                headers: {
+                    'Authorization': `Bearer ${token}`,
+                },
+                body: formData
+            });
+
+            if (!response.ok) {
+                throw new Error('Không thể xác nhận nghỉ phép');
+            }
+
+            // Success
+            handleCloseLeaveModal();
+            setSnackbarMessage('Xác nhận nghỉ phép cho bảo vệ thành công');
+            setShowSuccessSnackbar(true);
+        } catch (err) {
+            console.error('Error submitting leave:', err);
+            setSnackbarMessage('Xác nhận nghỉ phép cho bảo vệ thất bại');
+            setShowErrorSnackbar(true);
+        } finally {
+            setIsSubmittingLeave(false);
+        }
+    };
+
     const weekDates = getWeekDates(selectedWeekStart);
     const dayLabels = ['Thứ 2', 'Thứ 3', 'Thứ 4', 'Thứ 5', 'Thứ 6', 'Thứ 7', 'Chủ nhật'];
 
@@ -1296,8 +1415,11 @@ const ManagerShiftDetail = () => {
                                                         </div>
                                                     )}
                                                     <div className="mgr-shift-detail-guard-actions">
-                                                        <button className="mgr-shift-detail-guard-transfer-btn">
-                                                            Chuyển bảo vệ
+                                                        <button
+                                                            className="mgr-shift-detail-guard-leave-btn"
+                                                            onClick={() => handleOpenLeaveModal(guard)}
+                                                        >
+                                                            Xác nhận nghỉ
                                                         </button>
                                                         <button
                                                             className="mgr-shift-detail-guard-detail-btn"
@@ -1769,6 +1891,133 @@ const ManagerShiftDetail = () => {
                         <div className="mgr-shift-attendance-modal-footer">
                             <button className="mgr-shift-attendance-verify-btn">
                                 Xác nhận tiến độ
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
+
+            {showLeaveModal && selectedGuardForLeave && (
+                <div className="mgr-leave-modal-overlay" onClick={handleCloseLeaveModal}>
+                    <div className="mgr-leave-modal-content" onClick={(e) => e.stopPropagation()}>
+                        <div className="mgr-leave-modal-header">
+                            <h3>Xác nhận nghỉ phép</h3>
+                            <button className="mgr-leave-modal-close" onClick={handleCloseLeaveModal}>
+                                <svg viewBox="0 0 24 24" fill="currentColor">
+                                    <path d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/>
+                                </svg>
+                            </button>
+                        </div>
+
+                        <div className="mgr-leave-modal-body">
+                            <div className="mgr-leave-guard-info">
+                                <div className="mgr-leave-guard-avatar">
+                                    {selectedGuardForLeave.avatarUrl ? (
+                                        <img src={selectedGuardForLeave.avatarUrl} alt={selectedGuardForLeave.fullName} />
+                                    ) : (
+                                        <span>{selectedGuardForLeave.fullName.charAt(0).toUpperCase()}</span>
+                                    )}
+                                </div>
+                                <div className="mgr-leave-guard-details">
+                                    <div className="mgr-leave-guard-name">{selectedGuardForLeave.fullName}</div>
+                                    <div className="mgr-leave-guard-code">{selectedGuardForLeave.employeeCode}</div>
+                                    <div className="mgr-leave-guard-contact">
+                                        {formatPhoneNumber(selectedGuardForLeave.phoneNumber)} | {selectedGuardForLeave.email}
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div className="mgr-leave-form">
+                                <div className="mgr-leave-form-row">
+                                    <div className="mgr-leave-form-group">
+                                        <label className="mgr-leave-form-label">Từ ngày <span className="mgr-leave-required">*</span></label>
+                                        <input
+                                            type="date"
+                                            className="mgr-leave-form-input"
+                                            value={leaveFromDate}
+                                            onChange={(e) => setLeaveFromDate(e.target.value)}
+                                            disabled={isSubmittingLeave}
+                                        />
+                                    </div>
+                                    <div className="mgr-leave-form-group">
+                                        <label className="mgr-leave-form-label">Đến ngày <span className="mgr-leave-required">*</span></label>
+                                        <input
+                                            type="date"
+                                            className="mgr-leave-form-input"
+                                            value={leaveToDate}
+                                            onChange={(e) => setLeaveToDate(e.target.value)}
+                                            disabled={isSubmittingLeave}
+                                        />
+                                    </div>
+                                </div>
+
+                                <div className="mgr-leave-form-group">
+                                    <label className="mgr-leave-form-label">Loại nghỉ phép <span className="mgr-leave-required">*</span></label>
+                                    <select
+                                        className="mgr-leave-form-select"
+                                        value={leaveType}
+                                        onChange={(e) => setLeaveType(e.target.value as 'SICK_LEAVE' | 'MATERNITY_LEAVE' | 'LONG_TERM_LEAVE')}
+                                        disabled={isSubmittingLeave}
+                                    >
+                                        <option value="SICK_LEAVE">Nghỉ bệnh</option>
+                                        <option value="MATERNITY_LEAVE">Nghỉ thai sản</option>
+                                        <option value="LONG_TERM_LEAVE">Nghỉ dài hạn</option>
+                                    </select>
+                                </div>
+
+                                <div className="mgr-leave-form-group">
+                                    <label className="mgr-leave-form-label">Lý do nghỉ <span className="mgr-leave-required">*</span></label>
+                                    <textarea
+                                        className="mgr-leave-form-textarea"
+                                        value={leaveReason}
+                                        onChange={(e) => setLeaveReason(e.target.value)}
+                                        placeholder="Nhập lý do nghỉ phép..."
+                                        rows={4}
+                                        disabled={isSubmittingLeave}
+                                    />
+                                </div>
+
+                                <div className="mgr-leave-form-group">
+                                    <label className="mgr-leave-form-label">Tài liệu đính kèm <span className="mgr-leave-required">*</span></label>
+                                    <input
+                                        type="file"
+                                        className="mgr-leave-form-file"
+                                        onChange={handleFileChange}
+                                        accept=".jpg,.jpeg,.png,.gif,.pdf,.doc,.docx,.mp4,.avi,.mov"
+                                        disabled={isSubmittingLeave}
+                                    />
+                                    {leaveFile && (
+                                        <div className="mgr-leave-file-name">{leaveFile.name}</div>
+                                    )}
+                                </div>
+
+                                {leaveFilePreview && (
+                                    <div className="mgr-leave-preview">
+                                        <label className="mgr-leave-form-label">Xem trước</label>
+                                        {leaveFile?.type.startsWith('image/') ? (
+                                            <img src={leaveFilePreview} alt="Preview" className="mgr-leave-preview-image" />
+                                        ) : leaveFile?.type.startsWith('video/') ? (
+                                            <video src={leaveFilePreview} controls className="mgr-leave-preview-video" />
+                                        ) : null}
+                                    </div>
+                                )}
+                            </div>
+                        </div>
+
+                        <div className="mgr-leave-modal-footer">
+                            <button
+                                className="mgr-leave-btn-cancel"
+                                onClick={handleCloseLeaveModal}
+                                disabled={isSubmittingLeave}
+                            >
+                                Hủy
+                            </button>
+                            <button
+                                className="mgr-leave-btn-submit"
+                                onClick={handleSubmitLeave}
+                                disabled={isSubmittingLeave || !leaveFromDate || !leaveToDate || !leaveReason.trim() || !leaveFile}
+                            >
+                                {isSubmittingLeave ? 'Đang xử lý...' : 'Xác nhận'}
                             </button>
                         </div>
                     </div>
