@@ -1694,7 +1694,7 @@ const ManagerShiftDetail = () => {
                                                                             {getIssueTypeLabel(issue.issueType)}
                                                                         </div>
                                                                         <div className="mgr-shift-detail-guard-issue-dates">
-                                                                            {formatFullDate(issue.startDate)} - {formatFullDate(issue.endDate)}
+                                                                            Từ: {formatFullDate(issue.startDate)} - {formatFullDate(issue.endDate)}
                                                                         </div>
                                                                         <button
                                                                             className="mgr-shift-detail-guard-issue-detail-btn"
