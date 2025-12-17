@@ -200,6 +200,31 @@ interface ContractDatesResponse {
     };
 }
 
+interface GuardIssue {
+    id: string;
+    shiftId: string | null;
+    guardId: string;
+    issueType: string;
+    reason: string;
+    startDate: string;
+    endDate: string;
+    issueDate: string;
+    evidenceFileUrl: string;
+    totalShiftsAffected: number;
+    totalGuardsAffected: number;
+    createdAt: string;
+    createdBy: string;
+}
+
+interface GuardIssuesResponse {
+    success: boolean;
+    data: {
+        guardId: string;
+        issues: GuardIssue[];
+        totalIssues: number;
+    };
+}
+
 const ManagerShiftDetail = () => {
     const { contractId } = useParams<{ contractId: string }>();
     const navigate = useNavigate();
@@ -263,6 +288,11 @@ const ManagerShiftDetail = () => {
     const [fromDateError, setFromDateError] = useState<string>('');
     const [toDateError, setToDateError] = useState<string>('');
     const [loadingContractInfo, setLoadingContractInfo] = useState(false);
+
+    // Guard issues states
+    const [guardIssuesMap, setGuardIssuesMap] = useState<Map<string, GuardIssue[]>>(new Map());
+    const [showIssueDetailModal, setShowIssueDetailModal] = useState(false);
+    const [selectedIssue, setSelectedIssue] = useState<GuardIssue | null>(null);
 
     useEffect(() => {
         const timer = setInterval(() => {
@@ -487,6 +517,31 @@ const ManagerShiftDetail = () => {
         setAssignedGuards([]);
     };
 
+    const fetchGuardIssues = async (guardId: string) => {
+        try {
+            const token = localStorage.getItem('accessToken');
+            if (!token) return;
+
+            const url = `${import.meta.env.VITE_API_SHIFTS_URL}/api/guards/${guardId}/shift-issues`;
+
+            const response = await fetch(url, {
+                headers: {
+                    'Authorization': `Bearer ${token}`,
+                    'Content-Type': 'application/json',
+                }
+            });
+
+            if (response.ok) {
+                const data: GuardIssuesResponse = await response.json();
+                if (data.success && data.data.issues.length > 0) {
+                    setGuardIssuesMap(prev => new Map(prev).set(guardId, data.data.issues));
+                }
+            }
+        } catch (err) {
+            console.error(`Error fetching issues for guard ${guardId}:`, err);
+        }
+    };
+
     const fetchAssignedGuards = async (shiftId: string) => {
         try {
             setLoadingGuards(true);
@@ -514,6 +569,13 @@ const ManagerShiftDetail = () => {
 
             // Fetch attendance status for each guard
             await fetchGuardsAttendances(guards, shiftId);
+
+            // Fetch issues for cancelled guards
+            await Promise.all(
+                guards
+                    .filter(guard => guard.assignmentStatus === 'CANCELLED')
+                    .map(guard => fetchGuardIssues(guard.guardId))
+            );
         } catch (err) {
             console.error('Error fetching assigned guards:', err);
             setAssignedGuards([]);
@@ -599,6 +661,42 @@ const ManagerShiftDetail = () => {
 
     const getRoleLabel = (role: string): string => {
         return role === 'LEADER' ? 'Trưởng nhóm' : 'Thành viên';
+    };
+
+    const getIssueTypeLabel = (issueType: string): string => {
+        const labels: { [key: string]: string } = {
+            'SICK_LEAVE': 'Nghỉ bệnh dài ngày',
+            'MATERNITY_LEAVE': 'Nghỉ thai sản',
+            'LONG_TERM_LEAVE': 'Nghỉ dài ngày có phép'
+        };
+        return labels[issueType] || issueType;
+    };
+
+    const getFileType = (url: string): string => {
+        const extension = url.split('.').pop()?.toLowerCase();
+        const typeMap: { [key: string]: string } = {
+            'jpg': 'image/jpeg',
+            'jpeg': 'image/jpeg',
+            'png': 'image/png',
+            'gif': 'image/gif',
+            'pdf': 'application/pdf',
+            'doc': 'application/msword',
+            'docx': 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+            'mp4': 'video/mp4',
+            'avi': 'video/x-msvideo',
+            'mov': 'video/quicktime'
+        };
+        return typeMap[extension || ''] || 'application/octet-stream';
+    };
+
+    const handleOpenIssueDetail = (issue: GuardIssue) => {
+        setSelectedIssue(issue);
+        setShowIssueDetailModal(true);
+    };
+
+    const handleCloseIssueDetail = () => {
+        setShowIssueDetailModal(false);
+        setSelectedIssue(null);
     };
 
     const loadHereMapsAndInitialize = async () => {
@@ -1581,21 +1679,50 @@ const ManagerShiftDetail = () => {
                                                             {getAttendanceStatusLabel(attendance.status)}
                                                         </div>
                                                     )}
-                                                    <div className="mgr-shift-detail-guard-actions">
-                                                        <button
-                                                            className="mgr-shift-detail-guard-leave-btn"
-                                                            onClick={() => handleOpenLeaveModal(guard)}
-                                                        >
-                                                            Xác nhận nghỉ
-                                                        </button>
-                                                        <button
-                                                            className="mgr-shift-detail-guard-detail-btn"
-                                                            onClick={() => handleOpenAttendanceDetail(guard.guardId)}
-                                                            disabled={!attendance}
-                                                        >
-                                                            Chi tiết điểm danh
-                                                        </button>
-                                                    </div>
+
+                                                    {guard.assignmentStatus === 'CANCELLED' ? (
+                                                        <div className="mgr-shift-detail-guard-issue-section">
+                                                            {(() => {
+                                                                const issues = guardIssuesMap.get(guard.guardId);
+                                                                if (!issues || issues.length === 0) {
+                                                                    return <div className="mgr-shift-detail-guard-issue-loading">Đang tải thông tin nghỉ phép...</div>;
+                                                                }
+                                                                const issue = issues[0]; // Display first issue
+                                                                return (
+                                                                    <div className="mgr-shift-detail-guard-issue-info">
+                                                                        <div className="mgr-shift-detail-guard-issue-type">
+                                                                            {getIssueTypeLabel(issue.issueType)}
+                                                                        </div>
+                                                                        <div className="mgr-shift-detail-guard-issue-dates">
+                                                                            {formatFullDate(issue.startDate)} - {formatFullDate(issue.endDate)}
+                                                                        </div>
+                                                                        <button
+                                                                            className="mgr-shift-detail-guard-issue-detail-btn"
+                                                                            onClick={() => handleOpenIssueDetail(issue)}
+                                                                        >
+                                                                            Xem chi tiết
+                                                                        </button>
+                                                                    </div>
+                                                                );
+                                                            })()}
+                                                        </div>
+                                                    ) : (
+                                                        <div className="mgr-shift-detail-guard-actions">
+                                                            <button
+                                                                className="mgr-shift-detail-guard-leave-btn"
+                                                                onClick={() => handleOpenLeaveModal(guard)}
+                                                            >
+                                                                Xác nhận nghỉ
+                                                            </button>
+                                                            <button
+                                                                className="mgr-shift-detail-guard-detail-btn"
+                                                                onClick={() => handleOpenAttendanceDetail(guard.guardId)}
+                                                                disabled={!attendance}
+                                                            >
+                                                                Chi tiết điểm danh
+                                                            </button>
+                                                        </div>
+                                                    )}
                                                 </div>
                                             );
                                         })}
@@ -2059,6 +2186,112 @@ const ManagerShiftDetail = () => {
                             <button className="mgr-shift-attendance-verify-btn">
                                 Xác nhận tiến độ
                             </button>
+                        </div>
+                    </div>
+                </div>
+            )}
+
+            {showIssueDetailModal && selectedIssue && (
+                <div className="mgr-issue-detail-modal-overlay" onClick={handleCloseIssueDetail}>
+                    <div className="mgr-issue-detail-modal-content" onClick={(e) => e.stopPropagation()}>
+                        <div className="mgr-issue-detail-modal-header">
+                            <h3>Chi tiết nghỉ phép</h3>
+                            <button className="mgr-issue-detail-close-btn" onClick={handleCloseIssueDetail}>
+                                <svg viewBox="0 0 24 24" fill="currentColor">
+                                    <path d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/>
+                                </svg>
+                            </button>
+                        </div>
+
+                        <div className="mgr-issue-detail-modal-body">
+                            <div className="mgr-issue-detail-section">
+                                <h4>Thông tin nghỉ phép</h4>
+                                <div className="mgr-issue-detail-grid">
+                                    <div className="mgr-issue-detail-item">
+                                        <span className="mgr-issue-detail-label">Loại nghỉ:</span>
+                                        <span className="mgr-issue-detail-value">{getIssueTypeLabel(selectedIssue.issueType)}</span>
+                                    </div>
+                                    <div className="mgr-issue-detail-item">
+                                        <span className="mgr-issue-detail-label">Từ ngày:</span>
+                                        <span className="mgr-issue-detail-value">{formatFullDate(selectedIssue.startDate)}</span>
+                                    </div>
+                                    <div className="mgr-issue-detail-item">
+                                        <span className="mgr-issue-detail-label">Đến ngày:</span>
+                                        <span className="mgr-issue-detail-value">{formatFullDate(selectedIssue.endDate)}</span>
+                                    </div>
+                                    <div className="mgr-issue-detail-item">
+                                        <span className="mgr-issue-detail-label">Ngày tạo:</span>
+                                        <span className="mgr-issue-detail-value">{formatFullDate(selectedIssue.issueDate)}</span>
+                                    </div>
+                                    <div className="mgr-issue-detail-item">
+                                        <span className="mgr-issue-detail-label">Số ca bị ảnh hưởng:</span>
+                                        <span className="mgr-issue-detail-value">{selectedIssue.totalShiftsAffected} ca</span>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div className="mgr-issue-detail-section">
+                                <h4>Lý do</h4>
+                                <p className="mgr-issue-detail-reason">{selectedIssue.reason}</p>
+                            </div>
+
+                            {selectedIssue.evidenceFileUrl && (
+                                <div className="mgr-issue-detail-section">
+                                    <h4>Tài liệu đính kèm</h4>
+                                    <div className="mgr-issue-detail-evidence">
+                                        {(() => {
+                                            const fileType = getFileType(selectedIssue.evidenceFileUrl);
+
+                                            if (fileType.startsWith('image/')) {
+                                                return (
+                                                    <img
+                                                        src={selectedIssue.evidenceFileUrl}
+                                                        alt="Evidence"
+                                                        className="mgr-issue-detail-evidence-image"
+                                                    />
+                                                );
+                                            } else if (fileType.startsWith('video/')) {
+                                                return (
+                                                    <video
+                                                        src={selectedIssue.evidenceFileUrl}
+                                                        controls
+                                                        className="mgr-issue-detail-evidence-video"
+                                                    />
+                                                );
+                                            } else if (fileType === 'application/pdf') {
+                                                return (
+                                                    <div className="mgr-issue-detail-evidence-pdf">
+                                                        <iframe
+                                                            src={selectedIssue.evidenceFileUrl}
+                                                            className="mgr-issue-detail-evidence-pdf-viewer"
+                                                            title="PDF Document"
+                                                        />
+                                                        <a
+                                                            href={selectedIssue.evidenceFileUrl}
+                                                            target="_blank"
+                                                            rel="noopener noreferrer"
+                                                            className="mgr-issue-detail-evidence-download"
+                                                        >
+                                                            Tải xuống PDF
+                                                        </a>
+                                                    </div>
+                                                );
+                                            } else {
+                                                return (
+                                                    <a
+                                                        href={selectedIssue.evidenceFileUrl}
+                                                        target="_blank"
+                                                        rel="noopener noreferrer"
+                                                        className="mgr-issue-detail-evidence-download"
+                                                    >
+                                                        Tải xuống tài liệu
+                                                    </a>
+                                                );
+                                            }
+                                        })()}
+                                    </div>
+                                </div>
+                            )}
                         </div>
                     </div>
                 </div>
