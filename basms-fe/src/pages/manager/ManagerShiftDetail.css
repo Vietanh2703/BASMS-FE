@@ -2105,3 +2105,28 @@
 .mgr-issue-detail-evidence-download:hover {
     background-color: #2563eb;
 }
+
+/* Replacement Section Styles */
+.mgr-shift-detail-replacement-buttons {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 12px;
+    padding: 20px 0;
+}
+
+.mgr-shift-detail-replacement-btn {
+    padding: 12px 32px;
+    background-color: #3b82f6;
+    color: #ffffff;
+    border: none;
+    border-radius: 4px;
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    min-width: 200px;
+}
+
+.mgr-shift-detail-replacement-btn:hover {
+    background-color: #2563eb;
+}

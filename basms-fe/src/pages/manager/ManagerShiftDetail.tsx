@@ -1735,6 +1735,47 @@ const ManagerShiftDetail = () => {
                                 ) : null}
                             </div>
 
+                            {(() => {
+                                // Check if there are any cancelled guards
+                                const cancelledLeaders = assignedGuards.filter(
+                                    guard => guard.assignmentStatus === 'CANCELLED' && guard.role === 'LEADER'
+                                );
+                                const cancelledMembers = assignedGuards.filter(
+                                    guard => guard.assignmentStatus === 'CANCELLED' && guard.role === 'MEMBER'
+                                );
+
+                                const hasCancelledLeaders = cancelledLeaders.length > 0;
+                                const hasCancelledMembers = cancelledMembers.length > 0;
+
+                                if (!hasCancelledLeaders && !hasCancelledMembers) {
+                                    return null;
+                                }
+
+                                return (
+                                    <div className="mgr-shift-detail-detail-section">
+                                        <h3>Nhân sự thay thế</h3>
+                                        <div className="mgr-shift-detail-replacement-buttons">
+                                            {hasCancelledLeaders && (
+                                                <button
+                                                    className="mgr-shift-detail-replacement-btn"
+                                                    onClick={() => {/* TODO: Handle replace leader */}}
+                                                >
+                                                    Thay nhóm trưởng
+                                                </button>
+                                            )}
+                                            {hasCancelledMembers && (
+                                                <button
+                                                    className="mgr-shift-detail-replacement-btn"
+                                                    onClick={() => {/* TODO: Handle replace member */}}
+                                                >
+                                                    Thay thành viên
+                                                </button>
+                                            )}
+                                        </div>
+                                    </div>
+                                );
+                            })()}
+
                             <div className="mgr-shift-detail-detail-section">
                                 <h3>Địa điểm</h3>
                                 <div className="mgr-shift-detail-detail-location">
