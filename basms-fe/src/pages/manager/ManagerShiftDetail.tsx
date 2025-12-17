@@ -192,6 +192,51 @@ interface AttendanceResponse {
     data: AttendanceStatus;
 }
 
+interface ShiftSchedule {
+    id: string;
+    contractId: string;
+    locationId: string;
+    scheduleName: string;
+    scheduleType: string;
+    shiftStartTime: string;
+    shiftEndTime: string;
+    crossesMidnight: boolean;
+    durationHours: number;
+    breakMinutes: number;
+    guardsPerShift: number;
+    recurrenceType: string;
+    appliesMonday: boolean;
+    appliesTuesday: boolean;
+    appliesWednesday: boolean;
+    appliesThursday: boolean;
+    appliesFriday: boolean;
+    appliesSaturday: boolean;
+    appliesSunday: boolean;
+    monthlyDates: string | null;
+    appliesOnPublicHolidays: boolean;
+    appliesOnCustomerHolidays: boolean;
+    appliesOnWeekends: boolean;
+    skipWhenLocationClosed: boolean;
+    requiresArmedGuard: boolean;
+    requiresSupervisor: boolean;
+    minimumExperienceMonths: number;
+    requiredCertifications: string | null;
+    autoGenerateEnabled: boolean;
+    generateAdvanceDays: number;
+    effectiveFrom: string;
+    effectiveTo: string;
+    isActive: boolean;
+    notes: string | null;
+}
+
+interface ContractSchedulesResponse {
+    success: boolean;
+    errorMessage: string | null;
+    contractId: string;
+    contractCode: string;
+    shiftSchedules: ShiftSchedule[];
+}
+
 const ManagerShiftDetail = () => {
     const { contractId } = useParams<{ contractId: string }>();
     const navigate = useNavigate();
@@ -250,6 +295,10 @@ const ManagerShiftDetail = () => {
     const [leaveFile, setLeaveFile] = useState<File | null>(null);
     const [leaveFilePreview, setLeaveFilePreview] = useState<string | null>(null);
     const [isSubmittingLeave, setIsSubmittingLeave] = useState(false);
+    const [contractEffectiveTo, setContractEffectiveTo] = useState<string | null>(null);
+    const [fromDateError, setFromDateError] = useState<string>('');
+    const [toDateError, setToDateError] = useState<string>('');
+    const [loadingContractInfo, setLoadingContractInfo] = useState(false);
 
     useEffect(() => {
         const timer = setInterval(() => {
@@ -935,7 +984,41 @@ const ManagerShiftDetail = () => {
         }
     };
 
-    const handleOpenLeaveModal = (guard: AssignedGuard) => {
+    const fetchContractSchedules = async (contractId: string) => {
+        try {
+            setLoadingContractInfo(true);
+            const token = localStorage.getItem('accessToken');
+            if (!token) throw new Error('Không tìm thấy token xác thực');
+
+            const url = `${import.meta.env.VITE_API_SHIFTS_URL}/contracts/${contractId}/shift-schedules`;
+
+            const response = await fetch(url, {
+                headers: {
+                    'Authorization': `Bearer ${token}`,
+                    'Content-Type': 'application/json',
+                }
+            });
+
+            if (!response.ok) {
+                throw new Error('Không thể lấy thông tin hợp đồng');
+            }
+
+            const data: ContractSchedulesResponse = await response.json();
+
+            // Get effectiveTo from the first shift schedule (they should all have the same effectiveTo)
+            if (data.shiftSchedules && data.shiftSchedules.length > 0) {
+                setContractEffectiveTo(data.shiftSchedules[0].effectiveTo);
+            }
+        } catch (err) {
+            console.error('Error fetching contract schedules:', err);
+            setSnackbarMessage('Không thể lấy thông tin hợp đồng');
+            setShowErrorSnackbar(true);
+        } finally {
+            setLoadingContractInfo(false);
+        }
+    };
+
+    const handleOpenLeaveModal = async (guard: AssignedGuard) => {
         setSelectedGuardForLeave(guard);
         setLeaveFromDate('');
         setLeaveToDate('');
@@ -943,7 +1026,15 @@ const ManagerShiftDetail = () => {
         setLeaveType('SICK_LEAVE');
         setLeaveFile(null);
         setLeaveFilePreview(null);
+        setFromDateError('');
+        setToDateError('');
+        setContractEffectiveTo(null);
         setShowLeaveModal(true);
+
+        // Fetch contract info
+        if (selectedShift?.contractId) {
+            await fetchContractSchedules(selectedShift.contractId);
+        }
     };
 
     const handleCloseLeaveModal = () => {
@@ -955,6 +1046,104 @@ const ManagerShiftDetail = () => {
         setLeaveType('SICK_LEAVE');
         setLeaveFile(null);
         setLeaveFilePreview(null);
+        setFromDateError('');
+        setToDateError('');
+        setContractEffectiveTo(null);
+    };
+
+    const validateFromDate = (date: string): boolean => {
+        setFromDateError('');
+
+        if (!date) {
+            setFromDateError('Vui lòng chọn từ ngày');
+            return false;
+        }
+
+        const selectedDate = new Date(date);
+        const today = new Date();
+        today.setHours(0, 0, 0, 0);
+        selectedDate.setHours(0, 0, 0, 0);
+
+        // Must be after today (tomorrow or later)
+        if (selectedDate <= today) {
+            setFromDateError('Từ ngày phải sau ngày hôm nay');
+            return false;
+        }
+
+        // Check against effectiveTo
+        if (contractEffectiveTo) {
+            const effectiveToDate = new Date(contractEffectiveTo);
+            effectiveToDate.setHours(0, 0, 0, 0);
+
+            if (selectedDate >= effectiveToDate) {
+                setFromDateError('Từ ngày phải trước ngày kết thúc hợp đồng');
+                return false;
+            }
+        }
+
+        return true;
+    };
+
+    const validateToDate = (date: string): boolean => {
+        setToDateError('');
+
+        if (!date) {
+            setToDateError('Vui lòng chọn đến ngày');
+            return false;
+        }
+
+        const selectedDate = new Date(date);
+        const today = new Date();
+        today.setHours(0, 0, 0, 0);
+        selectedDate.setHours(0, 0, 0, 0);
+
+        // Must not be before today
+        if (selectedDate < today) {
+            setToDateError('Đến ngày không được trước ngày hôm nay');
+            return false;
+        }
+
+        // Must not be before fromDate
+        if (leaveFromDate) {
+            const fromDate = new Date(leaveFromDate);
+            fromDate.setHours(0, 0, 0, 0);
+
+            if (selectedDate < fromDate) {
+                setToDateError('Đến ngày không được trước từ ngày');
+                return false;
+            }
+        }
+
+        // Check against effectiveTo
+        if (contractEffectiveTo) {
+            const effectiveToDate = new Date(contractEffectiveTo);
+            effectiveToDate.setHours(0, 0, 0, 0);
+
+            if (selectedDate >= effectiveToDate) {
+                setToDateError('Đến ngày phải trước ngày kết thúc hợp đồng');
+                return false;
+            }
+        }
+
+        return true;
+    };
+
+    const handleFromDateChange = (date: string) => {
+        setLeaveFromDate(date);
+        if (date) {
+            validateFromDate(date);
+            // Re-validate toDate if it's already set
+            if (leaveToDate) {
+                validateToDate(leaveToDate);
+            }
+        }
+    };
+
+    const handleToDateChange = (date: string) => {
+        setLeaveToDate(date);
+        if (date) {
+            validateToDate(date);
+        }
     };
 
     const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -996,6 +1185,14 @@ const ManagerShiftDetail = () => {
 
     const handleSubmitLeave = async () => {
         if (!selectedGuardForLeave || !leaveFile) return;
+
+        // Validate dates before submitting
+        const isFromDateValid = validateFromDate(leaveFromDate);
+        const isToDateValid = validateToDate(leaveToDate);
+
+        if (!isFromDateValid || !isToDateValid) {
+            return;
+        }
 
         try {
             setIsSubmittingLeave(true);
@@ -1927,27 +2124,52 @@ const ManagerShiftDetail = () => {
                                 </div>
                             </div>
 
+                            {loadingContractInfo && (
+                                <div className="mgr-leave-loading-info">
+                                    <div className="mgr-leave-spinner"></div>
+                                    <span>Đang tải thông tin hợp đồng...</span>
+                                </div>
+                            )}
+
                             <div className="mgr-leave-form">
                                 <div className="mgr-leave-form-row">
                                     <div className="mgr-leave-form-group">
                                         <label className="mgr-leave-form-label">Từ ngày <span className="mgr-leave-required">*</span></label>
                                         <input
                                             type="date"
-                                            className="mgr-leave-form-input"
+                                            className={`mgr-leave-form-input ${fromDateError ? 'mgr-leave-form-input-error' : ''}`}
                                             value={leaveFromDate}
-                                            onChange={(e) => setLeaveFromDate(e.target.value)}
-                                            disabled={isSubmittingLeave}
+                                            onChange={(e) => handleFromDateChange(e.target.value)}
+                                            disabled={isSubmittingLeave || loadingContractInfo}
+                                            min={(() => {
+                                                const tomorrow = new Date();
+                                                tomorrow.setDate(tomorrow.getDate() + 1);
+                                                return tomorrow.toISOString().split('T')[0];
+                                            })()}
+                                            max={contractEffectiveTo ? (() => {
+                                                const maxDate = new Date(contractEffectiveTo);
+                                                maxDate.setDate(maxDate.getDate() - 1);
+                                                return maxDate.toISOString().split('T')[0];
+                                            })() : undefined}
                                         />
+                                        {fromDateError && <span className="mgr-leave-error-message">{fromDateError}</span>}
                                     </div>
                                     <div className="mgr-leave-form-group">
                                         <label className="mgr-leave-form-label">Đến ngày <span className="mgr-leave-required">*</span></label>
                                         <input
                                             type="date"
-                                            className="mgr-leave-form-input"
+                                            className={`mgr-leave-form-input ${toDateError ? 'mgr-leave-form-input-error' : ''}`}
                                             value={leaveToDate}
-                                            onChange={(e) => setLeaveToDate(e.target.value)}
-                                            disabled={isSubmittingLeave}
+                                            onChange={(e) => handleToDateChange(e.target.value)}
+                                            disabled={isSubmittingLeave || loadingContractInfo}
+                                            min={leaveFromDate || new Date().toISOString().split('T')[0]}
+                                            max={contractEffectiveTo ? (() => {
+                                                const maxDate = new Date(contractEffectiveTo);
+                                                maxDate.setDate(maxDate.getDate() - 1);
+                                                return maxDate.toISOString().split('T')[0];
+                                            })() : undefined}
                                         />
+                                        {toDateError && <span className="mgr-leave-error-message">{toDateError}</span>}
                                     </div>
                                 </div>
 
@@ -2015,7 +2237,16 @@ const ManagerShiftDetail = () => {
                             <button
                                 className="mgr-leave-btn-submit"
                                 onClick={handleSubmitLeave}
-                                disabled={isSubmittingLeave || !leaveFromDate || !leaveToDate || !leaveReason.trim() || !leaveFile}
+                                disabled={
+                                    isSubmittingLeave ||
+                                    loadingContractInfo ||
+                                    !leaveFromDate ||
+                                    !leaveToDate ||
+                                    !leaveReason.trim() ||
+                                    !leaveFile ||
+                                    !!fromDateError ||
+                                    !!toDateError
+                                }
                             >
                                 {isSubmittingLeave ? 'Đang xử lý...' : 'Xác nhận'}
                             </button>
