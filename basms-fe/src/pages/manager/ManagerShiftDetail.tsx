@@ -254,6 +254,11 @@ const ManagerShiftDetail = () => {
     const [mapLoading, setMapLoading] = useState(false);
     const mapInstanceRef = useRef<H.Map | null>(null);
 
+    const checkInMapRef = useRef<HTMLDivElement>(null);
+    const checkOutMapRef = useRef<HTMLDivElement>(null);
+    const checkInMapInstanceRef = useRef<H.Map | null>(null);
+    const checkOutMapInstanceRef = useRef<H.Map | null>(null);
+
     const [showAssignModal, setShowAssignModal] = useState(false);
     const [unassignedGroups, setUnassignedGroups] = useState<UnassignedGroup[]>([]);
     const [teams, setTeams] = useState<Team[]>([]);
@@ -340,6 +345,113 @@ const ManagerShiftDetail = () => {
             }
         };
     }, [showShiftDetail, selectedShift]);
+
+    useEffect(() => {
+        if (showAttendanceDetailModal && selectedAttendance) {
+            // Initialize check-in map if coordinates exist
+            if (selectedAttendance.checkInLatitude && selectedAttendance.checkInLongitude && checkInMapRef.current && window.H) {
+                try {
+                    checkInMapRef.current.innerHTML = '';
+
+                    const apiKey = import.meta.env.VITE_HERE_MAP_API_KEY;
+                    const platform = new window.H.service.Platform({
+                        apikey: apiKey,
+                    });
+
+                    const defaultLayers = platform.createDefaultLayers();
+
+                    const checkInCenter = {
+                        lat: selectedAttendance.checkInLatitude,
+                        lng: selectedAttendance.checkInLongitude,
+                    };
+
+                    const checkInMap = new window.H.Map(
+                        checkInMapRef.current,
+                        defaultLayers.vector.normal.map,
+                        {
+                            center: checkInCenter,
+                            zoom: 16,
+                            pixelRatio: window.devicePixelRatio || 1,
+                        }
+                    );
+
+                    checkInMapInstanceRef.current = checkInMap;
+
+                    new window.H.mapevents.Behavior(
+                        new window.H.mapevents.MapEvents(checkInMap)
+                    );
+
+                    window.H.ui.UI.createDefault(checkInMap, defaultLayers);
+
+                    const checkInMarker = new window.H.map.Marker(checkInCenter);
+                    checkInMap.addObject(checkInMarker);
+                } catch (error) {
+                    console.error('Error initializing check-in map:', error);
+                }
+            }
+
+            // Initialize check-out map if coordinates exist
+            if (selectedAttendance.checkOutLatitude && selectedAttendance.checkOutLongitude && checkOutMapRef.current && window.H) {
+                try {
+                    checkOutMapRef.current.innerHTML = '';
+
+                    const apiKey = import.meta.env.VITE_HERE_MAP_API_KEY;
+                    const platform = new window.H.service.Platform({
+                        apikey: apiKey,
+                    });
+
+                    const defaultLayers = platform.createDefaultLayers();
+
+                    const checkOutCenter = {
+                        lat: selectedAttendance.checkOutLatitude,
+                        lng: selectedAttendance.checkOutLongitude,
+                    };
+
+                    const checkOutMap = new window.H.Map(
+                        checkOutMapRef.current,
+                        defaultLayers.vector.normal.map,
+                        {
+                            center: checkOutCenter,
+                            zoom: 16,
+                            pixelRatio: window.devicePixelRatio || 1,
+                        }
+                    );
+
+                    checkOutMapInstanceRef.current = checkOutMap;
+
+                    new window.H.mapevents.Behavior(
+                        new window.H.mapevents.MapEvents(checkOutMap)
+                    );
+
+                    window.H.ui.UI.createDefault(checkOutMap, defaultLayers);
+
+                    const checkOutMarker = new window.H.map.Marker(checkOutCenter);
+                    checkOutMap.addObject(checkOutMarker);
+                } catch (error) {
+                    console.error('Error initializing check-out map:', error);
+                }
+            }
+        }
+
+        return () => {
+            if (checkInMapInstanceRef.current) {
+                try {
+                    checkInMapInstanceRef.current.dispose();
+                    checkInMapInstanceRef.current = null;
+                } catch (e) {
+                    // Silent cleanup
+                }
+            }
+            if (checkOutMapInstanceRef.current) {
+                try {
+                    checkOutMapInstanceRef.current.dispose();
+                    checkOutMapInstanceRef.current = null;
+                } catch (e) {
+                    // Silent cleanup
+                }
+            }
+        };
+    }, [showAttendanceDetailModal, selectedAttendance]);
 
     function getMonday(date: Date): Date {
         const d = new Date(date);
@@ -2146,6 +2258,9 @@ const ManagerShiftDetail = () => {
                                         </span>
                                     </div>
                                 </div>
+                                {selectedAttendance.checkInLatitude && selectedAttendance.checkInLongitude && (
+                                    <div className="mgr-shift-attendance-map-container" ref={checkInMapRef}></div>
+                                )}
                             </div>
 
                             <div className="mgr-shift-attendance-section">
@@ -2170,6 +2285,9 @@ const ManagerShiftDetail = () => {
                                         </span>
                                     </div>
                                 </div>
+                                {selectedAttendance.checkOutLatitude && selectedAttendance.checkOutLongitude && (
+                                    <div className="mgr-shift-attendance-map-container" ref={checkOutMapRef}></div>
+                                )}
                             </div>
 
                             <div className="mgr-shift-attendance-section">
