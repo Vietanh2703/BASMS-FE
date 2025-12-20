@@ -12,7 +12,7 @@ import './dashboardDirector.css';
 const DashboardDirector = () => {
     useNavigate();
     const { user, logout } = useAuth();
-    const [isMenuOpen, setIsMenuOpen] = useState(true);
+    const [isMenuOpen, setIsMenuOpen] = useState(false);
     const [currentTime, setCurrentTime] = useState(new Date());
     const [isProfileDropdownOpen, setIsProfileDropdownOpen] = useState(false);
     const [isLoggingOut, setIsLoggingOut] = useState(false);
