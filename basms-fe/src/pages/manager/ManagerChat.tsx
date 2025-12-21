@@ -1,48 +1,9 @@
 import { useState, useEffect, useRef } from 'react';
 import { useAuth } from '../../hooks/useAuth';
+import { useChatStore } from '../../stores/useChatStore';
+import { useSignalR } from '../../hooks/useSignalR';
+import NewConversationModalForManager from '../../components/NewConversationModalForManager';
 import './ManagerChat.css';
-
-interface Message {
-    id: string;
-    conversationId: string;
-    senderId: string;
-    senderName: string;
-    senderAvatarUrl: string | null;
-    messageType: string;
-    content: string;
-    fileUrl: string | null;
-    fileName: string | null;
-    fileSize: number | null;
-    fileType: string | null;
-    thumbnailUrl: string | null;
-    latitude: number | null;
-    longitude: number | null;
-    locationAddress: string | null;
-    locationMapUrl: string | null;
-    replyToMessageId: string | null;
-    isEdited: boolean;
-    editedAt: string | null;
-    createdAt: string;
-}
-
-interface Conversation {
-    id: string;
-    conversationType: string;
-    conversationName: string | null;
-    shiftId: string | null;
-    incidentId: string | null;
-    teamId: string | null;
-    contractId: string | null;
-    isActive: boolean;
-    lastMessageAt: string | null;
-    lastMessagePreview: string | null;
-    lastMessageSenderId: string | null;
-    lastMessageSenderName: string | null;
-    isDeleted: boolean;
-    createdAt: string;
-    updatedAt: string | null;
-    createdBy: string | null;
-}
 
 const ManagerChat = () => {
     const { user, logout } = useAuth();
@@ -51,19 +12,40 @@ const ManagerChat = () => {
     const [isProfileDropdownOpen, setIsProfileDropdownOpen] = useState(false);
     const [showLogoutModal, setShowLogoutModal] = useState(false);
     const [isLoggingOut, setIsLoggingOut] = useState(false);
+    const [showNewChatModal, setShowNewChatModal] = useState(false);
     const profileRef = useRef<HTMLDivElement>(null);
 
-    const [conversations, setConversations] = useState<Conversation[]>([]);
-    const [selectedConversation, setSelectedConversation] = useState<Conversation | null>(null);
-    const [messages, setMessages] = useState<Message[]>([]);
+    // Zustand store
+    const {
+        conversations,
+        selectedConversationId,
+        messages,
+        hasMore,
+        oldestMessageId,
+        setConversations,
+        selectConversation,
+        setMessages,
+        addMessage,
+        prependMessages,
+        setHasMore,
+        setOldestMessageId
+    } = useChatStore();
+
+    // SignalR connection
+    const { isConnected, joinConversation, leaveConversation } = useSignalR();
+
     const [messageInput, setMessageInput] = useState('');
     const [loading, setLoading] = useState(false);
     const [sending, setSending] = useState(false);
-    const [hasMore, setHasMore] = useState(false);
-    const [oldestMessageId, setOldestMessageId] = useState<string | null>(null);
 
     const messagesEndRef = useRef<HTMLDivElement>(null);
     const messagesContainerRef = useRef<HTMLDivElement>(null);
+
+    // Get selected conversation object
+    const selectedConversation = conversations.find(c => c.id === selectedConversationId) || null;
+    const currentMessages = selectedConversationId ? (messages[selectedConversationId] || []) : [];
+    const currentHasMore = selectedConversationId ? (hasMore[selectedConversationId] || false) : false;
+    const currentOldestMessageId = selectedConversationId ? (oldestMessageId[selectedConversationId] || null) : null;
 
     useEffect(() => {
         const timer = setInterval(() => {
@@ -88,19 +70,31 @@ const ManagerChat = () => {
         };
     }, [isProfileDropdownOpen]);
 
+    // Fetch conversations on mount
     useEffect(() => {
         fetchConversations();
     }, []);
 
+    // Join/Leave conversation via SignalR when selected conversation changes
     useEffect(() => {
-        if (selectedConversation) {
-            fetchMessages(selectedConversation.id);
-        }
-    }, [selectedConversation]);
+        if (selectedConversationId && isConnected) {
+            joinConversation(selectedConversationId);
 
+            // Fetch messages if not already loaded
+            if (!messages[selectedConversationId]) {
+                fetchMessages(selectedConversationId);
+            }
+
+            return () => {
+                leaveConversation(selectedConversationId);
+            };
+        }
+    }, [selectedConversationId, isConnected]);
+
+    // Scroll to bottom when new messages arrive
     useEffect(() => {
         scrollToBottom();
-    }, [messages]);
+    }, [currentMessages]);
 
     const fetchConversations = async () => {
         try {
@@ -166,13 +160,15 @@ const ManagerChat = () => {
             const fetchedMessages = result.data.messages || [];
 
             if (beforeMessageId) {
-                setMessages(prev => [...fetchedMessages.reverse(), ...prev]);
+                // Prepend older messages
+                prependMessages(conversationId, fetchedMessages.reverse());
             } else {
-                setMessages(fetchedMessages.reverse());
+                // Set initial messages
+                setMessages(conversationId, fetchedMessages.reverse());
             }
 
-            setHasMore(result.data.hasMore || false);
-            setOldestMessageId(result.data.oldestMessageId || null);
+            setHasMore(conversationId, result.data.hasMore || false);
+            setOldestMessageId(conversationId, result.data.oldestMessageId || null);
         } catch (err) {
             console.error('Error fetching messages:', err);
         } finally {
@@ -215,8 +211,12 @@ const ManagerChat = () => {
             const result = await response.json();
 
             if (result.success && result.data.message) {
-                setMessages(prev => [...prev, result.data.message]);
+                // Message will be added via SignalR ReceiveMessage event
+                // But we can add it optimistically here too
+                addMessage(selectedConversation.id, result.data.message);
                 setMessageInput('');
+
+                // Refresh conversations to update preview
                 fetchConversations();
             }
         } catch (err) {
@@ -238,9 +238,13 @@ const ManagerChat = () => {
     };
 
     const loadMoreMessages = () => {
-        if (selectedConversation && oldestMessageId && !loading) {
-            fetchMessages(selectedConversation.id, oldestMessageId);
+        if (selectedConversationId && currentOldestMessageId && !loading) {
+            fetchMessages(selectedConversationId, currentOldestMessageId);
         }
+    };
+
+    const handleSelectConversation = (conversationId: string) => {
+        selectConversation(conversationId);
     };
 
     const toggleMenu = () => {
@@ -360,11 +364,18 @@ const ManagerChat = () => {
                     </div>
 
                     <div className="mgr-chat-nav-right">
+                        {isConnected && (
+                            <div className="mgr-chat-connection-status">
+                                <span className="mgr-chat-connection-dot"></span>
+                                <span className="mgr-chat-connection-text">Đang kết nối</span>
+                            </div>
+                        )}
+
                         <button className="mgr-chat-notification-btn">
                             <svg viewBox="0 0 24 24" fill="currentColor">
                                 <path d="M12 22c1.1 0 2-.9 2-2h-4c0 1.1.9 2 2 2zm6-6v-5c0-3.07-1.64-5.64-4.5-6.32V4c0-.83-.67-1.5-1.5-1.5s-1.5.67-1.5 1.5v.68C7.63 5.36 6 7.92 6 11v5l-2 2v1h16v-1l-2-2z"/>
                             </svg>
-                            <span className="mgr-chat-notification-badge">5</span>
+                            <span className="mgr-chat-notification-badge">0</span>
                         </button>
 
                         <div
@@ -417,6 +428,15 @@ const ManagerChat = () => {
                         <div className="mgr-chat-conversations-panel">
                             <div className="mgr-chat-conversations-header">
                                 <h2>Cuộc trò chuyện</h2>
+                                <button
+                                    className="mgr-chat-new-conversation-btn"
+                                    onClick={() => setShowNewChatModal(true)}
+                                    title="Tạo cuộc trò chuyện mới"
+                                >
+                                    <svg viewBox="0 0 24 24" fill="currentColor">
+                                        <path d="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z"/>
+                                    </svg>
+                                </button>
                             </div>
                             <div className="mgr-chat-conversations-list">
                                 {conversations.length === 0 ? (
@@ -427,8 +447,8 @@ const ManagerChat = () => {
                                     conversations.map(conversation => (
                                         <div
                                             key={conversation.id}
-                                            className={`mgr-chat-conversation-item ${selectedConversation?.id === conversation.id ? 'mgr-chat-conversation-active' : ''}`}
-                                            onClick={() => setSelectedConversation(conversation)}
+                                            className={`mgr-chat-conversation-item ${selectedConversationId === conversation.id ? 'mgr-chat-conversation-active' : ''}`}
+                                            onClick={() => handleSelectConversation(conversation.id)}
                                         >
                                             <div className="mgr-chat-conversation-avatar">
                                                 {conversation.conversationName?.charAt(0).toUpperCase() || 'C'}
@@ -454,7 +474,7 @@ const ManagerChat = () => {
                                         <h2>{selectedConversation.conversationName || `Conversation ${selectedConversation.id.substring(0, 8)}`}</h2>
                                     </div>
                                     <div className="mgr-chat-messages-container" ref={messagesContainerRef}>
-                                        {hasMore && (
+                                        {currentHasMore && (
                                             <button
                                                 className="mgr-chat-load-more"
                                                 onClick={loadMoreMessages}
@@ -463,12 +483,12 @@ const ManagerChat = () => {
                                                 {loading ? 'Đang tải...' : 'Tải thêm tin nhắn'}
                                             </button>
                                         )}
-                                        {messages.length === 0 ? (
+                                        {currentMessages.length === 0 ? (
                                             <div className="mgr-chat-empty-messages">
                                                 Chưa có tin nhắn nào
                                             </div>
                                         ) : (
-                                            messages.map(message => (
+                                            currentMessages.map(message => (
                                                 <div
                                                     key={message.id}
                                                     className={`mgr-chat-message ${message.senderId === user?.userId ? 'mgr-chat-message-own' : 'mgr-chat-message-other'}`}
@@ -476,7 +496,10 @@ const ManagerChat = () => {
                                                     <div className="mgr-chat-message-content">
                                                         <div className="mgr-chat-message-sender">{message.senderName}</div>
                                                         <div className="mgr-chat-message-text">{message.content}</div>
-                                                        <div className="mgr-chat-message-time">{formatMessageTime(message.createdAt)}</div>
+                                                        <div className="mgr-chat-message-time">
+                                                            {formatMessageTime(message.createdAt)}
+                                                            {message.isEdited && <span className="mgr-chat-message-edited"> (đã chỉnh sửa)</span>}
+                                                        </div>
                                                     </div>
                                                 </div>
                                             ))
@@ -530,6 +553,13 @@ const ManagerChat = () => {
                         </div>
                     </div>
                 </div>
+            )}
+
+            {showNewChatModal && (
+                <NewConversationModalForManager
+                    isOpen={showNewChatModal}
+                    onClose={() => setShowNewChatModal(false)}
+                />
             )}
         </div>
     );
