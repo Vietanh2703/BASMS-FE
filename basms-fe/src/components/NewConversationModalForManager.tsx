@@ -53,7 +53,7 @@ const NewConversationModalForManager = ({ isOpen, onClose }: NewConversationModa
             }
 
             // Step 1: Get manager info by email
-            const managerResponse = await fetch(`${apiUrl}/shifts/managers/by-email?email=${encodeURIComponent(user.email)}`, {
+            const managerResponse = await fetch(`${apiUrl}/shifts/managers/by-email/${encodeURIComponent(user.email)}`, {
                 method: 'GET',
                 headers: {
                     'Authorization': `Bearer ${token}`,
@@ -92,7 +92,7 @@ const NewConversationModalForManager = ({ isOpen, onClose }: NewConversationModa
             // Step 3: Fetch detailed user info for each guard
             const guardUsersPromises = guardsList.map(async (guard: any) => {
                 try {
-                    const userResponse = await fetch(`${apiUrl}/users/by-email/${guard.email}`, {
+                    const userResponse = await fetch(`${apiUrl}/users/by-email/${encodeURIComponent(guard.email)}`, {
                         method: 'GET',
                         headers: {
                             'Authorization': `Bearer ${token}`,
