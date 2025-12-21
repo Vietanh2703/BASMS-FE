@@ -92,12 +92,15 @@ const NewConversationModalForManager = ({ isOpen, onClose }: NewConversationModa
             // Step 3: Fetch detailed user info for each guard
             const guardUsersPromises = guardsList.map(async (guard: any) => {
                 try {
-                    const userResponse = await fetch(`${apiUrl}/users/by-email/${encodeURIComponent(guard.email)}`, {
-                        method: 'GET',
+                    const userResponse = await fetch(`${apiUrl}/shifts/managers/by-email`, {
+                        method: 'POST',
                         headers: {
                             'Authorization': `Bearer ${token}`,
                             'Content-Type': 'application/json',
                         },
+                        body: JSON.stringify({
+                            Email: guard.email
+                        }),
                     });
 
                     if (!userResponse.ok) {
