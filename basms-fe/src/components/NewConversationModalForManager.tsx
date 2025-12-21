@@ -62,17 +62,17 @@ const NewConversationModalForManager = ({ isOpen, onClose }: NewConversationModa
             const result = await response.json();
             const allUsers = result.users || [];
 
-            // Filter to only show Guards and Guard Leaders
-            // roleId: ddbd5fad-ba6e-11f0-bcac-00155dca8f48 (Guard)
-            // roleId: ddbd6230-ba6e-11f0-bcac-00155dca8f48 (Guard Leader)
-            const GUARD_ROLE_ID = 'ddbd5fad-ba6e-11f0-bcac-00155dca8f48';
-            const GUARD_LEADER_ROLE_ID = 'ddbd6230-ba6e-11f0-bcac-00155dca8f48';
+            // Filter to only show Directors and Guards
+            // roleId: ddbd5fad-ba6e-11f0-bcac-00155dca8f48 (Director)
+            // roleId: ddbd6230-ba6e-11f0-bcac-00155dca8f48 (Guard)
+            const DIRECTOR_ROLE_ID = 'ddbd5fad-ba6e-11f0-bcac-00155dca8f48';
+            const GUARD_ROLE_ID = 'ddbd6230-ba6e-11f0-bcac-00155dca8f48';
 
             const filteredUsers = allUsers.filter(
                 (u: User) =>
                     u.id !== user?.userId &&
                     u.isActive &&
-                    (u.roleId === GUARD_ROLE_ID || u.roleId === GUARD_LEADER_ROLE_ID)
+                    (u.roleId === DIRECTOR_ROLE_ID || u.roleId === GUARD_ROLE_ID)
             );
 
             setUsers(filteredUsers);
@@ -202,7 +202,7 @@ const NewConversationModalForManager = ({ isOpen, onClose }: NewConversationModa
                     <div className="new-conversation-search">
                         <input
                             type="text"
-                            placeholder="Tìm kiếm bảo vệ..."
+                            placeholder="Tìm kiếm người dùng..."
                             value={searchTerm}
                             onChange={(e) => setSearchTerm(e.target.value)}
                             className="new-conversation-search-input"
@@ -217,13 +217,13 @@ const NewConversationModalForManager = ({ isOpen, onClose }: NewConversationModa
 
                     {loading ? (
                         <div className="new-conversation-loading">
-                            Đang tải danh sách bảo vệ...
+                            Đang tải danh sách người dùng...
                         </div>
                     ) : (
                         <div className="new-conversation-user-list">
                             {filteredUsers.length === 0 ? (
                                 <div className="new-conversation-empty">
-                                    {searchTerm ? 'Không tìm thấy bảo vệ nào' : 'Không có bảo vệ nào'}
+                                    {searchTerm ? 'Không tìm thấy người dùng nào' : 'Không có người dùng nào'}
                                 </div>
                             ) : (
                                 filteredUsers.map((u) => (

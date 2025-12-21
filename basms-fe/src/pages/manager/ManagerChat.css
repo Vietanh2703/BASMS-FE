@@ -116,10 +116,10 @@
 }
 
 .mgr-chat-main-content {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
     transition: margin-left 0.3s ease;
-    width: 100%;
-    min-height: 100vh;
-    background-color: #ffffff;
 }
 
 .mgr-chat-content-expanded {
@@ -351,12 +351,38 @@
 .mgr-chat-conversations-header {
     padding: 16px 20px;
     border-bottom: 1px solid #e5e7eb;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
 }
 
 .mgr-chat-conversations-header h2 {
     font-size: 18px;
     font-weight: 600;
     color: #111827;
+}
+
+.mgr-chat-new-conversation-btn {
+    background: #3b82f6;
+    border: none;
+    width: 32px;
+    height: 32px;
+    border-radius: 6px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: background-color 0.2s ease;
+}
+
+.mgr-chat-new-conversation-btn:hover {
+    background-color: #2563eb;
+}
+
+.mgr-chat-new-conversation-btn svg {
+    width: 20px;
+    height: 20px;
+    color: white;
 }
 
 .mgr-chat-conversations-list {
