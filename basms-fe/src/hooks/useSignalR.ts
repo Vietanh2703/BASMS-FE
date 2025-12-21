@@ -18,7 +18,7 @@ export const useSignalR = () => {
 
     useEffect(() => {
         const token = localStorage.getItem('accessToken');
-        const apiUrl = import.meta.env.VITE_API_CHATS_URL;
+        const apiUrl = import.meta.env.VITE_API_BASE_URL;
 
         if (!token || !apiUrl) {
             console.warn('No access token or API URL found for SignalR connection');
