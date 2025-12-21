@@ -47,7 +47,7 @@ const NewConversationModal = ({ isOpen, onClose }: NewConversationModalProps) =>
                 return;
             }
 
-            const response = await fetch(`${apiUrl}/api/users`, {
+            const response = await fetch(`${apiUrl}/users`, {
                 method: 'GET',
                 headers: {
                     'Authorization': `Bearer ${token}`,
@@ -99,7 +99,7 @@ const NewConversationModal = ({ isOpen, onClose }: NewConversationModalProps) =>
                 return;
             }
 
-            const response = await fetch(`${apiUrl}/api/chats/conversations`, {
+            const response = await fetch(`${apiUrl}/chats/conversations`, {
                 method: 'POST',
                 headers: {
                     'Authorization': `Bearer ${token}`,
