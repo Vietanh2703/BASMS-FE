@@ -184,7 +184,7 @@ const DirectorChat = () => {
 
         try {
             setSending(true);
-            const apiUrl = import.meta.env.VITE_API_CHATS_URL;
+            const apiUrl = import.meta.env.VITE_API_BASE_URL;
             const token = localStorage.getItem('accessToken');
 
             if (!token) {
