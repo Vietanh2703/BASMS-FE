@@ -47,7 +47,13 @@ const NewConversationModalForManager = ({ isOpen, onClose }: NewConversationModa
                 return;
             }
 
-            const response = await fetch(`${apiUrl}/users`, {
+            if (!user?.email) {
+                setError('Không tìm thấy email người dùng');
+                return;
+            }
+
+            // Step 1: Get manager info by email
+            const managerResponse = await fetch(`${apiUrl}/shifts/managers/by-email?email=${encodeURIComponent(user.email)}`, {
                 method: 'GET',
                 headers: {
                     'Authorization': `Bearer ${token}`,
@@ -55,24 +61,80 @@ const NewConversationModalForManager = ({ isOpen, onClose }: NewConversationModa
                 },
             });
 
-            if (!response.ok) {
-                throw new Error('Không thể lấy danh sách người dùng');
+            if (!managerResponse.ok) {
+                throw new Error('Không thể lấy thông tin manager');
             }
 
-            const result = await response.json();
-            const allUsers = result.users || [];
+            const managerResult = await managerResponse.json();
+            const managerId = managerResult.manager?.id;
 
-            // Filter to only show Directors and Guards
-            // roleId: ddbd5fad-ba6e-11f0-bcac-00155dca8f48 (Director)
-            // roleId: ddbd6230-ba6e-11f0-bcac-00155dca8f48 (Guard)
+            if (!managerId) {
+                setError('Không tìm thấy ID manager');
+                return;
+            }
+
+            // Step 2: Get guards managed by this manager
+            const guardsResponse = await fetch(`${apiUrl}/shifts/guards/joined/${managerId}`, {
+                method: 'GET',
+                headers: {
+                    'Authorization': `Bearer ${token}`,
+                    'Content-Type': 'application/json',
+                },
+            });
+
+            if (!guardsResponse.ok) {
+                throw new Error('Không thể lấy danh sách guards');
+            }
+
+            const guardsResult = await guardsResponse.json();
+            const guardsList = guardsResult.guards || [];
+
+            // Step 3: Fetch detailed user info for each guard
+            const guardUsersPromises = guardsList.map(async (guard: any) => {
+                try {
+                    const userResponse = await fetch(`${apiUrl}/users/by-email/${encodeURIComponent(guard.email)}`, {
+                        method: 'GET',
+                        headers: {
+                            'Authorization': `Bearer ${token}`,
+                            'Content-Type': 'application/json',
+                        },
+                    });
+
+                    if (!userResponse.ok) {
+                        console.warn(`Failed to fetch user info for ${guard.email}`);
+                        return null;
+                    }
+
+                    const userResult = await userResponse.json();
+                    return userResult.data;
+                } catch (err) {
+                    console.warn(`Error fetching user info for ${guard.email}:`, err);
+                    return null;
+                }
+            });
+
+            const guardUsers = (await Promise.all(guardUsersPromises)).filter(u => u !== null);
+
+            // Step 4: Fetch directors
             const DIRECTOR_ROLE_ID = 'ddbd5fad-ba6e-11f0-bcac-00155dca8f48';
-            const GUARD_ROLE_ID = 'ddbd6230-ba6e-11f0-bcac-00155dca8f48';
+            const directorsResponse = await fetch(`${apiUrl}/users/by-role/${DIRECTOR_ROLE_ID}`, {
+                method: 'GET',
+                headers: {
+                    'Authorization': `Bearer ${token}`,
+                    'Content-Type': 'application/json',
+                },
+            });
 
+            let directors: any[] = [];
+            if (directorsResponse.ok) {
+                const directorsResult = await directorsResponse.json();
+                directors = directorsResult.data?.users || [];
+            }
+
+            // Step 5: Combine guards and directors, filter out current user and inactive users
+            const allUsers = [...guardUsers, ...directors];
             const filteredUsers = allUsers.filter(
-                (u: User) =>
-                    u.id !== user?.userId &&
-                    u.isActive &&
-                    (u.roleId === DIRECTOR_ROLE_ID || u.roleId === GUARD_ROLE_ID)
+                (u: User) => u.id !== user?.userId && u.isActive
             );
 
             setUsers(filteredUsers);
