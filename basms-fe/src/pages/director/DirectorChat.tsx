@@ -107,7 +107,7 @@ const DirectorChat = () => {
                 return;
             }
 
-            const response = await fetch(`${apiUrl}/api/chats/conversations/get-all`, {
+            const response = await fetch(`${apiUrl}/chats/conversations/get-all`, {
                 method: 'GET',
                 headers: {
                     'Authorization': `Bearer ${token}`,
@@ -145,7 +145,7 @@ const DirectorChat = () => {
                 params.append('beforeMessageId', beforeMessageId);
             }
 
-            const response = await fetch(`${apiUrl}/api/chats/conversations/${conversationId}/messages?${params}`, {
+            const response = await fetch(`${apiUrl}/chats/conversations/${conversationId}/messages?${params}`, {
                 method: 'GET',
                 headers: {
                     'Authorization': `Bearer ${token}`,
@@ -192,7 +192,7 @@ const DirectorChat = () => {
                 return;
             }
 
-            const response = await fetch(`${apiUrl}/api/chats/messages`, {
+            const response = await fetch(`${apiUrl}/chats/messages`, {
                 method: 'POST',
                 headers: {
                     'Authorization': `Bearer ${token}`,

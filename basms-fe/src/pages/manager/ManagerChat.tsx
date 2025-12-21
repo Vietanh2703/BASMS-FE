@@ -112,7 +112,7 @@ const ManagerChat = () => {
                 return;
             }
 
-            const response = await fetch(`${apiUrl}/chats/conversations/get-all`, {
+            const response = await fetch(`${apiUrl}/api/chats/conversations/get-all`, {
                 method: 'GET',
                 headers: {
                     'Authorization': `Bearer ${token}`,
@@ -195,7 +195,7 @@ const ManagerChat = () => {
                 return;
             }
 
-            const response = await fetch(`${apiUrl}/api/chats/messages`, {
+            const response = await fetch(`${apiUrl}/chats/messages`, {
                 method: 'POST',
                 headers: {
                     'Authorization': `Bearer ${token}`,
