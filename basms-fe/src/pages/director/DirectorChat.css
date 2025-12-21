@@ -337,12 +337,77 @@
 .dir-chat-conversations-header {
     padding: 16px 20px;
     border-bottom: 1px solid #e5e7eb;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
 }
 
 .dir-chat-conversations-header h2 {
     font-size: 18px;
     font-weight: 600;
     color: #111827;
+}
+
+.dir-chat-new-conversation-btn {
+    background: #3b82f6;
+    border: none;
+    width: 32px;
+    height: 32px;
+    border-radius: 6px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: background-color 0.2s ease;
+}
+
+.dir-chat-new-conversation-btn:hover {
+    background-color: #2563eb;
+}
+
+.dir-chat-new-conversation-btn svg {
+    width: 20px;
+    height: 20px;
+    color: white;
+}
+
+.dir-chat-connection-status {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 6px 12px;
+    background-color: #ecfdf5;
+    border: 1px solid #a7f3d0;
+    border-radius: 6px;
+}
+
+.dir-chat-connection-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background-color: #10b981;
+    animation: pulse 2s infinite;
+}
+
+@keyframes pulse {
+    0%, 100% {
+        opacity: 1;
+    }
+    50% {
+        opacity: 0.5;
+    }
+}
+
+.dir-chat-connection-text {
+    font-size: 13px;
+    color: #059669;
+    font-weight: 500;
+}
+
+.dir-chat-message-edited {
+    font-style: italic;
+    color: inherit;
+    opacity: 0.7;
 }
 
 .dir-chat-conversations-list {

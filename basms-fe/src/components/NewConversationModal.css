@@ -1,0 +1,235 @@
+.new-conversation-modal-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: rgba(0, 0, 0, 0.5);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 2000;
+}
+
+.new-conversation-modal-content {
+    background-color: #ffffff;
+    border-radius: 12px;
+    width: 90%;
+    max-width: 500px;
+    max-height: 80vh;
+    display: flex;
+    flex-direction: column;
+    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2);
+}
+
+.new-conversation-modal-header {
+    padding: 20px 24px;
+    border-bottom: 1px solid #e5e7eb;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.new-conversation-modal-header h2 {
+    font-size: 20px;
+    font-weight: 600;
+    color: #111827;
+    margin: 0;
+}
+
+.new-conversation-close-btn {
+    background: none;
+    border: none;
+    cursor: pointer;
+    padding: 4px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 6px;
+    transition: background-color 0.2s ease;
+}
+
+.new-conversation-close-btn:hover {
+    background-color: #f3f4f6;
+}
+
+.new-conversation-close-btn svg {
+    width: 24px;
+    height: 24px;
+    color: #6b7280;
+}
+
+.new-conversation-modal-body {
+    padding: 20px 24px;
+    flex: 1;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+}
+
+.new-conversation-search {
+    margin-bottom: 16px;
+}
+
+.new-conversation-search-input {
+    width: 100%;
+    padding: 10px 14px;
+    border: 1px solid #e5e7eb;
+    border-radius: 8px;
+    font-size: 14px;
+    font-family: 'Inter', sans-serif;
+    outline: none;
+    transition: border-color 0.2s ease;
+}
+
+.new-conversation-search-input:focus {
+    border-color: #3b82f6;
+}
+
+.new-conversation-error {
+    padding: 12px;
+    background-color: #fee2e2;
+    border: 1px solid #fecaca;
+    border-radius: 6px;
+    color: #dc2626;
+    font-size: 14px;
+    margin-bottom: 16px;
+}
+
+.new-conversation-loading {
+    padding: 40px 20px;
+    text-align: center;
+    color: #6b7280;
+    font-size: 14px;
+}
+
+.new-conversation-user-list {
+    flex: 1;
+    overflow-y: auto;
+    border: 1px solid #e5e7eb;
+    border-radius: 8px;
+}
+
+.new-conversation-empty {
+    padding: 40px 20px;
+    text-align: center;
+    color: #6b7280;
+    font-size: 14px;
+}
+
+.new-conversation-user-item {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 12px 16px;
+    cursor: pointer;
+    transition: background-color 0.2s ease;
+    border-bottom: 1px solid #f3f4f6;
+}
+
+.new-conversation-user-item:last-child {
+    border-bottom: none;
+}
+
+.new-conversation-user-item:hover {
+    background-color: #f9fafb;
+}
+
+.new-conversation-user-item.selected {
+    background-color: #eff6ff;
+}
+
+.new-conversation-user-avatar {
+    width: 48px;
+    height: 48px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, #3b82f6, #1d4ed8);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    font-weight: 600;
+    font-size: 18px;
+    flex-shrink: 0;
+    overflow: hidden;
+}
+
+.new-conversation-user-avatar img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.new-conversation-user-info {
+    flex: 1;
+    min-width: 0;
+}
+
+.new-conversation-user-name {
+    font-size: 14px;
+    font-weight: 600;
+    color: #111827;
+    margin-bottom: 4px;
+}
+
+.new-conversation-user-role {
+    font-size: 13px;
+    color: #6b7280;
+}
+
+.new-conversation-check-icon {
+    width: 24px;
+    height: 24px;
+    flex-shrink: 0;
+}
+
+.new-conversation-check-icon svg {
+    width: 100%;
+    height: 100%;
+    color: #3b82f6;
+}
+
+.new-conversation-modal-footer {
+    padding: 16px 24px;
+    border-top: 1px solid #e5e7eb;
+    display: flex;
+    justify-content: flex-end;
+    gap: 12px;
+}
+
+.new-conversation-cancel-btn {
+    padding: 8px 16px;
+    background-color: #f3f4f6;
+    border: 1px solid #e5e7eb;
+    border-radius: 6px;
+    color: #374151;
+    font-size: 14px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: background-color 0.2s ease;
+}
+
+.new-conversation-cancel-btn:hover {
+    background-color: #e5e7eb;
+}
+
+.new-conversation-create-btn {
+    padding: 8px 16px;
+    background-color: #3b82f6;
+    border: none;
+    border-radius: 6px;
+    color: white;
+    font-size: 14px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: background-color 0.2s ease;
+}
+
+.new-conversation-create-btn:hover:not(:disabled) {
+    background-color: #2563eb;
+}
+
+.new-conversation-create-btn:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
