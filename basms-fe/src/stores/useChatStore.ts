@@ -83,7 +83,7 @@ interface ChatStore {
 
 export const useChatStore = create<ChatStore>()(
     persist(
-        (set, get) => ({
+        (set, _get) => ({
             conversations: [],
             selectedConversationId: null,
             messages: {},
