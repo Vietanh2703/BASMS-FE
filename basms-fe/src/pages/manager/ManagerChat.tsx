@@ -104,7 +104,7 @@ const ManagerChat = () => {
 
     const fetchConversations = async () => {
         try {
-            const apiUrl = import.meta.env.VITE_API_CHATS_URL;
+            const apiUrl = import.meta.env.VITE_API_BASE_URL;
             const token = localStorage.getItem('accessToken');
 
             if (!token) {
@@ -112,7 +112,7 @@ const ManagerChat = () => {
                 return;
             }
 
-            const response = await fetch(`${apiUrl}/api/chats/conversations/get-all`, {
+            const response = await fetch(`${apiUrl}/chats/conversations/get-all`, {
                 method: 'GET',
                 headers: {
                     'Authorization': `Bearer ${token}`,
@@ -134,7 +134,7 @@ const ManagerChat = () => {
     const fetchMessages = async (conversationId: string, beforeMessageId?: string) => {
         try {
             setLoading(true);
-            const apiUrl = import.meta.env.VITE_API_CHATS_URL;
+            const apiUrl = import.meta.env.VITE_API_BASE_URL;
             const token = localStorage.getItem('accessToken');
 
             if (!token) {
@@ -187,7 +187,7 @@ const ManagerChat = () => {
 
         try {
             setSending(true);
-            const apiUrl = import.meta.env.VITE_API_CHATS_URL;
+            const apiUrl = import.meta.env.VITE_API_BASE_URL;
             const token = localStorage.getItem('accessToken');
 
             if (!token) {

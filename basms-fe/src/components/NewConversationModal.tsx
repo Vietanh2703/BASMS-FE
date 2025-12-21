@@ -39,7 +39,7 @@ const NewConversationModal = ({ isOpen, onClose }: NewConversationModalProps) =>
             setLoading(true);
             setError(null);
 
-            const apiUrl = import.meta.env.VITE_API_USERS_URL;
+            const apiUrl = import.meta.env.VITE_API_BASE_URL;
             const token = localStorage.getItem('accessToken');
 
             if (!token) {
@@ -86,7 +86,7 @@ const NewConversationModal = ({ isOpen, onClose }: NewConversationModalProps) =>
             setCreating(true);
             setError(null);
 
-            const apiUrl = import.meta.env.VITE_API_CHATS_URL;
+            const apiUrl = import.meta.env.VITE_API_BASE_URL;
             const token = localStorage.getItem('accessToken');
 
             if (!token) {
