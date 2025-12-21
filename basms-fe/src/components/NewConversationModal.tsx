@@ -60,7 +60,7 @@ const NewConversationModal = ({ isOpen, onClose }: NewConversationModalProps) =>
             }
 
             const result = await response.json();
-            const allUsers = result.data || [];
+            const allUsers = result.users || [];
 
             // Filter out current user, inactive users, and only show managers (roleId: ddbd612f-ba6e-11f0-bcac-00155dca8f48)
             const MANAGER_ROLE_ID = 'ddbd612f-ba6e-11f0-bcac-00155dca8f48';
