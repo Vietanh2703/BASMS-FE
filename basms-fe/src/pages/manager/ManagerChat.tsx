@@ -22,12 +22,7 @@ const ManagerChat = () => {
         messages,
         hasMore,
         oldestMessageId,
-        setConversations,
         selectConversation,
-        setMessages,
-        prependMessages,
-        setHasMore,
-        setOldestMessageId
     } = useChatStore();
 
     // Simple HTTP chat - no polling, no WebSocket
