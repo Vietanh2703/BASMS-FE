@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef } from 'react';
 import { useAuth } from '../../hooks/useAuth';
 import { useChatStore } from '../../stores/useChatStore';
-import { usePollingChat } from '../../hooks/usePollingChat';  // ✅ Polling thay vì SignalR
+import { useSimpleChat } from '../../hooks/useSimpleChat';
 import NewConversationModalForManager from '../../components/NewConversationModalForManager';
 import './ManagerChat.css';
 
@@ -30,12 +30,13 @@ const ManagerChat = () => {
         setOldestMessageId
     } = useChatStore();
 
-    // HTTP Polling connection (replaced SignalR)
-    const { isConnected, joinConversation, leaveConversation, triggerImmediatePoll } = usePollingChat();
+    // Simple HTTP chat - no polling, no WebSocket
+    const { fetchMessages, sendMessage: sendMessageAPI, fetchConversations: fetchConversationsAPI } = useSimpleChat();
 
     const [messageInput, setMessageInput] = useState('');
     const [loading, setLoading] = useState(false);
     const [sending, setSending] = useState(false);
+    const [refreshing, setRefreshing] = useState(false);
 
     const messagesEndRef = useRef<HTMLDivElement>(null);
     const messagesContainerRef = useRef<HTMLDivElement>(null);
@@ -71,177 +72,65 @@ const ManagerChat = () => {
 
     // Fetch conversations on mount
     useEffect(() => {
-        fetchConversations();
+        loadConversations();
     }, []);
 
-    // Join/Leave conversation via SignalR when selected conversation changes
+    // Fetch messages when conversation changes
     useEffect(() => {
-        let isActive = true;
-
-        const handleConversationChange = async () => {
-            if (selectedConversationId && isConnected) {
-                // ✅ FIX: Await joinConversation to ensure user is in group before sending messages
-                await joinConversation(selectedConversationId);
-
-                // Only fetch messages if component is still mounted and conversation hasn't changed
-                if (isActive && !messages[selectedConversationId]) {
-                    fetchMessages(selectedConversationId);
-                }
-            }
-        };
-
-        handleConversationChange();
-
-        return () => {
-            isActive = false;
-            if (selectedConversationId) {
-                leaveConversation(selectedConversationId);
-            }
-        };
-    }, [selectedConversationId, isConnected]);
+        if (selectedConversationId) {
+            loadMessages(selectedConversationId);
+        }
+    }, [selectedConversationId]);
 
     // Scroll to bottom when new messages arrive
     useEffect(() => {
         scrollToBottom();
     }, [currentMessages]);
 
-    const fetchConversations = async () => {
-        try {
-            const apiUrl = import.meta.env.VITE_API_BASE_URL;
-            const token = localStorage.getItem('accessToken');
-
-            if (!token) {
-                console.error('No access token found');
-                return;
-            }
-
-            const response = await fetch(`${apiUrl}/chats/conversations/get-all`, {
-                method: 'GET',
-                headers: {
-                    'Authorization': `Bearer ${token}`,
-                    'Content-Type': 'application/json',
-                },
-            });
-
-            if (!response.ok) {
-                throw new Error('Failed to fetch conversations');
-            }
-
-            const result = await response.json();
-            setConversations(result.data || []);
-        } catch (err) {
-            console.error('Error fetching conversations:', err);
-        }
+    const loadConversations = async () => {
+        await fetchConversationsAPI();
     };
 
-    const fetchMessages = async (conversationId: string, beforeMessageId?: string) => {
-        try {
-            setLoading(true);
-            const apiUrl = import.meta.env.VITE_API_BASE_URL;
-            const token = localStorage.getItem('accessToken');
-
-            if (!token) {
-                console.error('No access token found');
-                return;
-            }
-
-            const params = new URLSearchParams({
-                limit: '50',
-            });
-
-            if (beforeMessageId) {
-                params.append('beforeMessageId', beforeMessageId);
-            }
-
-            const response = await fetch(`${apiUrl}/chats/conversations/${conversationId}/messages?${params}`, {
-                method: 'GET',
-                headers: {
-                    'Authorization': `Bearer ${token}`,
-                    'Content-Type': 'application/json',
-                },
-            });
-
-            if (!response.ok) {
-                throw new Error('Failed to fetch messages');
-            }
-
-            const result = await response.json();
-            const fetchedMessages = result.data.messages || [];
-
-            if (beforeMessageId) {
-                // Prepend older messages
-                prependMessages(conversationId, fetchedMessages.reverse());
-            } else {
-                // Set initial messages
-                setMessages(conversationId, fetchedMessages.reverse());
-            }
-
-            setHasMore(conversationId, result.data.hasMore || false);
-            setOldestMessageId(conversationId, result.data.oldestMessageId || null);
-        } catch (err) {
-            console.error('Error fetching messages:', err);
-        } finally {
-            setLoading(false);
-        }
+    const loadMessages = async (conversationId: string, beforeMessageId?: string) => {
+        setLoading(true);
+        await fetchMessages(conversationId, beforeMessageId);
+        setLoading(false);
     };
 
-    const sendMessage = async () => {
+    const handleSendMessage = async () => {
         if (!messageInput.trim() || !selectedConversation || sending) {
             return;
         }
 
-        try {
-            setSending(true);
-            const apiUrl = import.meta.env.VITE_API_BASE_URL;
-            const token = localStorage.getItem('accessToken');
+        setSending(true);
+        const content = messageInput.trim();
+        setMessageInput(''); // Clear input immediately for better UX
 
-            if (!token) {
-                console.error('No access token found');
-                return;
-            }
+        const result = await sendMessageAPI(selectedConversation.id, content);
 
-            const response = await fetch(`${apiUrl}/chats/messages`, {
-                method: 'POST',
-                headers: {
-                    'Authorization': `Bearer ${token}`,
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify({
-                    conversationId: selectedConversation.id,
-                    content: messageInput.trim(),
-                    replyToMessageId: null,
-                }),
-            });
-
-            if (!response.ok) {
-                throw new Error('Failed to send message');
-            }
-
-            const result = await response.json();
-
-            if (result.success) {
-                // ✅ Clear input immediately for better UX
-                setMessageInput('');
-
-                // ✅ Trigger immediate poll to fetch the new message
-                if (triggerImmediatePoll) {
-                    await triggerImmediatePoll();
-                }
-
-                // Refresh conversations to update preview
-                fetchConversations();
-            }
-        } catch (err) {
-            console.error('Error sending message:', err);
-        } finally {
-            setSending(false);
+        if (result.success) {
+            // Refresh conversations to update preview
+            await loadConversations();
+        } else {
+            // Restore message input if failed
+            setMessageInput(content);
         }
+
+        setSending(false);
+    };
+
+    const handleRefreshMessages = async () => {
+        if (!selectedConversationId || refreshing) return;
+
+        setRefreshing(true);
+        await loadMessages(selectedConversationId);
+        setRefreshing(false);
     };
 
     const handleKeyPress = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
         if (e.key === 'Enter' && !e.shiftKey) {
             e.preventDefault();
-            sendMessage();
+            handleSendMessage();
         }
     };
 
@@ -251,7 +140,7 @@ const ManagerChat = () => {
 
     const loadMoreMessages = () => {
         if (selectedConversationId && currentOldestMessageId && !loading) {
-            fetchMessages(selectedConversationId, currentOldestMessageId);
+            loadMessages(selectedConversationId, currentOldestMessageId);
         }
     };
 
@@ -376,13 +265,6 @@ const ManagerChat = () => {
                     </div>
 
                     <div className="mgr-chat-nav-right">
-                        {isConnected && (
-                            <div className="mgr-chat-connection-status">
-                                <span className="mgr-chat-connection-dot"></span>
-                                <span className="mgr-chat-connection-text">Đang kết nối</span>
-                            </div>
-                        )}
-
                         <button className="mgr-chat-notification-btn">
                             <svg viewBox="0 0 24 24" fill="currentColor">
                                 <path d="M12 22c1.1 0 2-.9 2-2h-4c0 1.1.9 2 2 2zm6-6v-5c0-3.07-1.64-5.64-4.5-6.32V4c0-.83-.67-1.5-1.5-1.5s-1.5.67-1.5 1.5v.68C7.63 5.36 6 7.92 6 11v5l-2 2v1h16v-1l-2-2z"/>
@@ -484,6 +366,16 @@ const ManagerChat = () => {
                                 <>
                                     <div className="mgr-chat-messages-header">
                                         <h2>{selectedConversation.conversationName || `Conversation ${selectedConversation.id.substring(0, 8)}`}</h2>
+                                        <button
+                                            className="mgr-chat-refresh-btn"
+                                            onClick={handleRefreshMessages}
+                                            disabled={refreshing}
+                                            title="Làm mới tin nhắn"
+                                        >
+                                            <svg viewBox="0 0 24 24" fill="currentColor" style={{ animation: refreshing ? 'spin 1s linear infinite' : 'none' }}>
+                                                <path d="M17.65 6.35C16.2 4.9 14.21 4 12 4c-4.42 0-7.99 3.58-7.99 8s3.57 8 7.99 8c3.73 0 6.84-2.55 7.73-6h-2.08c-.82 2.33-3.04 4-5.65 4-3.31 0-6-2.69-6-6s2.69-6 6-6c1.66 0 3.14.69 4.22 1.78L13 11h7V4l-2.35 2.35z"/>
+                                            </svg>
+                                        </button>
                                     </div>
                                     <div className="mgr-chat-messages-container" ref={messagesContainerRef}>
                                         {currentHasMore && (
@@ -529,7 +421,7 @@ const ManagerChat = () => {
                                         />
                                         <button
                                             className="mgr-chat-send-btn"
-                                            onClick={sendMessage}
+                                            onClick={handleSendMessage}
                                             disabled={!messageInput.trim() || sending}
                                         >
                                             {sending ? 'Đang gửi...' : 'Gửi'}
