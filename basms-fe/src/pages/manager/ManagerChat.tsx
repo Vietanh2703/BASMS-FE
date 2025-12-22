@@ -86,10 +86,27 @@ const ManagerChat = () => {
         await fetchConversationsAPI();
     };
 
+    const scrollToBottom = (smooth = true) => {
+        // Use setTimeout to ensure DOM is updated before scrolling
+        setTimeout(() => {
+            if (messagesEndRef.current) {
+                messagesEndRef.current.scrollIntoView({
+                    behavior: smooth ? 'smooth' : 'auto',
+                    block: 'end'
+                });
+            }
+        }, 100);
+    };
+
     const loadMessages = async (conversationId: string, beforeMessageId?: string) => {
         setLoading(true);
         await fetchMessages(conversationId, beforeMessageId);
         setLoading(false);
+
+        // Auto-scroll to bottom when loading new messages (not when loading older messages)
+        if (!beforeMessageId) {
+            scrollToBottom(false); // Instant scroll for initial load
+        }
     };
 
     const handleSendMessage = async () => {
@@ -104,6 +121,9 @@ const ManagerChat = () => {
         const result = await sendMessageAPI(selectedConversation.id, content);
 
         if (result.success) {
+            // Scroll to bottom to show new message
+            scrollToBottom();
+
             // Refresh conversations to update preview
             await loadConversations();
         } else {
@@ -120,6 +140,9 @@ const ManagerChat = () => {
         setRefreshing(true);
         await loadMessages(selectedConversationId);
         setRefreshing(false);
+
+        // Auto-scroll after refresh
+        scrollToBottom();
     };
 
     const handleKeyPress = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
@@ -127,10 +150,6 @@ const ManagerChat = () => {
             e.preventDefault();
             handleSendMessage();
         }
-    };
-
-    const scrollToBottom = () => {
-        messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
     };
 
     const loadMoreMessages = () => {
