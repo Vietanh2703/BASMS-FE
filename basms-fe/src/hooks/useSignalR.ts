@@ -54,7 +54,9 @@ export const useSignalR = () => {
 
         const newConnection = new signalR.HubConnectionBuilder()
             .withUrl(`${apiUrl}/chathub`, {
-                accessTokenFactory: () => token
+                accessTokenFactory: () => token,
+                skipNegotiation: true,  // ✅ Skip negotiate to avoid CORS issues
+                transport: signalR.HttpTransportType.WebSockets  // ✅ Force WebSocket
             })
             .withAutomaticReconnect({
                 nextRetryDelayInMilliseconds: (retryContext) => {

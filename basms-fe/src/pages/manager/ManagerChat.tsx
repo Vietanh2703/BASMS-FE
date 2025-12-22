@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef } from 'react';
 import { useAuth } from '../../hooks/useAuth';
 import { useChatStore } from '../../stores/useChatStore';
-import { useSignalR } from '../../hooks/useSignalR';
+import { usePollingChat } from '../../hooks/usePollingChat';  // ✅ Polling thay vì SignalR
 import NewConversationModalForManager from '../../components/NewConversationModalForManager';
 import './ManagerChat.css';
 
@@ -30,8 +30,8 @@ const ManagerChat = () => {
         setOldestMessageId
     } = useChatStore();
 
-    // SignalR connection
-    const { isConnected, joinConversation, leaveConversation } = useSignalR();
+    // HTTP Polling connection (replaced SignalR)
+    const { isConnected, joinConversation, leaveConversation } = usePollingChat();
 
     const [messageInput, setMessageInput] = useState('');
     const [loading, setLoading] = useState(false);
