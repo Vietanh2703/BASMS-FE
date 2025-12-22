@@ -25,7 +25,6 @@ const ManagerChat = () => {
         setConversations,
         selectConversation,
         setMessages,
-        addMessage,
         prependMessages,
         setHasMore,
         setOldestMessageId
@@ -77,18 +76,28 @@ const ManagerChat = () => {
 
     // Join/Leave conversation via SignalR when selected conversation changes
     useEffect(() => {
-        if (selectedConversationId && isConnected) {
-            joinConversation(selectedConversationId);
+        let isActive = true;
 
-            // Fetch messages if not already loaded
-            if (!messages[selectedConversationId]) {
-                fetchMessages(selectedConversationId);
+        const handleConversationChange = async () => {
+            if (selectedConversationId && isConnected) {
+                // ✅ FIX: Await joinConversation to ensure user is in group before sending messages
+                await joinConversation(selectedConversationId);
+
+                // Only fetch messages if component is still mounted and conversation hasn't changed
+                if (isActive && !messages[selectedConversationId]) {
+                    fetchMessages(selectedConversationId);
+                }
             }
+        };
 
-            return () => {
+        handleConversationChange();
+
+        return () => {
+            isActive = false;
+            if (selectedConversationId) {
                 leaveConversation(selectedConversationId);
-            };
-        }
+            }
+        };
     }, [selectedConversationId, isConnected]);
 
     // Scroll to bottom when new messages arrive
@@ -210,10 +219,9 @@ const ManagerChat = () => {
 
             const result = await response.json();
 
-            if (result.success && result.data.message) {
-                // Message will be added via SignalR ReceiveMessage event
-                // But we can add it optimistically here too
-                addMessage(selectedConversation.id, result.data.message);
+            if (result.success) {
+                // ✅ Message will be added automatically via SignalR ReceiveMessage event
+                // No need to add it here (prevents duplicate messages)
                 setMessageInput('');
 
                 // Refresh conversations to update preview

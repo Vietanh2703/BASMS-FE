@@ -1,4 +1,4 @@
-import { useEffect, useState, useCallback } from 'react';
+import { useEffect, useState, useCallback, useRef } from 'react';
 import * as signalR from '@microsoft/signalr';
 import { useChatStore, type Message } from '../stores/useChatStore';
 
@@ -16,6 +16,33 @@ export const useSignalR = () => {
         setUserStoppedTyping
     } = useChatStore();
 
+    // ============================================================
+    // USE REFS TO AVOID RE-CREATING CONNECTION
+    // ============================================================
+    const addMessageRef = useRef(addMessage);
+    const updateConversationPreviewRef = useRef(updateConversationPreview);
+    const updateMessageRef = useRef(updateMessage);
+    const deleteMessageRef = useRef(deleteMessage);
+    const setUserOnlineRef = useRef(setUserOnline);
+    const setUserOfflineRef = useRef(setUserOffline);
+    const setUserTypingRef = useRef(setUserTyping);
+    const setUserStoppedTypingRef = useRef(setUserStoppedTyping);
+
+    // Update refs when store functions change
+    useEffect(() => {
+        addMessageRef.current = addMessage;
+        updateConversationPreviewRef.current = updateConversationPreview;
+        updateMessageRef.current = updateMessage;
+        deleteMessageRef.current = deleteMessage;
+        setUserOnlineRef.current = setUserOnline;
+        setUserOfflineRef.current = setUserOffline;
+        setUserTypingRef.current = setUserTyping;
+        setUserStoppedTypingRef.current = setUserStoppedTyping;
+    }, [addMessage, updateConversationPreview, updateMessage, deleteMessage, setUserOnline, setUserOffline, setUserTyping, setUserStoppedTyping]);
+
+    // ============================================================
+    // CREATE CONNECTION ONLY ONCE
+    // ============================================================
     useEffect(() => {
         const token = localStorage.getItem('accessToken');
         const apiUrl = import.meta.env.VITE_API_BASE_URL;
@@ -42,18 +69,19 @@ export const useSignalR = () => {
             .build();
 
         // ============================================================
-        // EVENT LISTENERS
+        // EVENT LISTENERS - Use refs to access latest store functions
         // ============================================================
 
         // Receive new message
         newConnection.on('ReceiveMessage', (message: Message) => {
             console.log('SignalR: ReceiveMessage', message);
 
-            addMessage(message.conversationId, message);
+            // Use ref to call latest version of addMessage
+            addMessageRef.current(message.conversationId, message);
 
             // Update conversation preview
             const preview = message.content?.substring(0, 150) || '';
-            updateConversationPreview(
+            updateConversationPreviewRef.current(
                 message.conversationId,
                 preview,
                 message.senderName,
@@ -65,7 +93,7 @@ export const useSignalR = () => {
         newConnection.on('MessageEdited', (messageId: string, conversationId: string, newContent: string, editedAt: string) => {
             console.log('SignalR: MessageEdited', { messageId, conversationId, newContent });
 
-            updateMessage(conversationId, messageId, {
+            updateMessageRef.current(conversationId, messageId, {
                 content: newContent,
                 isEdited: true,
                 editedAt: editedAt
@@ -76,29 +104,29 @@ export const useSignalR = () => {
         newConnection.on('MessageDeleted', (messageId: string, conversationId: string) => {
             console.log('SignalR: MessageDeleted', { messageId, conversationId });
 
-            deleteMessage(conversationId, messageId);
+            deleteMessageRef.current(conversationId, messageId);
         });
 
         // User online/offline status
         newConnection.on('UserOnline', (userId: string) => {
             console.log('SignalR: UserOnline', userId);
-            setUserOnline(userId);
+            setUserOnlineRef.current(userId);
         });
 
         newConnection.on('UserOffline', (userId: string, lastSeen: string) => {
             console.log('SignalR: UserOffline', { userId, lastSeen });
-            setUserOffline(userId);
+            setUserOfflineRef.current(userId);
         });
 
         // Typing indicators
         newConnection.on('UserIsTyping', (userId: string, conversationId: string) => {
             console.log('SignalR: UserIsTyping', { userId, conversationId });
-            setUserTyping(conversationId, userId);
+            setUserTypingRef.current(conversationId, userId);
         });
 
         newConnection.on('UserStoppedTyping', (userId: string, conversationId: string) => {
             console.log('SignalR: UserStoppedTyping', { userId, conversationId });
-            setUserStoppedTyping(conversationId, userId);
+            setUserStoppedTypingRef.current(conversationId, userId);
         });
 
         // Connection state changes
@@ -139,7 +167,7 @@ export const useSignalR = () => {
                     .catch((err) => console.error('SignalR: Error during disconnect', err));
             }
         };
-    }, [addMessage, updateConversationPreview, updateMessage, deleteMessage, setUserOnline, setUserOffline, setUserTyping, setUserStoppedTyping]);
+    }, []); // ← EMPTY DEPENDENCIES - Connection only created once!
 
     // ============================================================
     // METHODS
