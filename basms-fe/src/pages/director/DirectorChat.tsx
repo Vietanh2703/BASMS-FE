@@ -90,10 +90,11 @@ const DirectorChat = () => {
     const scrollToBottom = (smooth = true) => {
         // Use setTimeout to ensure DOM is updated before scrolling
         setTimeout(() => {
-            if (messagesEndRef.current) {
-                messagesEndRef.current.scrollIntoView({
-                    behavior: smooth ? 'smooth' : 'auto',
-                    block: 'end'
+            if (messagesContainerRef.current) {
+                // Scroll the container directly to avoid scrolling the whole page
+                messagesContainerRef.current.scrollTo({
+                    top: messagesContainerRef.current.scrollHeight,
+                    behavior: smooth ? 'smooth' : 'auto'
                 });
             }
         }, 100);
