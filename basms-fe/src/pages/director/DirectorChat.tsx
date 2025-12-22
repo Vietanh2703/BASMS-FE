@@ -32,7 +32,7 @@ const DirectorChat = () => {
     } = useChatStore();
 
     // HTTP Polling connection (replaced SignalR)
-    const { isConnected, joinConversation, leaveConversation } = usePollingChat();
+    const { isConnected, joinConversation, leaveConversation, triggerImmediatePoll } = usePollingChat();
 
     const [messageInput, setMessageInput] = useState('');
     const [loading, setLoading] = useState(false);
@@ -221,9 +221,13 @@ const DirectorChat = () => {
             const result = await response.json();
 
             if (result.success) {
-                // ✅ Message will be added automatically via SignalR ReceiveMessage event
-                // No need to add it here (prevents duplicate messages)
+                // ✅ Clear input immediately for better UX
                 setMessageInput('');
+
+                // ✅ Trigger immediate poll to fetch the new message
+                if (triggerImmediatePoll) {
+                    await triggerImmediatePoll();
+                }
 
                 // Refresh conversations to update preview
                 fetchConversations();

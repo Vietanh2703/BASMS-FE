@@ -25,9 +25,9 @@ export const usePollingChat = () => {
             // Get current messages for this conversation
             const currentMessages = messages[conversationId] || [];
 
-            // Get last message timestamp
-            const lastMessageTime = currentMessages.length > 0
-                ? currentMessages[currentMessages.length - 1].createdAt
+            // ✅ Use lastMessageId instead of timestamp for more reliable filtering
+            const lastMessageId = currentMessages.length > 0
+                ? currentMessages[currentMessages.length - 1].id
                 : null;
 
             // Fetch latest messages
@@ -46,12 +46,13 @@ export const usePollingChat = () => {
             const result = await response.json();
             const fetchedMessages = (result.data.messages || []).reverse();
 
-            // Find new messages (messages after lastMessageTime)
-            const newMessages = lastMessageTime
-                ? fetchedMessages.filter((msg: any) => msg.createdAt > lastMessageTime)
-                : [];
+            // ✅ Build a Set of existing message IDs for O(1) lookup
+            const existingMessageIds = new Set(currentMessages.map(msg => msg.id));
 
-            // Add new messages to store
+            // ✅ Find new messages that don't exist in the current messages
+            const newMessages = fetchedMessages.filter((msg: any) => !existingMessageIds.has(msg.id));
+
+            // Add new messages to store (addMessage will double-check for duplicates)
             newMessages.forEach((msg: any) => {
                 console.log('Polling: New message received', msg);
                 addMessage(conversationId, msg);
@@ -104,6 +105,16 @@ export const usePollingChat = () => {
     }, [selectedConversationId]);
 
     // ============================================================
+    // TRIGGER IMMEDIATE POLL (for after sending a message)
+    // ============================================================
+    const triggerImmediatePoll = async () => {
+        if (selectedConversationId) {
+            console.log('Polling: Triggering immediate poll after sending message');
+            await pollMessages(selectedConversationId);
+        }
+    };
+
+    // ============================================================
     // DUMMY METHODS (for compatibility with SignalR interface)
     // ============================================================
     const joinConversation = async (_conversationId: string) => {
@@ -132,6 +143,7 @@ export const usePollingChat = () => {
         joinConversation,
         leaveConversation,
         sendTypingIndicator,
-        stopTypingIndicator
+        stopTypingIndicator,
+        triggerImmediatePoll  // ✅ Expose this for immediate polling after sending message
     };
 };

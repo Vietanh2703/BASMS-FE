@@ -113,12 +113,22 @@ export const useChatStore = create<ChatStore>()(
                 }
             })),
 
-            addMessage: (conversationId, message) => set((state) => ({
-                messages: {
-                    ...state.messages,
-                    [conversationId]: [...(state.messages[conversationId] || []), message]
+            addMessage: (conversationId, message) => set((state) => {
+                const currentMessages = state.messages[conversationId] || [];
+                // ✅ Prevent duplicate messages by checking if message.id already exists
+                const isDuplicate = currentMessages.some(msg => msg.id === message.id);
+
+                if (isDuplicate) {
+                    return state; // Don't add duplicate message
                 }
-            })),
+
+                return {
+                    messages: {
+                        ...state.messages,
+                        [conversationId]: [...currentMessages, message]
+                    }
+                };
+            }),
 
             prependMessages: (conversationId, messages) => set((state) => ({
                 messages: {
