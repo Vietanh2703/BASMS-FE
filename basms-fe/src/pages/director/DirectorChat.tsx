@@ -296,6 +296,22 @@ const DirectorChat = () => {
                                 {isMenuOpen && <span>Quản lý nhân sự</span>}
                             </Link>
                         </li>
+                        <li className="dir-chat-nav-item">
+                            <Link to="/director/analytics" className="dir-chat-nav-link">
+                                <svg className="dir-chat-nav-icon" viewBox="0 0 24 24" fill="currentColor">
+                                    <path d="M16 6l2.29 2.29-4.88 4.88-4-4L2 16.59 3.41 18l6-6 4 4 6.3-6.29L22 12V6z"/>
+                                </svg>
+                                {isMenuOpen && <span>Phân tích</span>}
+                            </Link>
+                        </li>
+                        <li className="dir-chat-nav-item">
+                            <Link to="/director/reports" className="dir-chat-nav-link">
+                                <svg className="dir-chat-nav-icon" viewBox="0 0 24 24" fill="currentColor">
+                                    <path d="M19 3h-4.18C14.4 1.84 13.3 1 12 1c-1.3 0-2.4.84-2.82 2H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm-7 0c.55 0 1 .45 1 1s-.45 1-1 1-1-.45-1-1 .45-1 1-1zm2 14H7v-2h7v2zm3-4H7v-2h10v2zm0-4H7V7h10v2z"/>
+                                </svg>
+                                {isMenuOpen && <span>Báo cáo</span>}
+                            </Link>
+                        </li>
                         <li className="dir-chat-nav-item dir-chat-nav-active">
                             <Link to="/director/chat" className="dir-chat-nav-link">
                                 <svg className="dir-chat-nav-icon" viewBox="0 0 24 24" fill="currentColor">
