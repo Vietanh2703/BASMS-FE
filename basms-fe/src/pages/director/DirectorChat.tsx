@@ -2,7 +2,7 @@ import { useState, useEffect, useRef } from 'react';
 import { Link } from 'react-router-dom';
 import { useAuth } from '../../hooks/useAuth';
 import { useChatStore } from '../../stores/useChatStore';
-import { useSimpleChat } from '../../hooks/useSimpleChat';
+import { useSignalRChat, ConnectionState } from '../../hooks/useSignalRChat';
 import NewConversationModal from '../../components/NewConversationModal';
 import './DirectorChat.css';
 
@@ -24,15 +24,28 @@ const DirectorChat = () => {
         hasMore,
         oldestMessageId,
         selectConversation,
+        typingUsers,
     } = useChatStore();
 
-    // Simple HTTP chat - no polling, no WebSocket
-    const { fetchMessages, sendMessage: sendMessageAPI, fetchConversations: fetchConversationsAPI } = useSimpleChat();
+    // SignalR real-time chat
+    const {
+        connectionState,
+        isConnected,
+        error: signalRError,
+        fetchMessages,
+        sendMessage: sendMessageAPI,
+        fetchConversations: fetchConversationsAPI,
+        joinConversation,
+        leaveConversation,
+        sendTypingIndicator,
+        stopTypingIndicator
+    } = useSignalRChat();
 
     const [messageInput, setMessageInput] = useState('');
     const [loading, setLoading] = useState(false);
     const [sending, setSending] = useState(false);
     const [refreshing, setRefreshing] = useState(false);
+    const typingTimeoutRef = useRef<number | null>(null);
 
     const messagesEndRef = useRef<HTMLDivElement>(null);
     const messagesContainerRef = useRef<HTMLDivElement>(null);
@@ -42,6 +55,10 @@ const DirectorChat = () => {
     const currentMessages = selectedConversationId ? (messages[selectedConversationId] || []) : [];
     const currentHasMore = selectedConversationId ? (hasMore[selectedConversationId] || false) : false;
     const currentOldestMessageId = selectedConversationId ? (oldestMessageId[selectedConversationId] || null) : null;
+    const currentTypingUsers = selectedConversationId ? (typingUsers[selectedConversationId] || new Set()) : new Set();
+
+    // Get typing users names (filter out current user)
+    const typingUsersArray = Array.from(currentTypingUsers).filter(userId => userId !== user?.userId);
 
     useEffect(() => {
         const timer = setInterval(() => {
@@ -71,12 +88,19 @@ const DirectorChat = () => {
         loadConversations();
     }, []);
 
-    // Fetch messages when conversation changes
+    // Join/leave conversation and fetch messages when conversation changes
     useEffect(() => {
-        if (selectedConversationId) {
+        if (selectedConversationId && isConnected) {
+            // Join new conversation
+            joinConversation(selectedConversationId);
             loadMessages(selectedConversationId);
+
+            // Leave on cleanup
+            return () => {
+                leaveConversation(selectedConversationId);
+            };
         }
-    }, [selectedConversationId]);
+    }, [selectedConversationId, isConnected]);
 
     // Scroll to bottom when new messages arrive
     useEffect(() => {
@@ -120,10 +144,16 @@ const DirectorChat = () => {
         const content = messageInput.trim();
         setMessageInput(''); // Clear input immediately for better UX
 
+        // Clear typing timeout
+        if (typingTimeoutRef.current) {
+            window.clearTimeout(typingTimeoutRef.current);
+            typingTimeoutRef.current = null;
+        }
+
         const result = await sendMessageAPI(selectedConversation.id, content);
 
         if (result.success) {
-            // Scroll to bottom to show new message
+            // Scroll to bottom to show new message (message will be added via SignalR)
             scrollToBottom();
 
             // Refresh conversations to update preview
@@ -134,6 +164,36 @@ const DirectorChat = () => {
         }
 
         setSending(false);
+    };
+
+    // Handle typing indicator
+    const handleMessageInputChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
+        const value = e.target.value;
+        setMessageInput(value);
+
+        // Send typing indicator if connected and has conversation selected
+        if (isConnected && selectedConversationId && value.trim()) {
+            sendTypingIndicator(selectedConversationId);
+
+            // Clear previous timeout
+            if (typingTimeoutRef.current) {
+                window.clearTimeout(typingTimeoutRef.current);
+            }
+
+            // Auto-stop typing after 3 seconds
+            typingTimeoutRef.current = window.setTimeout(() => {
+                if (selectedConversationId) {
+                    stopTypingIndicator(selectedConversationId);
+                }
+            }, 3000);
+        } else if (selectedConversationId && !value.trim()) {
+            // Stop typing if input is cleared
+            stopTypingIndicator(selectedConversationId);
+            if (typingTimeoutRef.current) {
+                window.clearTimeout(typingTimeoutRef.current);
+                typingTimeoutRef.current = null;
+            }
+        }
     };
 
     const handleRefreshMessages = async () => {
@@ -371,7 +431,16 @@ const DirectorChat = () => {
                             {selectedConversation ? (
                                 <>
                                     <div className="dir-chat-messages-header">
-                                        <h2>{selectedConversation.conversationName || `Conversation ${selectedConversation.id.substring(0, 8)}`}</h2>
+                                        <div>
+                                            <h2>{selectedConversation.conversationName || `Conversation ${selectedConversation.id.substring(0, 8)}`}</h2>
+                                            <div style={{ fontSize: '0.75rem', color: connectionState === ConnectionState.Connected ? '#4ade80' : connectionState === ConnectionState.Connecting || connectionState === ConnectionState.Reconnecting ? '#fbbf24' : '#ef4444' }}>
+                                                {connectionState === ConnectionState.Connected && '🟢 Đã kết nối'}
+                                                {connectionState === ConnectionState.Connecting && '🟡 Đang kết nối...'}
+                                                {connectionState === ConnectionState.Reconnecting && '🟡 Đang kết nối lại...'}
+                                                {connectionState === ConnectionState.Disconnected && '🔴 Mất kết nối'}
+                                                {connectionState === ConnectionState.Failed && `🔴 Lỗi: ${signalRError || 'Không thể kết nối'}`}
+                                            </div>
+                                        </div>
                                         <button
                                             className="dir-chat-refresh-btn"
                                             onClick={handleRefreshMessages}
@@ -416,19 +485,25 @@ const DirectorChat = () => {
                                         )}
                                         <div ref={messagesEndRef} />
                                     </div>
+                                    {typingUsersArray.length > 0 && (
+                                        <div style={{ padding: '0.5rem 1rem', fontSize: '0.875rem', color: '#6b7280', fontStyle: 'italic' }}>
+                                            {typingUsersArray.length === 1 ? 'Đang soạn tin nhắn...' : `${typingUsersArray.length} người đang soạn tin nhắn...`}
+                                        </div>
+                                    )}
                                     <div className="dir-chat-input-container">
                                         <textarea
                                             className="dir-chat-input"
                                             placeholder="Nhập tin nhắn..."
                                             value={messageInput}
-                                            onChange={(e) => setMessageInput(e.target.value)}
+                                            onChange={handleMessageInputChange}
                                             onKeyPress={handleKeyPress}
                                             rows={2}
+                                            disabled={!isConnected}
                                         />
                                         <button
                                             className="dir-chat-send-btn"
                                             onClick={handleSendMessage}
-                                            disabled={!messageInput.trim() || sending}
+                                            disabled={!messageInput.trim() || sending || !isConnected}
                                         >
                                             {sending ? 'Đang gửi...' : 'Gửi'}
                                         </button>
