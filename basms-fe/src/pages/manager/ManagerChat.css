@@ -517,10 +517,33 @@
 .mgr-chat-messages-container {
     flex: 1;
     overflow-y: auto;
+    overflow-x: hidden;
     padding: 20px;
     display: flex;
     flex-direction: column;
     gap: 16px;
+    min-height: 0; /* Important for flex child to enable scrolling */
+    max-height: calc(100vh - 350px); /* Fixed height based on viewport */
+    scroll-behavior: smooth;
+}
+
+/* Custom scrollbar for messages container */
+.mgr-chat-messages-container::-webkit-scrollbar {
+    width: 8px;
+}
+
+.mgr-chat-messages-container::-webkit-scrollbar-track {
+    background: #f1f5f9;
+    border-radius: 4px;
+}
+
+.mgr-chat-messages-container::-webkit-scrollbar-thumb {
+    background: #cbd5e1;
+    border-radius: 4px;
+}
+
+.mgr-chat-messages-container::-webkit-scrollbar-thumb:hover {
+    background: #94a3b8;
 }
 
 .mgr-chat-empty-messages {
