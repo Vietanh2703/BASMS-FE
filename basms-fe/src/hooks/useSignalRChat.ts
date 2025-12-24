@@ -97,8 +97,6 @@ export const useSignalRChat = () => {
             // EVENT HANDLERS - MESSAGES
             // ============================================================
             connection.on('ReceiveMessage', (messageDto: MessageDto) => {
-                console.log('📩 ReceiveMessage:', messageDto);
-
                 const message: Message = {
                     id: messageDto.id,
                     conversationId: messageDto.conversationId,
@@ -135,8 +133,6 @@ export const useSignalRChat = () => {
             });
 
             connection.on('MessageEdited', (messageId: string, newContent: string, editedAt: string) => {
-                console.log('✏️ MessageEdited:', { messageId, newContent, editedAt });
-
                 // Find conversation that contains this message
                 const state = useChatStore.getState();
                 for (const [conversationId, messages] of Object.entries(state.messages)) {
@@ -152,8 +148,6 @@ export const useSignalRChat = () => {
             });
 
             connection.on('MessageDeleted', (messageId: string) => {
-                console.log('🗑️ MessageDeleted:', messageId);
-
                 // Find and delete message from appropriate conversation
                 const state = useChatStore.getState();
                 for (const [conversationId, messages] of Object.entries(state.messages)) {
@@ -168,12 +162,10 @@ export const useSignalRChat = () => {
             // EVENT HANDLERS - PRESENCE
             // ============================================================
             connection.on('UserOnline', (userId: string) => {
-                console.log('🟢 UserOnline:', userId);
                 setUserOnline(userId);
             });
 
             connection.on('UserOffline', (userId: string) => {
-                console.log('🔴 UserOffline:', userId);
                 setUserOffline(userId);
             });
 
@@ -181,12 +173,10 @@ export const useSignalRChat = () => {
             // EVENT HANDLERS - TYPING INDICATORS
             // ============================================================
             connection.on('UserIsTyping', (userId: string, conversationId: string) => {
-                console.log('⌨️ UserIsTyping:', { userId, conversationId });
                 setUserTyping(conversationId, userId);
             });
 
             connection.on('UserStoppedTyping', (userId: string, conversationId: string) => {
-                console.log('⏹️ UserStoppedTyping:', { userId, conversationId });
                 setUserStoppedTyping(conversationId, userId);
             });
 
@@ -194,19 +184,16 @@ export const useSignalRChat = () => {
             // CONNECTION STATE HANDLERS
             // ============================================================
             connection.onreconnecting((error) => {
-                console.warn('🔄 SignalR reconnecting...', error);
                 setConnectionState(ConnectionState.Reconnecting);
                 setError(error?.message || 'Reconnecting...');
             });
 
-            connection.onreconnected((connectionId) => {
-                console.log('✅ SignalR reconnected:', connectionId);
+            connection.onreconnected(() => {
                 setConnectionState(ConnectionState.Connected);
                 setError(null);
             });
 
             connection.onclose((error) => {
-                console.error('❌ SignalR connection closed:', error);
                 setConnectionState(ConnectionState.Disconnected);
                 setError(error?.message || 'Connection closed');
             });
@@ -215,7 +202,6 @@ export const useSignalRChat = () => {
             setConnectionState(ConnectionState.Connecting);
             await connection.start();
 
-            console.log('✅ SignalR Connected:', connection.connectionId);
             setConnectionState(ConnectionState.Connected);
             setError(null);
 
@@ -224,7 +210,6 @@ export const useSignalRChat = () => {
 
         } catch (err: unknown) {
             const errorMessage = err instanceof Error ? err.message : 'Unknown error';
-            console.error('❌ SignalR connection failed:', errorMessage);
             setConnectionState(ConnectionState.Failed);
             setError(errorMessage);
             return false;
@@ -239,7 +224,6 @@ export const useSignalRChat = () => {
             await connectionRef.current.stop();
             connectionRef.current = null;
             setConnectionState(ConnectionState.Disconnected);
-            console.log('🔌 SignalR disconnected');
         }
     }, []);
 
@@ -250,9 +234,8 @@ export const useSignalRChat = () => {
         if (connectionRef.current?.state === signalR.HubConnectionState.Connected) {
             try {
                 await connectionRef.current.invoke('JoinConversation', conversationId);
-                console.log('✅ Joined conversation:', conversationId);
             } catch (err) {
-                console.error('❌ Failed to join conversation:', err);
+                // Silent fail
             }
         }
     }, []);
@@ -261,9 +244,8 @@ export const useSignalRChat = () => {
         if (connectionRef.current?.state === signalR.HubConnectionState.Connected) {
             try {
                 await connectionRef.current.invoke('LeaveConversation', conversationId);
-                console.log('✅ Left conversation:', conversationId);
             } catch (err) {
-                console.error('❌ Failed to leave conversation:', err);
+                // Silent fail
             }
         }
     }, []);
@@ -276,7 +258,7 @@ export const useSignalRChat = () => {
             try {
                 await connectionRef.current.invoke('SendTypingIndicator', conversationId);
             } catch (err) {
-                console.error('❌ Failed to send typing indicator:', err);
+                // Silent fail
             }
         }
     }, []);
@@ -286,7 +268,7 @@ export const useSignalRChat = () => {
             try {
                 await connectionRef.current.invoke('StopTypingIndicator', conversationId);
             } catch (err) {
-                console.error('❌ Failed to stop typing indicator:', err);
+                // Silent fail
             }
         }
     }, []);
