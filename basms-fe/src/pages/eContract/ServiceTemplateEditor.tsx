@@ -49,7 +49,7 @@ const ServiceTemplateEditor = () => {
         Gender: { fieldName: 'Ông/Bà', value: '', formatting: { bold: false, italic: false, underline: false } },
         Name: { fieldName: 'Họ tên đại diện', value: '', formatting: { bold: false, italic: false, underline: false } },
         EmployeeIdentityNumber: { fieldName: 'Số CCCD đại diện', value: '', formatting: { bold: false, italic: false, underline: false } },
-        GuardQuantity: { fieldName: 'Số lượng bảo vệ', value: '', formatting: { bold: false, italic: false, underline: false } },
+        GuardQuantity: { fieldName: 'Số lượng bảo vệ/ca', value: '', formatting: { bold: false, italic: false, underline: false } },
         ContractStartDate: { fieldName: 'Ngày bắt đầu HĐ', value: '', formatting: { bold: false, italic: false, underline: false } },
         ContractEndDate: { fieldName: 'Ngày kết thúc HĐ', value: '', formatting: { bold: false, italic: false, underline: false } },
         TaskPeriod: { fieldName: 'Thời gian làm việc', value: '', formatting: { bold: false, italic: false, underline: false } },
