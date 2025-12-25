@@ -21,6 +21,7 @@ import CustomerEdit from "./pages/director/CustomerEdit.tsx";
 import CustomerSchedule from "./pages/director/CustomerSchedule.tsx";
 import EmployeeControl from "./pages/director/EmployeeControl.tsx";
 import DirectorChat from "./pages/director/DirectorChat.tsx";
+import IncidentList from "./pages/director/IncidentList.tsx";
 import EContractLogin from './pages/eContract/eContractLogin';
 import EContractDashboard from './pages/eContract/eContractDashboard';
 import EContractList from "./pages/eContract/eContractList.tsx";
@@ -214,6 +215,11 @@ function App() {
                     <Route path="/director/chat" element={
                         <RoleBasedRoute allowedRoles={[ROLES.DIRECTOR]}>
                             <DirectorChat />
+                        </RoleBasedRoute>
+                    }/>
+                    <Route path="/director/incidents" element={
+                        <RoleBasedRoute allowedRoles={[ROLES.DIRECTOR]}>
+                            <IncidentList />
                         </RoleBasedRoute>
                     }/>
 
