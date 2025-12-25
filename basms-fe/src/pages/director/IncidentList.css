@@ -317,6 +317,24 @@
     color: #ef4444;
 }
 
+/* Page Header */
+.il-page-header {
+    margin-bottom: 24px;
+}
+
+.il-section-title {
+    font-size: 28px;
+    font-weight: 700;
+    color: #1e293b;
+    margin: 0 0 8px 0;
+}
+
+.il-section-subtitle {
+    font-size: 14px;
+    color: #6b7280;
+    margin: 0;
+}
+
 /* Incidents List */
 .il-incidents-list {
     display: flex;

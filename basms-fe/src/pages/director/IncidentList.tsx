@@ -470,6 +470,12 @@ const IncidentList: React.FC = () => {
                         <div className="il-empty">Không có sự cố nào</div>
                     ) : (
                         <>
+                            {/* Page Header */}
+                            <div className="il-page-header">
+                                <h2 className="il-section-title">Danh sách sự cố</h2>
+                                <p className="il-section-subtitle">Tổng số: {incidents.length} sự cố</p>
+                            </div>
+
                             {/* Incidents List */}
                             <div className="il-incidents-list">
                                 {currentIncidents.map((incident) => (
