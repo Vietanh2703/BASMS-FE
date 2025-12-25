@@ -1,5 +1,5 @@
-import React, { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import React, { useState, useEffect, useRef } from 'react';
+import { useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '../../hooks/useAuth';
 import './IncidentList.css';
 
@@ -56,7 +56,11 @@ interface IncidentDetailResponse {
 const IncidentList: React.FC = () => {
     const navigate = useNavigate();
     const { user, logout } = useAuth();
-    const [isSidebarOpen, setIsSidebarOpen] = useState(true);
+    const [isMenuOpen, setIsMenuOpen] = useState(false);
+    const [isProfileDropdownOpen, setIsProfileDropdownOpen] = useState(false);
+    const [isLoggingOut, setIsLoggingOut] = useState(false);
+    const profileRef = useRef<HTMLDivElement>(null);
+
     const [incidents, setIncidents] = useState<Incident[]>([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
@@ -86,6 +90,18 @@ const IncidentList: React.FC = () => {
     useEffect(() => {
         fetchIncidents();
     }, []);
+
+    useEffect(() => {
+        const handleClickOutside = (event: MouseEvent) => {
+            if (profileRef.current && !profileRef.current.contains(event.target as Node)) {
+                setIsProfileDropdownOpen(false);
+            }
+        };
+        if (isProfileDropdownOpen) {
+            document.addEventListener('mousedown', handleClickOutside);
+        }
+        return () => document.removeEventListener('mousedown', handleClickOutside);
+    }, [isProfileDropdownOpen]);
 
     const fetchIncidents = async () => {
         try {
@@ -209,7 +225,6 @@ const IncidentList: React.FC = () => {
 
             showSnackbarMessage('Phản hồi sự cố thành công', 'success');
             handleCloseResponseModal();
-            // Refresh incidents list
             await fetchIncidents();
         } catch (err) {
             setResponseError('Không thể gửi phản hồi. Vui lòng thử lại.');
@@ -226,13 +241,33 @@ const IncidentList: React.FC = () => {
         setTimeout(() => setShowSnackbar(false), 3000);
     };
 
-    const toggleSidebar = () => {
-        setIsSidebarOpen(!isSidebarOpen);
+    const toggleMenu = () => {
+        setIsMenuOpen(!isMenuOpen);
     };
 
-    const handleLogout = () => {
-        logout();
-        navigate('/login');
+    const toggleProfileDropdown = () => {
+        setIsProfileDropdownOpen(!isProfileDropdownOpen);
+    };
+
+    const handleLogout = async () => {
+        setShowLogoutModal(true);
+        setIsProfileDropdownOpen(false);
+    };
+
+    const confirmLogout = async () => {
+        setIsLoggingOut(true);
+        setShowLogoutModal(false);
+        try {
+            await logout();
+            navigate('/login');
+        } catch (error) {
+            console.error('Logout failed:', error);
+            setIsLoggingOut(false);
+        }
+    };
+
+    const cancelLogout = () => {
+        setShowLogoutModal(false);
     };
 
     const getSeverityColor = (severity: string): string => {
@@ -294,122 +329,168 @@ const IncidentList: React.FC = () => {
     };
 
     return (
-        <div className="dir-incidents-container">
+        <div className="il-container">
             {/* Sidebar */}
-            <aside className={`dir-incidents-sidebar ${isSidebarOpen ? 'dir-incidents-sidebar-open' : 'dir-incidents-sidebar-closed'}`}>
-                <div className="dir-incidents-sidebar-header">
-                    <div className="dir-incidents-sidebar-logo">
-                        <div className="dir-incidents-logo-icon">B</div>
-                        {isSidebarOpen && <span className="dir-incidents-logo-text">BASMS</span>}
+            <aside className={`il-sidebar ${isMenuOpen ? 'il-sidebar-open' : 'il-sidebar-closed'}`}>
+                <div className="il-sidebar-header">
+                    <div className="il-sidebar-logo">
+                        <div className="il-logo-icon">D</div>
+                        {isMenuOpen && <span className="il-logo-text">Director</span>}
                     </div>
                 </div>
-                <nav className="dir-incidents-sidebar-nav">
-                    <ul className="dir-incidents-nav-list">
-                        <li className="dir-incidents-nav-item">
-                            <a href="/director/dashboard" className="dir-incidents-nav-link">
-                                <span className="dir-incidents-nav-icon">📊</span>
-                                {isSidebarOpen && <span>Dashboard</span>}
-                            </a>
+                <nav className="il-sidebar-nav">
+                    <ul className="il-nav-list">
+                        <li className="il-nav-item">
+                            <Link to="/director/dashboard" className="il-nav-link">
+                                <svg className="il-nav-icon" viewBox="0 0 24 24" fill="currentColor">
+                                    <path d="M3 13h8V3H3v10zm0 8h8v-6H3v6zm10 0h8V11h-8v10zm0-18v6h8V3h-8z"/>
+                                </svg>
+                                {isMenuOpen && <span>Tổng quan</span>}
+                            </Link>
                         </li>
-                        <li className="dir-incidents-nav-item">
-                            <a href="/director/customer-list" className="dir-incidents-nav-link">
-                                <span className="dir-incidents-nav-icon">👥</span>
-                                {isSidebarOpen && <span>Khách hàng</span>}
-                            </a>
+                        <li className="il-nav-item">
+                            <Link to="/director/customer-list" className="il-nav-link">
+                                <svg className="il-nav-icon" viewBox="0 0 24 24" fill="currentColor">
+                                    <path d="M16 11c1.66 0 2.99-1.34 2.99-3S17.66 5 16 5c-1.66 0-3 1.34-3 3s1.34 3 3 3zm-8 0c1.66 0 2.99-1.34 2.99-3S9.66 5 8 5C6.34 5 5 6.34 5 8s1.34 3 3 3zm0 2c-2.33 0-7 1.17-7 3.5V19h14v-2.5c0-2.33-4.67-3.5-7-3.5zm8 0c-.29 0-.62.02-.97.05 1.16.84 1.97 1.97 1.97 3.45V19h6v-2.5c0-2.33-4.67-3.5-7-3.5z"/>
+                                </svg>
+                                {isMenuOpen && <span>Khách hàng</span>}
+                            </Link>
                         </li>
-                        <li className="dir-incidents-nav-item">
-                            <a href="/director/employee-control" className="dir-incidents-nav-link">
-                                <span className="dir-incidents-nav-icon">👮</span>
-                                {isSidebarOpen && <span>Nhân viên</span>}
-                            </a>
+                        <li className="il-nav-item">
+                            <Link to="/director/employee-control" className="il-nav-link">
+                                <svg className="il-nav-icon" viewBox="0 0 24 24" fill="currentColor">
+                                    <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 3c1.66 0 3 1.34 3 3s-1.34 3-3 3-3-1.34-3-3 1.34-3 3-3zm0 14.2c-2.5 0-4.71-1.28-6-3.22.03-1.99 4-3.08 6-3.08 1.99 0 5.97 1.09 6 3.08-1.29 1.94-3.5 3.22-6 3.22z"/>
+                                </svg>
+                                {isMenuOpen && <span>Quản lý nhân sự</span>}
+                            </Link>
                         </li>
-                        <li className="dir-incidents-nav-item dir-incidents-nav-active">
-                            <a href="/director/incidents" className="dir-incidents-nav-link">
-                                <span className="dir-incidents-nav-icon">🚨</span>
-                                {isSidebarOpen && <span>Sự cố</span>}
-                            </a>
+                        <li className="il-nav-item">
+                            <Link to="/director/analytics" className="il-nav-link">
+                                <svg className="il-nav-icon" viewBox="0 0 24 24" fill="currentColor">
+                                    <path d="M16 6l2.29 2.29-4.88 4.88-4-4L2 16.59 3.41 18l6-6 4 4 6.3-6.29L22 12V6z"/>
+                                </svg>
+                                {isMenuOpen && <span>Phân tích</span>}
+                            </Link>
                         </li>
-                        <li className="dir-incidents-nav-item">
-                            <a href="/director/chat" className="dir-incidents-nav-link">
-                                <span className="dir-incidents-nav-icon">💬</span>
-                                {isSidebarOpen && <span>Tin nhắn</span>}
-                            </a>
+                        <li className="il-nav-item il-nav-active">
+                            <Link to="/director/incidents" className="il-nav-link">
+                                <svg className="il-nav-icon" viewBox="0 0 24 24" fill="currentColor">
+                                    <path d="M12 2L1 21h22L12 2zm0 3.99L19.53 19H4.47L12 5.99zM11 16v2h2v-2h-2zm0-6v4h2v-4h-2z"/>
+                                </svg>
+                                {isMenuOpen && <span>Sự cố</span>}
+                            </Link>
+                        </li>
+                        <li className="il-nav-item">
+                            <Link to="/director/chat" className="il-nav-link">
+                                <svg className="il-nav-icon" viewBox="0 0 24 24" fill="currentColor">
+                                    <path d="M20 2H4c-1.1 0-1.99.9-1.99 2L2 22l4-4h14c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2zM6 9h12v2H6V9zm8 5H6v-2h8v2zm4-6H6V6h12v2z"/>
+                                </svg>
+                                {isMenuOpen && <span>Trò chuyện</span>}
+                            </Link>
                         </li>
                     </ul>
                 </nav>
             </aside>
 
             {/* Main Content */}
-            <main className={`dir-incidents-main ${isSidebarOpen ? 'dir-incidents-main-sidebar-open' : 'dir-incidents-main-sidebar-closed'}`}>
-                {/* Header */}
-                <header className="dir-incidents-header">
-                    <div className="dir-incidents-header-left">
-                        <button className="dir-incidents-menu-btn" onClick={toggleSidebar}>
-                            ☰
+            <div className={`il-main-content ${isMenuOpen ? 'il-content-expanded' : 'il-content-collapsed'}`}>
+                <header className="il-header">
+                    <div className="il-header-left">
+                        <button className="il-menu-toggle" onClick={toggleMenu}>
+                            <svg viewBox="0 0 24 24" fill="currentColor">
+                                <path d="M3 18h18v-2H3v2zm0-5h18v-2H3v2zm0-7v2h18V6H3z"/>
+                            </svg>
                         </button>
-                        <h1 className="dir-incidents-title">Danh sách sự cố</h1>
+                        <h1 className="il-page-title">Danh sách sự cố</h1>
                     </div>
-                    <div className="dir-incidents-header-right">
-                        <div className="dir-incidents-user-info">
-                            <div className="dir-incidents-user-avatar">
+                    <div className="il-header-right">
+                        <button className="il-notification-btn">
+                            <svg viewBox="0 0 24 24" fill="currentColor">
+                                <path d="M12 22c1.1 0 2-.9 2-2h-4c0 1.1.9 2 2 2zm6-6v-5c0-3.07-1.64-5.64-4.5-6.32V4c0-.83-.67-1.5-1.5-1.5s-1.5.67-1.5 1.5v.68C7.63 5.36 6 7.92 6 11v5l-2 2v1h16v-1l-2-2z"/>
+                            </svg>
+                            <span className="il-notification-badge">5</span>
+                        </button>
+                        <div ref={profileRef} className="il-user-profile" onClick={toggleProfileDropdown}>
+                            <div className="il-user-avatar">
                                 <span>{user?.fullName?.charAt(0).toUpperCase() || 'D'}</span>
                             </div>
-                            <span className="dir-incidents-user-name">{user?.fullName || 'Director'}</span>
-                            <button className="dir-incidents-logout-btn" onClick={() => setShowLogoutModal(true)}>
-                                Đăng xuất
-                            </button>
+                            <div className="il-user-info">
+                                <span className="il-user-name">{user?.fullName || 'Director'}</span>
+                                <span className="il-user-role">Giám đốc điều hành</span>
+                            </div>
+                            {isProfileDropdownOpen && (
+                                <div className="il-profile-dropdown">
+                                    <div
+                                        className={`il-dropdown-item il-logout-item ${isLoggingOut ? 'il-disabled' : ''}`}
+                                        onClick={(e) => {
+                                            e.stopPropagation();
+                                            if (!isLoggingOut) {
+                                                handleLogout();
+                                            }
+                                        }}
+                                        style={{
+                                            cursor: isLoggingOut ? 'not-allowed' : 'pointer',
+                                            opacity: isLoggingOut ? 0.5 : 1
+                                        }}
+                                    >
+                                        <svg className="il-dropdown-icon" viewBox="0 0 24 24" fill="currentColor">
+                                            <path d="M17 7l-1.41 1.41L18.17 11H8v2h10.17l-2.58 2.58L17 17l5-5zM4 5h8V3H4c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h8v-2H4V5z"/>
+                                        </svg>
+                                        {isLoggingOut ? 'Đang đăng xuất...' : 'Đăng xuất'}
+                                    </div>
+                                </div>
+                            )}
                         </div>
                     </div>
                 </header>
 
-                {/* Content */}
-                <div className="dir-incidents-content">
+                <main className="il-main">
                     {loading ? (
-                        <div className="dir-incidents-loading">Đang tải dữ liệu...</div>
+                        <div className="il-loading">Đang tải dữ liệu...</div>
                     ) : error ? (
-                        <div className="dir-incidents-error">Lỗi: {error}</div>
+                        <div className="il-error">Lỗi: {error}</div>
                     ) : incidents.length === 0 ? (
-                        <div className="dir-incidents-empty">Không có sự cố nào</div>
+                        <div className="il-empty">Không có sự cố nào</div>
                     ) : (
                         <>
                             {/* Incidents List */}
-                            <div className="dir-incidents-list">
+                            <div className="il-incidents-list">
                                 {currentIncidents.map((incident) => (
-                                    <div key={incident.id} className="dir-incident-item">
-                                        <div className="dir-incident-info">
-                                            <div className="dir-incident-header">
-                                                <h3 className="dir-incident-title">{incident.title}</h3>
-                                                <span className="dir-incident-code">{incident.incidentCode}</span>
+                                    <div key={incident.id} className="il-incident-item">
+                                        <div className="il-incident-info">
+                                            <div className="il-incident-header">
+                                                <h3 className="il-incident-title">{incident.title}</h3>
+                                                <span className="il-incident-code">{incident.incidentCode}</span>
                                             </div>
-                                            <div className="dir-incident-details">
-                                                <div className="dir-incident-detail-item">
-                                                    <span className="dir-incident-label">Loại sự cố:</span>
-                                                    <span className="dir-incident-value">{getIncidentTypeLabel(incident.incidentType)}</span>
+                                            <div className="il-incident-details">
+                                                <div className="il-incident-detail-item">
+                                                    <span className="il-incident-label">Loại sự cố:</span>
+                                                    <span className="il-incident-value">{getIncidentTypeLabel(incident.incidentType)}</span>
                                                 </div>
-                                                <div className="dir-incident-detail-item">
-                                                    <span className="dir-incident-label">Mức độ:</span>
+                                                <div className="il-incident-detail-item">
+                                                    <span className="il-incident-label">Mức độ:</span>
                                                     <span
-                                                        className="dir-incident-severity"
+                                                        className="il-incident-severity"
                                                         style={{ backgroundColor: getSeverityColor(incident.severity) }}
                                                     >
                                                         {getSeverityLabel(incident.severity)}
                                                     </span>
                                                 </div>
-                                                <div className="dir-incident-detail-item">
-                                                    <span className="dir-incident-label">Trạng thái:</span>
-                                                    <span className="dir-incident-status">{getStatusLabel(incident.status)}</span>
+                                                <div className="il-incident-detail-item">
+                                                    <span className="il-incident-label">Trạng thái:</span>
+                                                    <span className="il-incident-status">{getStatusLabel(incident.status)}</span>
                                                 </div>
                                             </div>
                                         </div>
-                                        <div className="dir-incident-actions">
+                                        <div className="il-incident-actions">
                                             <button
-                                                className="dir-incident-btn dir-incident-btn-detail"
+                                                className="il-incident-btn il-incident-btn-detail"
                                                 onClick={() => handleViewDetail(incident.id)}
                                             >
                                                 Xem chi tiết
                                             </button>
                                             <button
-                                                className="dir-incident-btn dir-incident-btn-response"
+                                                className="il-incident-btn il-incident-btn-response"
                                                 onClick={() => handleOpenResponseModal(incident.id)}
                                                 disabled={incident.status === 'RESPONDED' || incident.status === 'RESOLVED'}
                                             >
@@ -422,9 +503,9 @@ const IncidentList: React.FC = () => {
 
                             {/* Pagination */}
                             {totalPages > 1 && (
-                                <div className="dir-incidents-pagination">
+                                <div className="il-pagination">
                                     <button
-                                        className="dir-incidents-page-btn"
+                                        className="il-page-btn"
                                         onClick={() => handlePageChange(currentPage - 1)}
                                         disabled={currentPage === 1}
                                     >
@@ -433,14 +514,14 @@ const IncidentList: React.FC = () => {
                                     {Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => (
                                         <button
                                             key={page}
-                                            className={`dir-incidents-page-btn ${currentPage === page ? 'dir-incidents-page-btn-active' : ''}`}
+                                            className={`il-page-btn ${currentPage === page ? 'il-page-btn-active' : ''}`}
                                             onClick={() => handlePageChange(page)}
                                         >
                                             {page}
                                         </button>
                                     ))}
                                     <button
-                                        className="dir-incidents-page-btn"
+                                        className="il-page-btn"
                                         onClick={() => handlePageChange(currentPage + 1)}
                                         disabled={currentPage === totalPages}
                                     >
@@ -450,94 +531,94 @@ const IncidentList: React.FC = () => {
                             )}
                         </>
                     )}
-                </div>
-            </main>
+                </main>
+            </div>
 
             {/* Detail Modal */}
             {showDetailModal && (
-                <div className="dir-incident-modal-overlay" onClick={handleCloseDetailModal}>
-                    <div className="dir-incident-modal-content" onClick={(e) => e.stopPropagation()}>
-                        <div className="dir-incident-modal-header">
+                <div className="il-modal-overlay" onClick={handleCloseDetailModal}>
+                    <div className="il-modal-content" onClick={(e) => e.stopPropagation()}>
+                        <div className="il-modal-header">
                             <h2>Chi tiết sự cố</h2>
-                            <button className="dir-incident-modal-close" onClick={handleCloseDetailModal}>×</button>
+                            <button className="il-modal-close" onClick={handleCloseDetailModal}>×</button>
                         </div>
-                        <div className="dir-incident-modal-body">
+                        <div className="il-modal-body">
                             {loadingDetail ? (
-                                <div className="dir-incident-modal-loading">Đang tải...</div>
+                                <div className="il-modal-loading">Đang tải...</div>
                             ) : selectedIncident ? (
-                                <div className="dir-incident-detail">
-                                    <div className="dir-incident-detail-row">
-                                        <span className="dir-incident-detail-label">Mã sự cố:</span>
-                                        <span className="dir-incident-detail-value">{selectedIncident.incidentCode}</span>
+                                <div className="il-detail">
+                                    <div className="il-detail-row">
+                                        <span className="il-detail-label">Mã sự cố:</span>
+                                        <span className="il-detail-value">{selectedIncident.incidentCode}</span>
                                     </div>
-                                    <div className="dir-incident-detail-row">
-                                        <span className="dir-incident-detail-label">Tiêu đề:</span>
-                                        <span className="dir-incident-detail-value">{selectedIncident.title}</span>
+                                    <div className="il-detail-row">
+                                        <span className="il-detail-label">Tiêu đề:</span>
+                                        <span className="il-detail-value">{selectedIncident.title}</span>
                                     </div>
-                                    <div className="dir-incident-detail-row">
-                                        <span className="dir-incident-detail-label">Mô tả:</span>
-                                        <span className="dir-incident-detail-value">{selectedIncident.description}</span>
+                                    <div className="il-detail-row">
+                                        <span className="il-detail-label">Mô tả:</span>
+                                        <span className="il-detail-value">{selectedIncident.description}</span>
                                     </div>
-                                    <div className="dir-incident-detail-row">
-                                        <span className="dir-incident-detail-label">Loại sự cố:</span>
-                                        <span className="dir-incident-detail-value">{getIncidentTypeLabel(selectedIncident.incidentType)}</span>
+                                    <div className="il-detail-row">
+                                        <span className="il-detail-label">Loại sự cố:</span>
+                                        <span className="il-detail-value">{getIncidentTypeLabel(selectedIncident.incidentType)}</span>
                                     </div>
-                                    <div className="dir-incident-detail-row">
-                                        <span className="dir-incident-detail-label">Mức độ:</span>
+                                    <div className="il-detail-row">
+                                        <span className="il-detail-label">Mức độ:</span>
                                         <span
-                                            className="dir-incident-severity"
+                                            className="il-incident-severity"
                                             style={{ backgroundColor: getSeverityColor(selectedIncident.severity) }}
                                         >
                                             {getSeverityLabel(selectedIncident.severity)}
                                         </span>
                                     </div>
-                                    <div className="dir-incident-detail-row">
-                                        <span className="dir-incident-detail-label">Thời gian xảy ra:</span>
-                                        <span className="dir-incident-detail-value">
+                                    <div className="il-detail-row">
+                                        <span className="il-detail-label">Thời gian xảy ra:</span>
+                                        <span className="il-detail-value">
                                             {new Date(selectedIncident.incidentTime).toLocaleString('vi-VN')}
                                         </span>
                                     </div>
-                                    <div className="dir-incident-detail-row">
-                                        <span className="dir-incident-detail-label">Địa điểm:</span>
-                                        <span className="dir-incident-detail-value">{selectedIncident.location}</span>
+                                    <div className="il-detail-row">
+                                        <span className="il-detail-label">Địa điểm:</span>
+                                        <span className="il-detail-value">{selectedIncident.location}</span>
                                     </div>
-                                    <div className="dir-incident-detail-row">
-                                        <span className="dir-incident-detail-label">Ca làm việc:</span>
-                                        <span className="dir-incident-detail-value">{selectedIncident.shiftLocation || 'N/A'}</span>
+                                    <div className="il-detail-row">
+                                        <span className="il-detail-label">Ca làm việc:</span>
+                                        <span className="il-detail-value">{selectedIncident.shiftLocation || 'N/A'}</span>
                                     </div>
-                                    <div className="dir-incident-detail-row">
-                                        <span className="dir-incident-detail-label">Trạng thái:</span>
-                                        <span className="dir-incident-detail-value">{getStatusLabel(selectedIncident.status)}</span>
+                                    <div className="il-detail-row">
+                                        <span className="il-detail-label">Trạng thái:</span>
+                                        <span className="il-detail-value">{getStatusLabel(selectedIncident.status)}</span>
                                     </div>
                                     {selectedIncident.responseContent && (
-                                        <div className="dir-incident-detail-row">
-                                            <span className="dir-incident-detail-label">Nội dung phản hồi:</span>
-                                            <span className="dir-incident-detail-value">{selectedIncident.responseContent}</span>
+                                        <div className="il-detail-row">
+                                            <span className="il-detail-label">Nội dung phản hồi:</span>
+                                            <span className="il-detail-value">{selectedIncident.responseContent}</span>
                                         </div>
                                     )}
                                     {selectedIncident.respondedAt && (
-                                        <div className="dir-incident-detail-row">
-                                            <span className="dir-incident-detail-label">Thời gian phản hồi:</span>
-                                            <span className="dir-incident-detail-value">
+                                        <div className="il-detail-row">
+                                            <span className="il-detail-label">Thời gian phản hồi:</span>
+                                            <span className="il-detail-value">
                                                 {new Date(selectedIncident.respondedAt).toLocaleString('vi-VN')}
                                             </span>
                                         </div>
                                     )}
                                     {selectedIncident.mediaFiles && selectedIncident.mediaFiles.length > 0 && (
-                                        <div className="dir-incident-detail-row dir-incident-media-section">
-                                            <span className="dir-incident-detail-label">Hình ảnh:</span>
-                                            <div className="dir-incident-media-gallery">
+                                        <div className="il-detail-row il-media-section">
+                                            <span className="il-detail-label">Hình ảnh:</span>
+                                            <div className="il-media-gallery">
                                                 {selectedIncident.mediaFiles.map((media) => (
-                                                    <div key={media.id} className="dir-incident-media-item">
+                                                    <div key={media.id} className="il-media-item">
                                                         {media.mediaType === 'IMAGE' && (
                                                             <img
                                                                 src={media.presignedUrl}
                                                                 alt={media.caption || media.fileName}
-                                                                className="dir-incident-media-image"
+                                                                className="il-media-image"
                                                             />
                                                         )}
                                                         {media.caption && (
-                                                            <p className="dir-incident-media-caption">{media.caption}</p>
+                                                            <p className="il-media-caption">{media.caption}</p>
                                                         )}
                                                     </div>
                                                 ))}
@@ -546,7 +627,7 @@ const IncidentList: React.FC = () => {
                                     )}
                                 </div>
                             ) : (
-                                <div className="dir-incident-modal-error">Không thể tải thông tin chi tiết</div>
+                                <div className="il-modal-error">Không thể tải thông tin chi tiết</div>
                             )}
                         </div>
                     </div>
@@ -555,27 +636,27 @@ const IncidentList: React.FC = () => {
 
             {/* Response Modal */}
             {showResponseModal && (
-                <div className="dir-incident-modal-overlay" onClick={handleCloseResponseModal}>
-                    <div className="dir-incident-modal-content dir-incident-response-modal" onClick={(e) => e.stopPropagation()}>
-                        <div className="dir-incident-modal-header">
+                <div className="il-modal-overlay" onClick={handleCloseResponseModal}>
+                    <div className="il-modal-content il-response-modal" onClick={(e) => e.stopPropagation()}>
+                        <div className="il-modal-header">
                             <h2>Phản hồi sự cố</h2>
-                            <button className="dir-incident-modal-close" onClick={handleCloseResponseModal}>×</button>
+                            <button className="il-modal-close" onClick={handleCloseResponseModal}>×</button>
                         </div>
-                        <div className="dir-incident-modal-body">
-                            <div className="dir-incident-response-form">
-                                <label className="dir-incident-form-label">Nội dung phản hồi:</label>
+                        <div className="il-modal-body">
+                            <div className="il-response-form">
+                                <label className="il-form-label">Nội dung phản hồi:</label>
                                 <textarea
-                                    className="dir-incident-form-textarea"
+                                    className="il-form-textarea"
                                     value={responseContent}
                                     onChange={(e) => setResponseContent(e.target.value)}
                                     placeholder="Nhập nội dung phản hồi..."
                                     rows={6}
                                 />
                                 {responseError && (
-                                    <div className="dir-incident-form-error">{responseError}</div>
+                                    <div className="il-form-error">{responseError}</div>
                                 )}
                                 <button
-                                    className="dir-incident-form-submit"
+                                    className="il-form-submit"
                                     onClick={handleSubmitResponse}
                                     disabled={isResponding}
                                 >
@@ -589,19 +670,19 @@ const IncidentList: React.FC = () => {
 
             {/* Logout Confirmation Modal */}
             {showLogoutModal && (
-                <div className="dir-incident-modal-overlay" onClick={() => setShowLogoutModal(false)}>
-                    <div className="dir-incident-modal-content dir-incident-logout-modal" onClick={(e) => e.stopPropagation()}>
-                        <div className="dir-incident-modal-header">
+                <div className="il-modal-overlay" onClick={cancelLogout}>
+                    <div className="il-modal-content il-logout-modal" onClick={(e) => e.stopPropagation()}>
+                        <div className="il-modal-header">
                             <h2>Xác nhận đăng xuất</h2>
-                            <button className="dir-incident-modal-close" onClick={() => setShowLogoutModal(false)}>×</button>
+                            <button className="il-modal-close" onClick={cancelLogout}>×</button>
                         </div>
-                        <div className="dir-incident-modal-body">
+                        <div className="il-modal-body">
                             <p>Bạn có chắc chắn muốn đăng xuất?</p>
-                            <div className="dir-incident-logout-actions">
-                                <button className="dir-incident-btn-cancel" onClick={() => setShowLogoutModal(false)}>
+                            <div className="il-logout-actions">
+                                <button className="il-btn-cancel" onClick={cancelLogout}>
                                     Hủy
                                 </button>
-                                <button className="dir-incident-btn-confirm" onClick={handleLogout}>
+                                <button className="il-btn-confirm" onClick={confirmLogout}>
                                     Đăng xuất
                                 </button>
                             </div>
@@ -612,7 +693,7 @@ const IncidentList: React.FC = () => {
 
             {/* Snackbar */}
             {showSnackbar && (
-                <div className={`dir-incident-snackbar dir-incident-snackbar-${snackbarType}`}>
+                <div className={`il-snackbar il-snackbar-${snackbarType}`}>
                     {snackbarMessage}
                 </div>
             )}
