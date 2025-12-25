@@ -418,7 +418,7 @@ const IncidentList: React.FC = () => {
                                 <path d="M3 18h18v-2H3v2zm0-5h18v-2H3v2zm0-7v2h18V6H3z"/>
                             </svg>
                         </button>
-                        <h1 className="il-page-title">Danh sách sự cố</h1>
+                        <div className="il-datetime">{formatDateTime(currentTime)}</div>
                     </div>
                     <div className="il-header-right">
                         <button className="il-notification-btn">
