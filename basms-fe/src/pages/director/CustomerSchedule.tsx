@@ -498,14 +498,6 @@ const CustomerSchedule = () => {
                             </Link>
                         </li>
                         <li className="cust-schedule-nav-item">
-                            <Link to="/director/analytics" className="cust-schedule-nav-link">
-                                <svg className="cust-schedule-nav-icon" viewBox="0 0 24 24" fill="currentColor">
-                                    <path d="M16 6l2.29 2.29-4.88 4.88-4-4L2 16.59 3.41 18l6-6 4 4 6.3-6.29L22 12V6z"/>
-                                </svg>
-                                {isMenuOpen && <span>Phân tích</span>}
-                            </Link>
-                        </li>
-                        <li className="cust-schedule-nav-item">
                             <Link to="/director/incidents" className="cust-schedule-nav-link">
                                 <svg className="cust-schedule-nav-icon" viewBox="0 0 24 24" fill="currentColor">
                                     <path d="M12 2L1 21h22L12 2zm0 3.99L19.53 19H4.47L12 5.99zM11 16v2h2v-2h-2zm0-6v4h2v-4h-2z"/>
