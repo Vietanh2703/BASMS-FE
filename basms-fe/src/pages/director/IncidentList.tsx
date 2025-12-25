@@ -57,6 +57,7 @@ const IncidentList: React.FC = () => {
     const navigate = useNavigate();
     const { user, logout } = useAuth();
     const [isMenuOpen, setIsMenuOpen] = useState(false);
+    const [currentTime, setCurrentTime] = useState(new Date());
     const [isProfileDropdownOpen, setIsProfileDropdownOpen] = useState(false);
     const [isLoggingOut, setIsLoggingOut] = useState(false);
     const profileRef = useRef<HTMLDivElement>(null);
@@ -89,6 +90,11 @@ const IncidentList: React.FC = () => {
 
     useEffect(() => {
         fetchIncidents();
+    }, []);
+
+    useEffect(() => {
+        const timer = setInterval(() => setCurrentTime(new Date()), 1000);
+        return () => clearInterval(timer);
     }, []);
 
     useEffect(() => {
@@ -268,6 +274,17 @@ const IncidentList: React.FC = () => {
 
     const cancelLogout = () => {
         setShowLogoutModal(false);
+    };
+
+    const formatDateTime = (date: Date): string => {
+        const days = ['Chủ nhật', 'Thứ hai', 'Thứ ba', 'Thứ tư', 'Thứ năm', 'Thứ sáu', 'Thứ bảy'];
+        const day = date.getDate().toString().padStart(2, '0');
+        const month = (date.getMonth() + 1).toString().padStart(2, '0');
+        const year = date.getFullYear();
+        const hours = date.getHours().toString().padStart(2, '0');
+        const minutes = date.getMinutes().toString().padStart(2, '0');
+        const seconds = date.getSeconds().toString().padStart(2, '0');
+        return `${days[date.getDay()]}, ${day}/${month}/${year} ${hours}:${minutes}:${seconds}`;
     };
 
     const getSeverityColor = (severity: string): string => {
