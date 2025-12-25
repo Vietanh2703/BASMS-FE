@@ -191,6 +191,8 @@ const CustomerEdit = () => {
     const shiftScheduleRef = useRef<ShiftScheduleEditHandle>(null);
     const [searchQuery, setSearchQuery] = useState('');
     const [searchResults, setSearchResults] = useState<H.service.SearchResult[]>([]);
+    const [latInput, setLatInput] = useState('');
+    const [lngInput, setLngInput] = useState('');
 
     // Data state
     const [contractData, setContractData] = useState<ContractData | null>(null);
@@ -291,6 +293,9 @@ const CustomerEdit = () => {
                             latitude: lat,
                             longitude: lng,
                         });
+                        // Update coordinate inputs
+                        setLatInput(lat.toFixed(6));
+                        setLngInput(lng.toFixed(6));
                     }
                 }
             } catch (error) {
@@ -395,6 +400,9 @@ const CustomerEdit = () => {
                         latitude: coord.lat,
                         longitude: coord.lng,
                     });
+                    // Update coordinate inputs
+                    setLatInput(coord.lat.toFixed(6));
+                    setLngInput(coord.lng.toFixed(6));
                 });
 
                 // Resize map on window resize
@@ -618,6 +626,9 @@ const CustomerEdit = () => {
                         latitude: lat,
                         longitude: lng,
                     });
+                    // Update coordinate inputs
+                    setLatInput(lat.toFixed(6));
+                    setLngInput(lng.toFixed(6));
                 } else {
                     setError('Không tìm thấy địa điểm. Vui lòng thử lại với từ khóa khác.');
                     setTimeout(() => setError(null), 3000);
@@ -645,12 +656,62 @@ const CustomerEdit = () => {
             longitude: lng,
         });
 
+        // Update coordinate inputs
+        setLatInput(lat.toFixed(6));
+        setLngInput(lng.toFixed(6));
+
         setSearchResults([]);
     };
 
     const handleSearchKeyPress = (e: React.KeyboardEvent<HTMLInputElement>) => {
         if (e.key === 'Enter') {
             handleSearchLocation();
+        }
+    };
+
+    const handleGoToCoordinates = () => {
+        const lat = parseFloat(latInput);
+        const lng = parseFloat(lngInput);
+
+        // Validate coordinates
+        if (isNaN(lat) || isNaN(lng)) {
+            setError('Vui lòng nhập tọa độ hợp lệ');
+            setTimeout(() => setError(null), 3000);
+            return;
+        }
+
+        if (lat < -90 || lat > 90) {
+            setError('Vĩ độ phải nằm trong khoảng -90 đến 90');
+            setTimeout(() => setError(null), 3000);
+            return;
+        }
+
+        if (lng < -180 || lng > 180) {
+            setError('Kinh độ phải nằm trong khoảng -180 đến 180');
+            setTimeout(() => setError(null), 3000);
+            return;
+        }
+
+        // Update map and marker
+        if (mapRef.current && markerRef.current) {
+            mapRef.current.setCenter({ lat, lng });
+            mapRef.current.setZoom(17);
+            markerRef.current.setGeometry({ lat, lng });
+        }
+
+        // Update GPS data
+        setGpsData({
+            latitude: lat,
+            longitude: lng,
+        });
+
+        // Clear search results
+        setSearchResults([]);
+    };
+
+    const handleCoordinateKeyPress = (e: React.KeyboardEvent<HTMLInputElement>) => {
+        if (e.key === 'Enter') {
+            handleGoToCoordinates();
         }
     };
 
@@ -862,6 +923,9 @@ const CustomerEdit = () => {
                                                     const lng = location.locationDetails.longitude;
                                                     if (lat && lng) {
                                                         setGpsData({ latitude: lat, longitude: lng });
+                                                        // Update coordinate inputs
+                                                        setLatInput(lat.toFixed(6));
+                                                        setLngInput(lng.toFixed(6));
                                                         if (mapRef.current && markerRef.current) {
                                                             mapRef.current.setCenter({ lat, lng });
                                                             markerRef.current.setGeometry({ lat, lng });
@@ -905,6 +969,50 @@ const CustomerEdit = () => {
                                     </div>
                                     <p className="cust-edit-search-hint">
                                         Gợi ý: Bạn có thể nhập tên đường, quận/huyện hoặc địa chỉ đầy đủ để tìm kiếm.
+                                    </p>
+                                </div>
+
+                                {/* Coordinates Input */}
+                                <div className="cust-edit-form-group">
+                                    <label className="cust-edit-label">Hoặc nhập tọa độ trực tiếp</label>
+                                    <div className="cust-edit-coordinates-container">
+                                        <div className="cust-edit-coordinate-input-group">
+                                            <label className="cust-edit-coordinate-label">Vĩ độ (Latitude)</label>
+                                            <input
+                                                type="number"
+                                                step="0.000001"
+                                                className="cust-edit-input cust-edit-coordinate-input"
+                                                placeholder="Ví dụ: 10.762622"
+                                                value={latInput}
+                                                onChange={(e) => setLatInput(e.target.value)}
+                                                onKeyPress={handleCoordinateKeyPress}
+                                            />
+                                        </div>
+                                        <div className="cust-edit-coordinate-input-group">
+                                            <label className="cust-edit-coordinate-label">Kinh độ (Longitude)</label>
+                                            <input
+                                                type="number"
+                                                step="0.000001"
+                                                className="cust-edit-input cust-edit-coordinate-input"
+                                                placeholder="Ví dụ: 106.660172"
+                                                value={lngInput}
+                                                onChange={(e) => setLngInput(e.target.value)}
+                                                onKeyPress={handleCoordinateKeyPress}
+                                            />
+                                        </div>
+                                        <button
+                                            type="button"
+                                            className="cust-edit-coordinate-btn"
+                                            onClick={handleGoToCoordinates}
+                                        >
+                                            <svg viewBox="0 0 24 24" fill="currentColor" width="20" height="20">
+                                                <path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z"/>
+                                            </svg>
+                                            Đi đến tọa độ
+                                        </button>
+                                    </div>
+                                    <p className="cust-edit-search-hint">
+                                        Gợi ý: Nhập tọa độ GPS chính xác để đánh dấu vị trí trên bản đồ.
                                     </p>
                                 </div>
 
