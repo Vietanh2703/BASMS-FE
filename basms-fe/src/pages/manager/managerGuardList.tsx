@@ -1,6 +1,9 @@
 import {useState, useEffect, useRef} from 'react';
 import { useAuth } from '../../hooks/useAuth.ts';
 import ManagerInfoModal from "../../components/managerInfoModal/managerInfoModal.tsx";
+import SnackbarChecked from '../../components/snackbar/snackbarChecked';
+import SnackbarFailed from '../../components/snackbar/snackbarFailed';
+import SnackbarWarning from '../../components/snackbar/snackbarWarning';
 import './managerGuardList.css';
 
 interface Guard {
@@ -17,6 +20,7 @@ interface Guard {
     employmentStatus: string;
     hireDate: string;
     contractType: string;
+    certificationLevel: string;
     terminationDate: string | null;
     terminationReason: string | null;
     maxWeeklyHours: number;
@@ -44,6 +48,7 @@ interface PendingGuard {
     employmentStatus: string;
     hireDate: string;
     contractType: string;
+    certificationLevel: string;
     preferredShiftType: string | null;
     canWorkOvertime: boolean;
     canWorkWeekends: boolean;
@@ -57,6 +62,20 @@ interface PendingGuard {
     violationCount: number;
     commendationCount: number;
     requestedAt: string;
+    createdAt: string;
+}
+
+interface Team {
+    teamId: string;
+    teamCode: string;
+    teamName: string;
+    managerId: string;
+    managerName: string;
+    specialization: string;
+    currentMemberCount: number;
+    minMembers: number;
+    maxMembers: number;
+    isActive: boolean;
     createdAt: string;
 }
 
@@ -78,6 +97,34 @@ const ManagerGuardList = () => {
     const [loadingPending, setLoadingPending] = useState(false);
     const [confirmingGuardId, setConfirmingGuardId] = useState<string | null>(null);
     const [pendingCount, setPendingCount] = useState<number>(0);
+
+    const [showTeamsModal, setShowTeamsModal] = useState(false);
+    const [teams, setTeams] = useState<Team[]>([]);
+    const [loadingTeams, setLoadingTeams] = useState(false);
+    const [teamsSearchTerm, setTeamsSearchTerm] = useState('');
+    const [showCreateTeamModal, setShowCreateTeamModal] = useState(false);
+    const [teamName, setTeamName] = useState('');
+    const [specialization, setSpecialization] = useState('');
+    const [description, setDescription] = useState('');
+    const [minMembers, setMinMembers] = useState<number>(1);
+    const [maxMembers, setMaxMembers] = useState<number>(10);
+    const [creatingTeam, setCreatingTeam] = useState(false);
+    const [showSuccessSnackbar, setShowSuccessSnackbar] = useState(false);
+    const [showErrorSnackbar, setShowErrorSnackbar] = useState(false);
+    const [showWarningSnackbar, setShowWarningSnackbar] = useState(false);
+    const [snackbarMessage, setSnackbarMessage] = useState('');
+
+    const [showAssignGuardsModal, setShowAssignGuardsModal] = useState(false);
+    const [selectedTeamForAssign, setSelectedTeamForAssign] = useState<Team | null>(null);
+    const [guardsForAssign, setGuardsForAssign] = useState<Guard[]>([]);
+    const [loadingGuardsForAssign, setLoadingGuardsForAssign] = useState(false);
+    const [selectedLeader, setSelectedLeader] = useState<Guard | null>(null);
+    const [selectedMembers, setSelectedMembers] = useState<Guard[]>([]);
+    const [isAssigningTeam, setIsAssigningTeam] = useState(false);
+
+    const [showDeleteTeamModal, setShowDeleteTeamModal] = useState(false);
+    const [selectedTeamForDelete, setSelectedTeamForDelete] = useState<Team | null>(null);
+    const [deletingTeam, setDeletingTeam] = useState(false);
 
     const profileRef = useRef<HTMLDivElement>(null);
 
@@ -350,6 +397,133 @@ const ManagerGuardList = () => {
         setShowPendingModal(false);
     };
 
+    const handleOpenTeamsModal = async () => {
+        setShowTeamsModal(true);
+        await fetchTeams();
+    };
+
+    const handleCloseTeamsModal = () => {
+        setShowTeamsModal(false);
+        setTeamsSearchTerm('');
+    };
+
+    const handleOpenCreateTeamModal = () => {
+        setShowCreateTeamModal(true);
+        setTeamName('');
+        setSpecialization('');
+        setDescription('');
+        setMinMembers(1);
+        setMaxMembers(10);
+    };
+
+    const handleCloseCreateTeamModal = () => {
+        setShowCreateTeamModal(false);
+        setTeamName('');
+        setSpecialization('');
+        setDescription('');
+        setMinMembers(1);
+        setMaxMembers(10);
+    };
+
+    const fetchTeams = async () => {
+        if (!managerId) return;
+
+        try {
+            setLoadingTeams(true);
+            const accessToken = localStorage.getItem('accessToken');
+
+            if (!accessToken) {
+                console.error('No access token found');
+                return;
+            }
+
+            const url = `${import.meta.env.VITE_API_SHIFTS_URL}/shifts/teams?managerId=${managerId}`;
+            const response = await fetch(url, {
+                headers: {
+                    'Authorization': `Bearer ${accessToken}`,
+                    'Content-Type': 'application/json',
+                }
+            });
+
+            if (!response.ok) {
+                throw new Error(`Failed to fetch teams: ${response.status}`);
+            }
+
+            const data = await response.json();
+            setTeams(data.teams || []);
+        } catch (err) {
+            console.error('Error fetching teams:', err);
+            setSnackbarMessage('Không thể tải danh sách nhóm');
+            setShowErrorSnackbar(true);
+        } finally {
+            setLoadingTeams(false);
+        }
+    };
+
+    const handleCreateTeam = async () => {
+        if (!managerId) return;
+
+        try {
+            setCreatingTeam(true);
+            const accessToken = localStorage.getItem('accessToken');
+
+            if (!accessToken) {
+                throw new Error('No access token found');
+            }
+
+            const url = `${import.meta.env.VITE_API_SHIFTS_URL}/shifts/teams`;
+            const requestBody = {
+                managerId: managerId,
+                teamName: teamName.trim(),
+                specialization: specialization,
+                description: description.trim(),
+                minMembers: minMembers,
+                maxMembers: maxMembers
+            };
+
+            const response = await fetch(url, {
+                method: 'POST',
+                headers: {
+                    'Authorization': `Bearer ${accessToken}`,
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify(requestBody)
+            });
+
+            if (!response.ok) {
+                throw new Error(`Failed to create team: ${response.status}`);
+            }
+
+            setSnackbarMessage('Tạo nhóm thành công');
+            setShowSuccessSnackbar(true);
+            handleCloseCreateTeamModal();
+        } catch (err) {
+            console.error('Error creating team:', err);
+            setSnackbarMessage('Tạo nhóm thất bại');
+            setShowErrorSnackbar(true);
+        } finally {
+            setCreatingTeam(false);
+        }
+    };
+
+    const handleSuccessSnackbarClose = () => {
+        setShowSuccessSnackbar(false);
+        if (showTeamsModal) {
+            fetchTeams();
+        }
+    };
+
+    const getSpecializationLabel = (spec: string): string => {
+        const labels: { [key: string]: string } = {
+            'RESIDENTIAL': 'Khu dân cư',
+            'COMMERCIAL': 'Thương mại',
+            'EVENT': 'Sự kiện',
+            'VIP': 'VIP',
+            'INDUSTRIAL': 'Công nghiệp'
+        };
+        return labels[spec] || spec;
+    };
+
     const fetchPendingRequests = async () => {
         if (!managerId) return;
 
@@ -436,6 +610,243 @@ const ManagerGuardList = () => {
         }
     };
 
+    const handleOpenAssignGuardsModal = async (team: Team) => {
+        setSelectedTeamForAssign(team);
+        setShowTeamsModal(false);
+        setShowAssignGuardsModal(true);
+        setSelectedLeader(null);
+        setSelectedMembers([]);
+        await fetchGuardsForAssign();
+    };
+
+    const handleCloseAssignGuardsModal = () => {
+        setShowAssignGuardsModal(false);
+        setSelectedTeamForAssign(null);
+        setGuardsForAssign([]);
+        setSelectedLeader(null);
+        setSelectedMembers([]);
+        setShowTeamsModal(true);
+    };
+
+    const fetchGuardsForAssign = async () => {
+        if (!managerId) return;
+
+        try {
+            setLoadingGuardsForAssign(true);
+            const accessToken = localStorage.getItem('accessToken');
+
+            if (!accessToken) {
+                console.error('No access token found');
+                return;
+            }
+
+            const url = `${import.meta.env.VITE_API_SHIFTS_URL}/shifts/guards/joined/${managerId}`;
+            const response = await fetch(url, {
+                headers: {
+                    'Authorization': `Bearer ${accessToken}`,
+                    'Content-Type': 'application/json',
+                }
+            });
+
+            if (!response.ok) {
+                throw new Error(`Failed to fetch guards: ${response.status}`);
+            }
+
+            const data = await response.json();
+            setGuardsForAssign(data.guards || []);
+        } catch (err) {
+            console.error('Error fetching guards for assign:', err);
+            setSnackbarMessage('Không thể tải danh sách bảo vệ');
+            setShowErrorSnackbar(true);
+        } finally {
+            setLoadingGuardsForAssign(false);
+        }
+    };
+
+    const handleSelectLeader = (guard: Guard) => {
+        if (guard.certificationLevel === 'I') {
+            setSnackbarMessage('Không phân công bảo vệ cấp bậc I thành trưởng nhóm');
+            setShowErrorSnackbar(true);
+            return;
+        }
+        setSelectedLeader(guard);
+    };
+
+    const getCertificationLevelLabel = (level: string): string => {
+        const labels: { [key: string]: string } = {
+            'I': 'Cấp bậc I',
+            'II': 'Cấp bậc II',
+            'III': 'Cấp bậc III'
+        };
+        return labels[level] || level;
+    };
+
+    const handleSelectMember = (guard: Guard) => {
+        if (!selectedTeamForAssign) return;
+
+        const maxMembers = selectedTeamForAssign.maxMembers;
+        const needsLeader = maxMembers > 1;
+        const maxMembersSlots = needsLeader ? maxMembers - 1 : maxMembers;
+
+        // Kiểm tra nếu team chỉ có 1 người và guard cấp bậc I
+        if (maxMembers === 1 && guard.certificationLevel === 'I') {
+            setSnackbarMessage('Nhóm 1 người chỉ có thể phân công cho cấp bậc II hoặc cấp bậc III');
+            setShowErrorSnackbar(true);
+            return;
+        }
+
+        if (selectedMembers.length < maxMembersSlots) {
+            setSelectedMembers([...selectedMembers, guard]);
+        }
+    };
+
+    const handleRemoveLeader = () => {
+        setSelectedLeader(null);
+    };
+
+    const handleRemoveMember = (guardId: string) => {
+        setSelectedMembers(selectedMembers.filter(g => g.id !== guardId));
+    };
+
+    const isGuardSelected = (guardId: string) => {
+        return selectedLeader?.id === guardId || selectedMembers.some(g => g.id === guardId);
+    };
+
+    const canConfirmAssignment = () => {
+        if (!selectedTeamForAssign) return false;
+
+        const maxMembers = selectedTeamForAssign.maxMembers;
+        const needsLeader = maxMembers > 1;
+
+        if (needsLeader) {
+            const maxMembersSlots = maxMembers - 1;
+            return selectedLeader !== null && selectedMembers.length === maxMembersSlots;
+        } else {
+            return selectedMembers.length === 1;
+        }
+    };
+
+    const handleConfirmAssignment = async () => {
+        if (!selectedTeamForAssign || !user?.userId) return;
+
+        try {
+            setIsAssigningTeam(true);
+            const accessToken = localStorage.getItem('accessToken');
+
+            if (!accessToken) {
+                throw new Error('No access token found');
+            }
+
+            const assignments: Array<{guardId: string, role: string, joiningNotes: string}> = [];
+
+            if (selectedLeader) {
+                assignments.push({
+                    guardId: selectedLeader.id,
+                    role: 'LEADER',
+                    joiningNotes: 'Phân công đội trưởng'
+                });
+            }
+
+            selectedMembers.forEach(member => {
+                assignments.push({
+                    guardId: member.id,
+                    role: 'MEMBER',
+                    joiningNotes: 'Phân công thành viên'
+                });
+            });
+
+            const url = `${import.meta.env.VITE_API_SHIFTS_URL}/shifts/teams/${selectedTeamForAssign.teamId}/members`;
+
+            for (const assignment of assignments) {
+                const response = await fetch(url, {
+                    method: 'POST',
+                    headers: {
+                        'Authorization': `Bearer ${accessToken}`,
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify(assignment)
+                });
+
+                if (!response.ok) {
+                    throw new Error('Failed to assign guard');
+                }
+            }
+
+            setSnackbarMessage('Phân công thành công');
+            setShowSuccessSnackbar(true);
+            handleCloseAssignGuardsModal();
+        } catch (err) {
+            console.error('Error assigning guards to team:', err);
+            setSnackbarMessage('Phân công thất bại');
+            setShowErrorSnackbar(true);
+        } finally {
+            setIsAssigningTeam(false);
+        }
+    };
+
+    const handleOpenDeleteTeamModal = (team: Team) => {
+        setSelectedTeamForDelete(team);
+        setShowDeleteTeamModal(true);
+    };
+
+    const handleCloseDeleteTeamModal = () => {
+        setShowDeleteTeamModal(false);
+        setSelectedTeamForDelete(null);
+    };
+
+    const handleDeleteTeam = async () => {
+        if (!selectedTeamForDelete || !user?.userId) return;
+
+        try {
+            setDeletingTeam(true);
+            const accessToken = localStorage.getItem('accessToken');
+
+            if (!accessToken) {
+                throw new Error('No access token found');
+            }
+
+            const url = `${import.meta.env.VITE_API_SHIFTS_URL}/shifts/teams/${selectedTeamForDelete.teamId}/delete`;
+            const requestBody = {
+                TeamId: selectedTeamForDelete.teamId,
+                DeletedBy: user.userId
+            };
+
+            const response = await fetch(url, {
+                method: 'PUT',
+                headers: {
+                    'Authorization': `Bearer ${accessToken}`,
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify(requestBody)
+            });
+
+            const responseText = await response.text();
+
+            if (!response.ok) {
+                if (responseText.includes('được phân công') || responseText.includes('ca trực')) {
+                    setSnackbarMessage('Nhóm hiện đã được phân công ca trực. Không thể xóa');
+                    setShowErrorSnackbar(true);
+                } else {
+                    setSnackbarMessage('Xóa nhóm thất bại');
+                    setShowErrorSnackbar(true);
+                }
+                handleCloseDeleteTeamModal();
+                return;
+            }
+
+            setSnackbarMessage('Xóa nhóm thành công');
+            setShowSuccessSnackbar(true);
+            handleCloseDeleteTeamModal();
+        } catch (err) {
+            console.error('Error deleting team:', err);
+            setSnackbarMessage('Xóa nhóm thất bại');
+            setShowErrorSnackbar(true);
+            handleCloseDeleteTeamModal();
+        } finally {
+            setDeletingTeam(false);
+        }
+    };
+
     return (
         <div className="manager-dashboard-wrapper">
             <aside className={`manager-sidebar ${isMenuOpen ? 'manager-sidebar-open' : 'manager-sidebar-closed'}`}>
@@ -478,6 +889,14 @@ const ManagerGuardList = () => {
                                     <path d="M19 3h-1V1h-2v2H8V1H6v2H5c-1.11 0-1.99.9-1.99 2L3 19c0 1.1.89 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm0 16H5V8h14v11zM7 10h5v5H7z"/>
                                 </svg>
                                 {isMenuOpen && <span>Phân công ca làm</span>}
+                            </a>
+                        </li>
+                        <li className="manager-nav-item">
+                            <a href="/manager/chat" className="manager-nav-link">
+                                <svg className="manager-nav-icon" viewBox="0 0 24 24" fill="currentColor">
+                                    <path d="M20 2H4c-1.1 0-1.99.9-1.99 2L2 22l4-4h14c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2zM6 9h12v2H6V9zm8 5H6v-2h8v2zm4-6H6V6h12v2z"/>
+                                </svg>
+                                {isMenuOpen && <span>Trò chuyện</span>}
                             </a>
                         </li>
                     </ul>
@@ -558,15 +977,23 @@ const ManagerGuardList = () => {
                             <h1 className="manager-page-title">Quản lý nhân viên bảo vệ</h1>
                             <p className="manager-page-subtitle">Danh sách nhân viên bảo vệ đang quản lý</p>
                         </div>
-                        <button className="mgr-guard-pending-btn" onClick={handleOpenPendingModal}>
-                            <svg viewBox="0 0 24 24" fill="currentColor">
-                                <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/>
-                            </svg>
-                            Xác nhận bảo vệ
-                            {pendingCount > 0 && (
-                                <span className="mgr-guard-badge">{pendingCount}</span>
-                            )}
-                        </button>
+                        <div style={{ display: 'flex', gap: '12px' }}>
+                            <button className="mgr-guard-pending-btn" onClick={handleOpenPendingModal}>
+                                <svg viewBox="0 0 24 24" fill="currentColor">
+                                    <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/>
+                                </svg>
+                                Xác nhận bảo vệ
+                                {pendingCount > 0 && (
+                                    <span className="mgr-guard-badge">{pendingCount}</span>
+                                )}
+                            </button>
+                            <button className="mgr-guard-team-btn" onClick={handleOpenTeamsModal}>
+                                <svg viewBox="0 0 24 24" fill="currentColor">
+                                    <path d="M16 11c1.66 0 2.99-1.34 2.99-3S17.66 5 16 5c-1.66 0-3 1.34-3 3s1.34 3 3 3zm-8 0c1.66 0 2.99-1.34 2.99-3S9.66 5 8 5C6.34 5 5 6.34 5 8s1.34 3 3 3zm0 2c-2.33 0-7 1.17-7 3.5V19h14v-2.5c0-2.33-4.67-3.5-7-3.5zm8 0c-.29 0-.62.02-.97.05 1.16.84 1.97 1.97 1.97 3.45V19h6v-2.5c0-2.33-4.67-3.5-7-3.5z"/>
+                                </svg>
+                                Phân công nhóm bảo vệ
+                            </button>
+                        </div>
                     </div>
 
                     <div className="mgr-guard-controls">
@@ -676,6 +1103,10 @@ const ManagerGuardList = () => {
                                                 <svg viewBox="0 0 24 24" fill="currentColor">
                                                     <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 3c1.66 0 3 1.34 3 3s-1.34 3-3 3-3-1.34-3-3 1.34-3 3-3zm0 14.2c-2.5 0-4.71-1.28-6-3.22.03-1.99 4-3.08 6-3.08 1.99 0 5.97 1.09 6 3.08-1.29 1.94-3.5 3.22-6 3.22z"/>
                                                 </svg>
+                                                <div>
+                                                    <span className="mgr-guard-info-label">Cấp bậc</span>
+                                                    <span className="mgr-guard-info-value">{getCertificationLevelLabel(guard.certificationLevel)}</span>
+                                                </div>
                                             </div>
                                             <div className="mgr-guard-info-item">
                                                 <svg viewBox="0 0 24 24" fill="currentColor">
@@ -821,6 +1252,384 @@ const ManagerGuardList = () => {
                     </div>
                 </div>
             )}
+
+            {showTeamsModal && (
+                <div className="mgr-teams-modal-overlay" onClick={handleCloseTeamsModal}>
+                    <div className="mgr-teams-modal-box" onClick={(e) => e.stopPropagation()}>
+                        <div className="mgr-teams-modal-header">
+                            <h2>Danh sách các nhóm</h2>
+                            <div style={{ display: 'flex', gap: '10px', alignItems: 'center' }}>
+                                <button className="mgr-teams-create-btn" onClick={handleOpenCreateTeamModal}>
+                                    Tạo nhóm mới
+                                </button>
+                                <button className="mgr-teams-close-btn" onClick={handleCloseTeamsModal}>
+                                    <svg viewBox="0 0 24 24" fill="currentColor">
+                                        <path d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/>
+                                    </svg>
+                                </button>
+                            </div>
+                        </div>
+
+                        <div className="mgr-teams-search-container">
+                            <svg viewBox="0 0 24 24" fill="currentColor">
+                                <path d="M15.5 14h-.79l-.28-.27C15.41 12.59 16 11.11 16 9.5 16 5.91 13.09 3 9.5 3S3 5.91 3 9.5 5.91 16 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19l-4.99-5zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14z"/>
+                            </svg>
+                            <input
+                                type="text"
+                                placeholder="Tìm kiếm nhóm..."
+                                value={teamsSearchTerm}
+                                onChange={(e) => setTeamsSearchTerm(e.target.value)}
+                            />
+                        </div>
+
+                        <div className="mgr-teams-list-container">
+                            {loadingTeams ? (
+                                <div className="mgr-teams-loading">
+                                    <p>Đang tải danh sách nhóm...</p>
+                                </div>
+                            ) : teams.filter(team =>
+                                team.teamName.toLowerCase().includes(teamsSearchTerm.toLowerCase()) ||
+                                team.teamCode.toLowerCase().includes(teamsSearchTerm.toLowerCase())
+                            ).length === 0 ? (
+                                <div className="mgr-teams-empty">
+                                    <p>Không có nhóm nào</p>
+                                </div>
+                            ) : (
+                                teams
+                                    .filter(team =>
+                                        team.teamName.toLowerCase().includes(teamsSearchTerm.toLowerCase()) ||
+                                        team.teamCode.toLowerCase().includes(teamsSearchTerm.toLowerCase())
+                                    )
+                                    .map(team => (
+                                        <div key={team.teamId} className="mgr-teams-item">
+                                            <div className="mgr-teams-item-main">
+                                                <div className="mgr-teams-item-name">{team.teamName}</div>
+                                                <div className="mgr-teams-item-code">{team.teamCode}</div>
+                                            </div>
+                                            <div className="mgr-teams-item-info">
+                                                <span>Thành viên: {team.currentMemberCount}/{team.maxMembers}</span>
+                                                <span>Chuyên môn: {getSpecializationLabel(team.specialization)}</span>
+                                                <span>Trạng thái: {team.isActive ? 'Hoạt động' : 'Không hoạt động'}</span>
+                                            </div>
+                                            <div className="mgr-teams-item-actions">
+                                                {team.currentMemberCount < team.maxMembers && (
+                                                    <button
+                                                        className="mgr-teams-assign-btn"
+                                                        onClick={() => handleOpenAssignGuardsModal(team)}
+                                                    >
+                                                        Phân công
+                                                    </button>
+                                                )}
+                                                <button
+                                                    className="mgr-teams-delete-btn"
+                                                    onClick={() => handleOpenDeleteTeamModal(team)}
+                                                >
+                                                    Xóa nhóm
+                                                </button>
+                                            </div>
+                                        </div>
+                                    ))
+                            )}
+                        </div>
+                    </div>
+                </div>
+            )}
+
+            {showCreateTeamModal && (
+                <div className="mgr-create-team-modal-overlay" onClick={handleCloseCreateTeamModal}>
+                    <div className="mgr-create-team-modal-box" onClick={(e) => e.stopPropagation()}>
+                        <div className="mgr-create-team-modal-header">
+                            <h2>Tạo nhóm mới</h2>
+                            <button className="mgr-create-team-close-btn" onClick={handleCloseCreateTeamModal}>
+                                <svg viewBox="0 0 24 24" fill="currentColor">
+                                    <path d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/>
+                                </svg>
+                            </button>
+                        </div>
+
+                        <div className="mgr-create-team-form">
+                            <div className="mgr-create-team-field">
+                                <label>Tên nhóm <span style={{ color: '#dc3545' }}>*</span></label>
+                                <input
+                                    type="text"
+                                    placeholder="Nhập tên nhóm..."
+                                    value={teamName}
+                                    onChange={(e) => setTeamName(e.target.value)}
+                                />
+                            </div>
+
+                            <div className="mgr-create-team-field">
+                                <label>Chuyên môn <span style={{ color: '#dc3545' }}>*</span></label>
+                                <select value={specialization} onChange={(e) => setSpecialization(e.target.value)}>
+                                    <option value="">-- Chọn chuyên môn --</option>
+                                    <option value="RESIDENTIAL">Khu dân cư</option>
+                                    <option value="COMMERCIAL">Thương mại</option>
+                                    <option value="EVENT">Sự kiện</option>
+                                    <option value="VIP">VIP</option>
+                                    <option value="INDUSTRIAL">Công nghiệp</option>
+                                </select>
+                            </div>
+
+                            <div className="mgr-create-team-field">
+                                <label>Mô tả</label>
+                                <textarea
+                                    placeholder="Nhập mô tả nhóm..."
+                                    value={description}
+                                    onChange={(e) => setDescription(e.target.value)}
+                                    rows={4}
+                                />
+                            </div>
+
+                            <div className="mgr-create-team-row">
+                                <div className="mgr-create-team-field">
+                                    <label>Số thành viên tối thiểu <span style={{ color: '#dc3545' }}>*</span></label>
+                                    <input
+                                        type="number"
+                                        min="1"
+                                        value={minMembers}
+                                        onChange={(e) => setMinMembers(Math.max(1, parseInt(e.target.value) || 1))}
+                                    />
+                                </div>
+
+                                <div className="mgr-create-team-field">
+                                    <label>Số thành viên tối đa <span style={{ color: '#dc3545' }}>*</span></label>
+                                    <input
+                                        type="number"
+                                        min="1"
+                                        value={maxMembers}
+                                        onChange={(e) => setMaxMembers(Math.max(1, parseInt(e.target.value) || 1))}
+                                    />
+                                </div>
+                            </div>
+
+                            {minMembers > maxMembers && (
+                                <div className="mgr-create-team-error">
+                                    Số thành viên tối thiểu không được lớn hơn số thành viên tối đa
+                                </div>
+                            )}
+
+                            <button
+                                className="mgr-create-team-submit-btn"
+                                onClick={handleCreateTeam}
+                                disabled={
+                                    creatingTeam ||
+                                    !teamName.trim() ||
+                                    !specialization ||
+                                    minMembers <= 0 ||
+                                    maxMembers <= 0 ||
+                                    minMembers > maxMembers
+                                }
+                            >
+                                {creatingTeam ? 'Đang tạo nhóm...' : 'Xác nhận tạo nhóm'}
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
+
+            {showAssignGuardsModal && selectedTeamForAssign && (
+                <div className="mgr-assign-guards-modal-overlay">
+                    <div className="mgr-assign-guards-modal-box" onClick={(e) => e.stopPropagation()}>
+                        <div className="mgr-assign-guards-modal-header">
+                            <h2>Phân công bảo vệ vào nhóm {selectedTeamForAssign.teamName}</h2>
+                            <button className="mgr-assign-guards-close-btn" onClick={handleCloseAssignGuardsModal}>
+                                <svg viewBox="0 0 24 24" fill="currentColor">
+                                    <path d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/>
+                                </svg>
+                            </button>
+                        </div>
+
+                        <div className="mgr-assign-guards-body">
+                            <div className="mgr-assign-guards-left">
+                                <h3>Danh sách bảo vệ</h3>
+                                {loadingGuardsForAssign ? (
+                                    <div className="mgr-assign-guards-loading">
+                                        <div className="mgr-guard-spinner"></div>
+                                        <p>Đang tải...</p>
+                                    </div>
+                                ) : guardsForAssign.length === 0 ? (
+                                    <div className="mgr-assign-guards-empty">
+                                        <p>Không có bảo vệ nào</p>
+                                    </div>
+                                ) : (
+                                    <div className="mgr-assign-guards-available-list">
+                                        {guardsForAssign.map(guard => {
+                                            const isSelected = isGuardSelected(guard.id);
+                                            const isFullyAssigned = canConfirmAssignment();
+
+                                            return (
+                                                <div key={guard.id} className="mgr-assign-guard-available-item">
+                                                    <div className="mgr-assign-guard-avatar">
+                                                        {guard.fullName.charAt(0).toUpperCase()}
+                                                    </div>
+                                                    <div className="mgr-assign-guard-info">
+                                                        <div className="mgr-assign-guard-name">{guard.fullName}</div>
+                                                        <div className="mgr-assign-guard-details">
+                                                            <span className="mgr-assign-guard-code">{guard.employeeCode}</span>
+                                                            <span className="mgr-assign-guard-level">{getCertificationLevelLabel(guard.certificationLevel)}</span>
+                                                        </div>
+                                                    </div>
+                                                    {!isSelected && !isFullyAssigned && (
+                                                        <button
+                                                            className="mgr-assign-guard-select-btn"
+                                                            onClick={() => {
+                                                                const needsLeader = selectedTeamForAssign.maxMembers > 1;
+                                                                if (needsLeader && !selectedLeader) {
+                                                                    handleSelectLeader(guard);
+                                                                } else {
+                                                                    handleSelectMember(guard);
+                                                                }
+                                                            }}
+                                                        >
+                                                            Phân công
+                                                        </button>
+                                                    )}
+                                                </div>
+                                            );
+                                        })}
+                                    </div>
+                                )}
+                            </div>
+
+                            <div className="mgr-assign-guards-right">
+                                <h3>Đã chọn phân công</h3>
+
+                                {selectedTeamForAssign.maxMembers > 1 && (
+                                    <div className="mgr-assign-guards-section">
+                                        <div className="mgr-assign-guards-section-header">
+                                            <span>Trưởng nhóm</span>
+                                            <span className="mgr-assign-guards-count">
+                                                {selectedLeader ? 1 : 0}/1
+                                            </span>
+                                        </div>
+                                        {selectedLeader ? (
+                                            <div className="mgr-assign-guard-selected-item">
+                                                <div className="mgr-assign-guard-avatar">
+                                                    {selectedLeader.fullName.charAt(0).toUpperCase()}
+                                                </div>
+                                                <div className="mgr-assign-guard-info">
+                                                    <div className="mgr-assign-guard-name">{selectedLeader.fullName}</div>
+                                                    <div className="mgr-assign-guard-details">
+                                                        <span className="mgr-assign-guard-code">{selectedLeader.employeeCode}</span>
+                                                        <span className="mgr-assign-guard-level">{getCertificationLevelLabel(selectedLeader.certificationLevel)}</span>
+                                                    </div>
+                                                </div>
+                                                <button
+                                                    className="mgr-assign-guard-remove-btn"
+                                                    onClick={handleRemoveLeader}
+                                                >
+                                                    Xóa
+                                                </button>
+                                            </div>
+                                        ) : (
+                                            <div className="mgr-assign-guards-placeholder">
+                                                Vui lòng phân công 1 bảo vệ bậc II hoặc III
+                                            </div>
+                                        )}
+                                    </div>
+                                )}
+
+                                <div className="mgr-assign-guards-section">
+                                    <div className="mgr-assign-guards-section-header">
+                                        <span>Thành viên nhóm</span>
+                                        <span className="mgr-assign-guards-count">
+                                            {selectedMembers.length}/{selectedTeamForAssign.maxMembers > 1 ? selectedTeamForAssign.maxMembers - 1 : selectedTeamForAssign.maxMembers}
+                                        </span>
+                                    </div>
+                                    {selectedMembers.length > 0 ? (
+                                        <div className="mgr-assign-guards-selected-list">
+                                            {selectedMembers.map(member => (
+                                                <div key={member.id} className="mgr-assign-guard-selected-item">
+                                                    <div className="mgr-assign-guard-avatar">
+                                                        {member.fullName.charAt(0).toUpperCase()}
+                                                    </div>
+                                                    <div className="mgr-assign-guard-info">
+                                                        <div className="mgr-assign-guard-name">{member.fullName}</div>
+                                                        <div className="mgr-assign-guard-details">
+                                                            <span className="mgr-assign-guard-code">{member.employeeCode}</span>
+                                                            <span className="mgr-assign-guard-level">{getCertificationLevelLabel(member.certificationLevel)}</span>
+                                                        </div>
+                                                    </div>
+                                                    <button
+                                                        className="mgr-assign-guard-remove-btn"
+                                                        onClick={() => handleRemoveMember(member.id)}
+                                                    >
+                                                        Xóa
+                                                    </button>
+                                                </div>
+                                            ))}
+                                        </div>
+                                    ) : (
+                                        <div className="mgr-assign-guards-placeholder">
+                                            {selectedTeamForAssign.maxMembers === 1
+                                                ? 'Vui lòng phân công 1 bảo vệ bậc II hoặc III'
+                                                : 'Chưa có thành viên nào trong nhóm'
+                                            }
+                                        </div>
+                                    )}
+                                </div>
+                            </div>
+                        </div>
+
+                        <div className="mgr-assign-guards-footer">
+                            <button
+                                className="mgr-assign-guards-confirm-btn"
+                                onClick={handleConfirmAssignment}
+                                disabled={!canConfirmAssignment() || isAssigningTeam}
+                            >
+                                {isAssigningTeam ? 'Đang phân công...' : 'Xác nhận phân công'}
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
+
+            {showDeleteTeamModal && selectedTeamForDelete && (
+                <div className="mgr-delete-team-modal-overlay" onClick={handleCloseDeleteTeamModal}>
+                    <div className="mgr-delete-team-modal-box" onClick={(e) => e.stopPropagation()}>
+                        <div className="mgr-delete-team-modal-header">
+                            <h2>Xác nhận xóa nhóm</h2>
+                        </div>
+                        <div className="mgr-delete-team-modal-body">
+                            <p>Bạn có chắc xóa nhóm <strong>{selectedTeamForDelete.teamName}</strong>?</p>
+                        </div>
+                        <div className="mgr-delete-team-modal-footer">
+                            <button
+                                className="mgr-delete-team-cancel-btn"
+                                onClick={handleCloseDeleteTeamModal}
+                                disabled={deletingTeam}
+                            >
+                                Quay lại
+                            </button>
+                            <button
+                                className="mgr-delete-team-confirm-btn"
+                                onClick={handleDeleteTeam}
+                                disabled={deletingTeam}
+                            >
+                                {deletingTeam ? 'Đang xóa...' : 'Xóa'}
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
+
+            <SnackbarChecked
+                message={snackbarMessage}
+                isOpen={showSuccessSnackbar}
+                onClose={handleSuccessSnackbarClose}
+            />
+
+            <SnackbarFailed
+                message={snackbarMessage}
+                isOpen={showErrorSnackbar}
+                onClose={() => setShowErrorSnackbar(false)}
+            />
+
+            <SnackbarWarning
+                message={snackbarMessage}
+                isOpen={showWarningSnackbar}
+                onClose={() => setShowWarningSnackbar(false)}
+            />
 
             <ManagerInfoModal
                 isOpen={showManagerInfoModal}

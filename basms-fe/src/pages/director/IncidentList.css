@@ -1,0 +1,843 @@
+/* Incident List Styles - Prefix: il- để tránh conflict */
+
+/* Container & Layout */
+.il-container {
+    display: flex;
+    min-height: 100vh;
+    background-color: #f9fafb;
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+}
+
+/* Sidebar */
+.il-sidebar {
+    position: fixed;
+    left: 0;
+    top: 0;
+    height: 100vh;
+    background-color: #ffffff;
+    border-right: 1px solid #e5e7eb;
+    transition: width 0.3s ease;
+    z-index: 1000;
+    overflow: hidden;
+}
+
+.il-sidebar-open { width: 250px; }
+.il-sidebar-closed { width: 70px; }
+
+.il-sidebar-header {
+    padding: 30px 15px 20px 15px;
+    border-bottom: 1px solid #e5e7eb;
+}
+
+.il-sidebar-logo {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.il-logo-icon {
+    width: 40px;
+    height: 40px;
+    background: linear-gradient(135deg, #3b82f6, #1d4ed8);
+    color: white;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 8px;
+    font-weight: 600;
+    font-size: 18px;
+}
+
+.il-logo-text {
+    color: #3b82f6;
+    font-size: 20px;
+    font-weight: 700;
+    white-space: nowrap;
+}
+
+.il-sidebar-nav {
+    padding: 30px 0 20px 0;
+}
+
+.il-nav-list {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+}
+
+.il-nav-item {
+    margin-bottom: 4px;
+}
+
+.il-nav-link {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 12px 20px;
+    color: #6b7280;
+    text-decoration: none;
+    transition: all 0.2s ease;
+    position: relative;
+}
+
+.il-nav-link:hover {
+    background-color: #f8fafc;
+    color: #3b82f6;
+}
+
+.il-nav-active .il-nav-link {
+    background-color: #eff6ff;
+    color: #3b82f6;
+    font-weight: 500;
+}
+
+.il-nav-active .il-nav-link::before {
+    content: '';
+    position: absolute;
+    left: 0;
+    top: 0;
+    bottom: 0;
+    width: 4px;
+    background-color: #3b82f6;
+}
+
+.il-nav-icon {
+    width: 20px;
+    height: 20px;
+    flex-shrink: 0;
+}
+
+/* Main Content */
+.il-main-content {
+    flex: 1;
+    transition: margin-left 0.3s ease;
+}
+
+.il-content-expanded { margin-left: 250px; }
+.il-content-collapsed { margin-left: 70px; }
+
+/* Header */
+.il-header {
+    height: 80px;
+    background: white;
+    border-bottom: 1px solid #e5e7eb;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 15px 30px;
+    position: sticky;
+    top: 0;
+    z-index: 100;
+}
+
+.il-header-left,
+.il-header-right {
+    display: flex;
+    align-items: center;
+    gap: 20px;
+}
+
+.il-menu-toggle {
+    background: none;
+    border: none;
+    color: #6b7280;
+    cursor: pointer;
+    padding: 8px;
+    border-radius: 6px;
+    transition: all 0.2s ease;
+}
+
+.il-menu-toggle:hover {
+    background-color: #f3f4f6;
+    color: #3b82f6;
+}
+
+.il-menu-toggle svg {
+    width: 24px;
+    height: 24px;
+}
+
+.il-datetime {
+    font-size: 14px;
+    font-weight: 500;
+    color: #3b82f6;
+    background-color: #eff6ff;
+    padding: 8px 16px;
+    border-radius: 6px;
+    border: 1px solid #bfdbfe;
+}
+
+.il-page-title {
+    font-size: 24px;
+    font-weight: 700;
+    color: #1e293b;
+    margin: 0;
+}
+
+.il-notification-btn {
+    position: relative;
+    background: none;
+    border: none;
+    color: #6b7280;
+    cursor: pointer;
+    padding: 8px;
+    border-radius: 6px;
+    transition: all 0.2s ease;
+}
+
+.il-notification-btn:hover {
+    background-color: #f3f4f6;
+    color: #3b82f6;
+}
+
+.il-notification-btn svg {
+    width: 24px;
+    height: 24px;
+}
+
+.il-notification-badge {
+    position: absolute;
+    top: 4px;
+    right: 4px;
+    background-color: #ef4444;
+    color: white;
+    font-size: 10px;
+    font-weight: 600;
+    padding: 2px 5px;
+    border-radius: 10px;
+    min-width: 16px;
+    text-align: center;
+}
+
+.il-user-profile {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    cursor: pointer;
+    padding: 8px 12px;
+    border-radius: 8px;
+    transition: background-color 0.2s ease;
+    position: relative;
+}
+
+.il-user-profile:hover {
+    background-color: #f3f4f6;
+}
+
+.il-user-avatar {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, #3b82f6, #1d4ed8);
+    color: white;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 600;
+    font-size: 16px;
+}
+
+.il-user-info {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+}
+
+.il-user-name {
+    font-weight: 600;
+    color: #1e293b;
+    font-size: 14px;
+}
+
+.il-user-role {
+    font-size: 12px;
+    color: #6b7280;
+}
+
+.il-profile-dropdown {
+    position: absolute;
+    top: 100%;
+    right: 0;
+    margin-top: 8px;
+    background: white;
+    border: 1px solid #e5e7eb;
+    border-radius: 8px;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    min-width: 200px;
+    z-index: 1000;
+}
+
+.il-dropdown-item {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 12px 16px;
+    color: #6b7280;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.il-dropdown-item:hover {
+    background-color: #f8fafc;
+}
+
+.il-logout-item {
+    color: #ef4444;
+}
+
+.il-logout-item:hover {
+    background-color: #fef2f2;
+}
+
+.il-dropdown-icon {
+    width: 20px;
+    height: 20px;
+}
+
+.il-disabled {
+    pointer-events: none;
+    opacity: 0.5;
+}
+
+/* Main Content Area */
+.il-main {
+    padding: 24px;
+}
+
+.il-loading,
+.il-error,
+.il-empty {
+    text-align: center;
+    padding: 60px 20px;
+    font-size: 18px;
+    color: #6b7280;
+}
+
+.il-error {
+    color: #ef4444;
+}
+
+/* Page Header */
+.il-page-header {
+    margin-bottom: 24px;
+}
+
+.il-section-title {
+    font-size: 28px;
+    font-weight: 700;
+    color: #1e293b;
+    margin: 0 0 8px 0;
+}
+
+.il-section-subtitle {
+    font-size: 14px;
+    color: #6b7280;
+    margin: 0;
+}
+
+/* Incidents List */
+.il-incidents-list {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+}
+
+.il-incident-item {
+    background-color: #ffffff;
+    border: 1px solid #e5e7eb;
+    border-radius: 12px;
+    padding: 20px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    transition: all 0.2s ease;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+}
+
+.il-incident-item:hover {
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    transform: translateY(-2px);
+}
+
+.il-incident-info {
+    flex: 1;
+}
+
+.il-incident-header {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 12px;
+}
+
+.il-incident-title {
+    font-size: 18px;
+    font-weight: 600;
+    color: #1e293b;
+    margin: 0;
+}
+
+.il-incident-code {
+    padding: 4px 10px;
+    background-color: #eff6ff;
+    color: #3b82f6;
+    border-radius: 6px;
+    font-size: 12px;
+    font-weight: 500;
+}
+
+.il-incident-details {
+    display: flex;
+    gap: 24px;
+    flex-wrap: wrap;
+}
+
+.il-incident-detail-item {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.il-incident-label {
+    font-size: 14px;
+    color: #6b7280;
+    font-weight: 500;
+}
+
+.il-incident-value {
+    font-size: 14px;
+    color: #1e293b;
+    font-weight: 500;
+}
+
+.il-incident-severity {
+    padding: 4px 12px;
+    color: white;
+    border-radius: 12px;
+    font-size: 12px;
+    font-weight: 600;
+    text-transform: uppercase;
+}
+
+.il-incident-status {
+    font-size: 14px;
+    color: #1e293b;
+    font-weight: 500;
+}
+
+.il-incident-actions {
+    display: flex;
+    gap: 12px;
+    align-items: center;
+}
+
+.il-incident-btn {
+    padding: 10px 20px;
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+    font-weight: 500;
+    font-size: 14px;
+    transition: all 0.2s ease;
+    white-space: nowrap;
+}
+
+.il-incident-btn-detail {
+    background-color: #3b82f6;
+    color: white;
+}
+
+.il-incident-btn-detail:hover {
+    background-color: #2563eb;
+}
+
+.il-incident-btn-response {
+    background-color: #10b981;
+    color: white;
+}
+
+.il-incident-btn-response:hover {
+    background-color: #059669;
+}
+
+.il-incident-btn-response:disabled {
+    background-color: #d1d5db;
+    cursor: not-allowed;
+}
+
+/* Pagination */
+.il-pagination {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 8px;
+    margin-top: 30px;
+}
+
+.il-page-btn {
+    padding: 8px 16px;
+    border: 1px solid #e5e7eb;
+    background-color: #ffffff;
+    color: #6b7280;
+    border-radius: 6px;
+    cursor: pointer;
+    font-weight: 500;
+    transition: all 0.2s ease;
+}
+
+.il-page-btn:hover:not(:disabled) {
+    background-color: #f8fafc;
+    border-color: #3b82f6;
+    color: #3b82f6;
+}
+
+.il-page-btn:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+.il-page-btn-active {
+    background-color: #3b82f6;
+    color: white;
+    border-color: #3b82f6;
+}
+
+/* Modal Styles */
+.il-modal-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: rgba(0, 0, 0, 0.5);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 2000;
+    animation: fadeIn 0.2s ease;
+}
+
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+    }
+    to {
+        opacity: 1;
+    }
+}
+
+.il-modal-content {
+    background-color: #ffffff;
+    border-radius: 16px;
+    max-width: 800px;
+    width: 90%;
+    max-height: 90vh;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    animation: slideUp 0.3s ease;
+}
+
+@keyframes slideUp {
+    from {
+        transform: translateY(20px);
+        opacity: 0;
+    }
+    to {
+        transform: translateY(0);
+        opacity: 1;
+    }
+}
+
+.il-response-modal {
+    max-width: 600px;
+}
+
+.il-logout-modal {
+    max-width: 400px;
+}
+
+.il-modal-header {
+    padding: 24px 30px;
+    border-bottom: 1px solid #e5e7eb;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.il-modal-header h2 {
+    font-size: 20px;
+    font-weight: 700;
+    color: #1e293b;
+    margin: 0;
+}
+
+.il-modal-close {
+    background: none;
+    border: none;
+    font-size: 32px;
+    color: #6b7280;
+    cursor: pointer;
+    line-height: 1;
+    transition: color 0.2s ease;
+    padding: 0;
+}
+
+.il-modal-close:hover {
+    color: #1e293b;
+}
+
+.il-modal-body {
+    padding: 30px;
+    overflow-y: auto;
+}
+
+.il-modal-loading,
+.il-modal-error {
+    text-align: center;
+    padding: 40px 20px;
+    color: #6b7280;
+}
+
+.il-modal-error {
+    color: #ef4444;
+}
+
+/* Incident Detail */
+.il-detail {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+}
+
+.il-detail-row {
+    display: flex;
+    gap: 12px;
+    padding: 12px 0;
+    border-bottom: 1px solid #f3f4f6;
+}
+
+.il-detail-row:last-child {
+    border-bottom: none;
+}
+
+.il-detail-label {
+    font-weight: 600;
+    color: #6b7280;
+    min-width: 150px;
+    flex-shrink: 0;
+}
+
+.il-detail-value {
+    color: #1e293b;
+    flex: 1;
+}
+
+.il-media-section {
+    flex-direction: column;
+}
+
+.il-media-gallery {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+    gap: 16px;
+    margin-top: 12px;
+}
+
+.il-media-item {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.il-media-image {
+    width: 100%;
+    height: 200px;
+    object-fit: cover;
+    border-radius: 8px;
+    border: 1px solid #e5e7eb;
+}
+
+.il-media-caption {
+    font-size: 12px;
+    color: #6b7280;
+    text-align: center;
+    margin: 0;
+}
+
+/* Response Form */
+.il-response-form {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+}
+
+.il-form-label {
+    font-weight: 600;
+    color: #1e293b;
+    font-size: 14px;
+}
+
+.il-form-textarea {
+    width: 100%;
+    padding: 12px;
+    border: 1px solid #e5e7eb;
+    border-radius: 8px;
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+    font-size: 14px;
+    color: #1e293b;
+    resize: vertical;
+    transition: border-color 0.2s ease;
+}
+
+.il-form-textarea:focus {
+    outline: none;
+    border-color: #3b82f6;
+}
+
+.il-form-error {
+    color: #ef4444;
+    font-size: 14px;
+    margin-top: -8px;
+}
+
+.il-form-submit {
+    padding: 12px 24px;
+    background-color: #3b82f6;
+    color: white;
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+    font-weight: 600;
+    font-size: 14px;
+    transition: background-color 0.2s ease;
+}
+
+.il-form-submit:hover:not(:disabled) {
+    background-color: #2563eb;
+}
+
+.il-form-submit:disabled {
+    background-color: #d1d5db;
+    cursor: not-allowed;
+}
+
+/* Logout Modal Actions */
+.il-logout-actions {
+    display: flex;
+    gap: 12px;
+    justify-content: flex-end;
+    margin-top: 24px;
+}
+
+.il-btn-cancel {
+    padding: 10px 20px;
+    background-color: #f3f4f6;
+    color: #6b7280;
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+    font-weight: 500;
+    transition: background-color 0.2s ease;
+}
+
+.il-btn-cancel:hover {
+    background-color: #e5e7eb;
+}
+
+.il-btn-confirm {
+    padding: 10px 20px;
+    background-color: #ef4444;
+    color: white;
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+    font-weight: 500;
+    transition: background-color 0.2s ease;
+}
+
+.il-btn-confirm:hover {
+    background-color: #dc2626;
+}
+
+/* Snackbar */
+.il-snackbar {
+    position: fixed;
+    bottom: 30px;
+    right: 30px;
+    padding: 16px 24px;
+    border-radius: 8px;
+    color: white;
+    font-weight: 500;
+    z-index: 3000;
+    animation: slideInRight 0.3s ease;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+}
+
+@keyframes slideInRight {
+    from {
+        transform: translateX(100%);
+        opacity: 0;
+    }
+    to {
+        transform: translateX(0);
+        opacity: 1;
+    }
+}
+
+.il-snackbar-success {
+    background-color: #10b981;
+}
+
+.il-snackbar-error {
+    background-color: #ef4444;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+    .il-content-expanded,
+    .il-content-collapsed {
+        margin-left: 0;
+    }
+
+    .il-sidebar {
+        transform: translateX(-100%);
+    }
+
+    .il-sidebar-open {
+        transform: translateX(0);
+    }
+
+    .il-incident-item {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 16px;
+    }
+
+    .il-incident-actions {
+        width: 100%;
+        justify-content: flex-end;
+    }
+
+    .il-incident-details {
+        flex-direction: column;
+        gap: 8px;
+    }
+
+    .il-modal-content {
+        width: 95%;
+        max-height: 95vh;
+    }
+
+    .il-media-gallery {
+        grid-template-columns: 1fr;
+    }
+
+    .il-datetime {
+        display: none;
+    }
+
+    .il-user-info {
+        display: none;
+    }
+}

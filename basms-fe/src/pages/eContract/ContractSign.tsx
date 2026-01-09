@@ -37,6 +37,28 @@ const ContractSign = () => {
     const [isConfirmed, setIsConfirmed] = useState(false);
     const [signedSuccessfully, setSignedSuccessfully] = useState(false);
     const canvasRef = useRef<HTMLCanvasElement>(null);
+    const [canvasSize, setCanvasSize] = useState({ width: 600, height: 300 });
+
+    // Update canvas size based on window width
+    useEffect(() => {
+        const updateCanvasSize = () => {
+            const width = window.innerWidth;
+            if (width <= 480) {
+                // Mobile phones
+                setCanvasSize({ width: Math.min(width - 48, 340), height: 200 });
+            } else if (width <= 768) {
+                // Tablets
+                setCanvasSize({ width: Math.min(width - 64, 500), height: 250 });
+            } else {
+                // Desktop
+                setCanvasSize({ width: 600, height: 300 });
+            }
+        };
+
+        updateCanvasSize();
+        window.addEventListener('resize', updateCanvasSize);
+        return () => window.removeEventListener('resize', updateCanvasSize);
+    }, []);
 
     useEffect(() => {
         const fetchContractData = async () => {
@@ -165,6 +187,11 @@ const ContractSign = () => {
         const ctx = canvas.getContext('2d');
         if (!ctx) return;
 
+        // Prevent scrolling on touch devices
+        if ('touches' in e) {
+            e.preventDefault();
+        }
+
         setIsDrawing(true);
 
         const rect = canvas.getBoundingClientRect();
@@ -183,6 +210,11 @@ const ContractSign = () => {
 
         const ctx = canvas.getContext('2d');
         if (!ctx) return;
+
+        // Prevent scrolling on touch devices
+        if ('touches' in e) {
+            e.preventDefault();
+        }
 
         const rect = canvas.getBoundingClientRect();
         const x = 'touches' in e ? e.touches[0].clientX - rect.left : e.clientX - rect.left;
@@ -354,8 +386,8 @@ const ContractSign = () => {
                         <div className="cs-signature-modal-body">
                             <canvas
                                 ref={canvasRef}
-                                width={600}
-                                height={300}
+                                width={canvasSize.width}
+                                height={canvasSize.height}
                                 className="cs-signature-canvas"
                                 onMouseDown={startDrawing}
                                 onMouseMove={draw}

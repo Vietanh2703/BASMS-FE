@@ -20,6 +20,8 @@ import CustomerDetail from "./pages/director/CustomerDetail.tsx";
 import CustomerEdit from "./pages/director/CustomerEdit.tsx";
 import CustomerSchedule from "./pages/director/CustomerSchedule.tsx";
 import EmployeeControl from "./pages/director/EmployeeControl.tsx";
+import DirectorChat from "./pages/director/DirectorChat.tsx";
+import IncidentList from "./pages/director/IncidentList.tsx";
 import EContractLogin from './pages/eContract/eContractLogin';
 import EContractDashboard from './pages/eContract/eContractDashboard';
 import EContractList from "./pages/eContract/eContractList.tsx";
@@ -40,6 +42,7 @@ import ManagerRequest from "./pages/manager/managerRequest.tsx";
 import ManagerGuardList from "./pages/manager/managerGuardList.tsx";
 import ShiftAssignment from "./pages/manager/ShiftAssignment.tsx";
 import ManagerShiftDetail from "./pages/manager/ManagerShiftDetail.tsx";
+import ManagerChat from "./pages/manager/ManagerChat.tsx";
 import { ROLES } from './constants/roles';
 import './App.css';
 
@@ -209,6 +212,16 @@ function App() {
                             <EmployeeControl />
                         </RoleBasedRoute>
                     }/>
+                    <Route path="/director/chat" element={
+                        <RoleBasedRoute allowedRoles={[ROLES.DIRECTOR]}>
+                            <DirectorChat />
+                        </RoleBasedRoute>
+                    }/>
+                    <Route path="/director/incidents" element={
+                        <RoleBasedRoute allowedRoles={[ROLES.DIRECTOR]}>
+                            <IncidentList />
+                        </RoleBasedRoute>
+                    }/>
 
                     {/* Manager role */}
                     <Route path="/manager/dashboard" element={
@@ -234,6 +247,11 @@ function App() {
                     <Route path="/manager/shift-assignment/:contractId" element={
                         <RoleBasedRoute allowedRoles={[ROLES.MANAGER]}>
                             <ManagerShiftDetail />
+                        </RoleBasedRoute>
+                    }/>
+                    <Route path="/manager/chat" element={
+                        <RoleBasedRoute allowedRoles={[ROLES.MANAGER]}>
+                            <ManagerChat />
                         </RoleBasedRoute>
                     }/>
 
