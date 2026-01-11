@@ -94,8 +94,6 @@ const CustomerListAdmin = () => {
     const [showFailureSnackbar, setShowFailureSnackbar] = useState(false);
     const [failureMessage, setFailureMessage] = useState('');
 
-    // Account activation states
-    const [activatingCustomers, setActivatingCustomers] = useState<Set<string>>(new Set());
     const [formData, setFormData] = useState({
         IdentityNumber: '',
         IdentityIssueDate: '',
@@ -517,114 +515,6 @@ const CustomerListAdmin = () => {
         }
     };
 
-    const handleActivateCustomer = async (customer: Customer) => {
-        if (activatingCustomers.has(customer.id)) return;
-
-        setActivatingCustomers(prev => new Set(prev).add(customer.id));
-
-        try {
-            const apiUrl = import.meta.env.VITE_API_CONTRACT_URL;
-            const token = localStorage.getItem('accessToken');
-
-            if (!token) {
-                throw new Error('Không tìm thấy token xác thực. Vui lòng đăng nhập lại.');
-            }
-
-            // Check if customer has at least 1 contract
-            let contractsData = customerContracts.get(customer.id);
-
-            // If contracts not yet fetched, fetch them first
-            if (!contractsData) {
-                const contractsResponse = await fetch(`${apiUrl}/contracts/customers/${customer.id}/all`, {
-                    method: 'GET',
-                    headers: {
-                        'Authorization': `Bearer ${token}`,
-                        'Content-Type': 'application/json',
-                    },
-                });
-
-                if (contractsResponse.ok) {
-                    contractsData = await contractsResponse.json();
-                    setCustomerContracts(prev => {
-                        const newMap = new Map(prev);
-                        newMap.set(customer.id, contractsData!);
-                        return newMap;
-                    });
-                }
-            }
-
-            // Validate contract count
-            if (!contractsData || contractsData.totalContracts === 0) {
-                setFailureMessage('Khách hàng cần có ít nhất 1 hợp đồng trước khi kích hoạt tài khoản');
-                setShowFailureSnackbar(true);
-                setActivatingCustomers(prev => {
-                    const newSet = new Set(prev);
-                    newSet.delete(customer.id);
-                    return newSet;
-                });
-                return;
-            }
-
-            // Step 1: Activate customer
-            const activateResponse = await fetch(`${apiUrl}/contracts/customers/${customer.id}/activate`, {
-                method: 'POST',
-                headers: {
-                    'Authorization': `Bearer ${token}`,
-                    'Content-Type': 'application/json',
-                },
-            });
-
-            if (!activateResponse.ok) {
-                const errorText = await activateResponse.text();
-                try {
-                    const errorData = JSON.parse(errorText);
-                    throw new Error(errorData.message || 'Không thể kích hoạt tài khoản');
-                } catch (parseError) {
-                    if (parseError instanceof Error && parseError.message.includes('Không thể')) {
-                        throw parseError;
-                    }
-                    throw new Error('Không thể kích hoạt tài khoản');
-                }
-            }
-
-            // Step 2: Send login email
-            const emailResponse = await fetch(`${apiUrl}/users/send-login-email`, {
-                method: 'POST',
-                headers: {
-                    'Authorization': `Bearer ${token}`,
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify({
-                    email: customer.email,
-                    phoneNumber: customer.phone
-                }),
-            });
-
-            if (!emailResponse.ok) {
-                // Email sending failed, but activation succeeded
-                setFailureMessage('Tài khoản đã được kích hoạt nhưng không thể gửi email thông báo');
-                setShowFailureSnackbar(true);
-            } else {
-                // Both succeeded
-                setShowSuccessSnackbar(true);
-            }
-
-            // Reload page after showing message
-            setTimeout(() => {
-                window.location.reload();
-            }, 2000);
-        } catch (err: any) {
-            setFailureMessage(err.message || 'Có lỗi xảy ra khi kích hoạt tài khoản');
-            setShowFailureSnackbar(true);
-        } finally {
-            setActivatingCustomers(prev => {
-                const newSet = new Set(prev);
-                newSet.delete(customer.id);
-                return newSet;
-            });
-        }
-    };
-
     return (
         <div className="admin-customers-container">
             {/* Sidebar */}
@@ -914,19 +804,6 @@ const CustomerListAdmin = () => {
                                                 <span className="admin-customers-detail-label">Khách hàng từ:</span>
                                                 <span className="admin-customers-detail-value">{formatDate(customer.customerSince)}</span>
                                             </div>
-                                        </div>
-
-                                        {/* Action buttons based on customer status */}
-                                        <div className="admin-customers-item-actions">
-                                            {customer.status === 'in-active' && (
-                                                <button
-                                                    className="admin-customers-action-btn admin-customers-btn-activate"
-                                                    onClick={() => handleActivateCustomer(customer)}
-                                                    disabled={activatingCustomers.has(customer.id)}
-                                                >
-                                                    {activatingCustomers.has(customer.id) ? 'Đang kích hoạt...' : 'Kích hoạt tài khoản'}
-                                                </button>
-                                            )}
                                         </div>
 
                                         {/* Total Contracts Toggle */}

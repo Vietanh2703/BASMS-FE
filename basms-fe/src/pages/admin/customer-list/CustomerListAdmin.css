@@ -607,13 +607,6 @@
 }
 
 /* Action Buttons */
-.admin-customers-item-actions {
-    display: flex;
-    gap: 12px;
-    flex-wrap: wrap;
-    margin-bottom: 16px;
-}
-
 .admin-customers-action-btn {
     padding: 10px 18px;
     border-radius: 6px;
@@ -623,24 +616,6 @@
     cursor: pointer;
     transition: all 0.2s ease;
     font-family: 'Inter', sans-serif;
-}
-
-.admin-customers-btn-activate {
-    background-color: #fef9c3;
-    color: #ca8a04;
-    border: 1px solid #fde047;
-}
-
-.admin-customers-btn-activate:hover {
-    background-color: #fef3c7;
-    transform: translateY(-1px);
-    box-shadow: 0 2px 4px rgba(202, 138, 4, 0.2);
-}
-
-.admin-customers-btn-activate:disabled {
-    opacity: 0.6;
-    cursor: not-allowed;
-    transform: none;
 }
 
 .admin-customers-btn-view {
@@ -1390,15 +1365,6 @@
 
     .admin-customers-create-btn {
         padding: 10px;
-    }
-
-    .admin-customers-item-actions {
-        flex-direction: column;
-    }
-
-    .admin-customers-action-btn {
-        width: 100%;
-        text-align: center;
     }
 
     .admin-customers-contracts-toggle {
