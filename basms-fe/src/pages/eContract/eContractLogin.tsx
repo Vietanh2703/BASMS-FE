@@ -6,7 +6,7 @@ import { apiClient, API_ENDPOINTS } from '../../clients/apiClients';
 import { useEContractAuth } from '../../hooks/useEContractAuth';
 import './eContractLogin.css';
 
-const ALLOWED_ROLE_ID = 'ddbd5fad-ba6e-11f0-bcac-00155dca8f48';
+const ALLOWED_ROLE_ID = 'ddbd5bad-ba6e-11f0-bcac-00155dca8f48';
 
 interface EContractLoginResponse {
     userId: string;

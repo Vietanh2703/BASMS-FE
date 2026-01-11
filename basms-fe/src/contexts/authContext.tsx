@@ -163,7 +163,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
             email: userInfo.email,
             accessToken,
             refreshToken,
-            accessTokenExpiry, // Sử dụng expiry time từ API
+            accessTokenExpiry,
             refreshTokenExpiry // Sử dụng expiry time từ API
         };
 

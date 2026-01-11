@@ -1,14 +1,15 @@
-import { useState, useEffect, useRef, useMemo, useCallback } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '../../hooks/useAuth';
-import type {
-    ContractStats,
-    ReportStats,
-    ChartDataItem
-} from './types';
+import type { DashboardData } from './types';
+import DashboardKPI from './components/DashboardKPI';
+import ShiftsOverview from './components/ShiftsOverview';
+import IncidentsOverview from './components/IncidentsOverview';
+import OperationalMetrics from './components/OperationalMetrics';
+import SystemAlerts from './components/SystemAlerts';
+import dashboardService from '../../services/dashboardService';
 import './dashboardDirector.css';
 
-// Move all mock data outside component to prevent re-creation on every render
 const DashboardDirector = () => {
     useNavigate();
     const { user, logout } = useAuth();
@@ -17,47 +18,33 @@ const DashboardDirector = () => {
     const [isProfileDropdownOpen, setIsProfileDropdownOpen] = useState(false);
     const [isLoggingOut, setIsLoggingOut] = useState(false);
     const [showLogoutModal, setShowLogoutModal] = useState(false);
-    const [timeFilter, setTimeFilter] = useState<'today' | '7days' | '30days' | '90days' | 'year'>('30days');
     const profileRef = useRef<HTMLDivElement>(null);
 
-    // API Endpoints - Replace these with your actual API URLs
-// Mock Data - Replace with API calls
-    const [contractStats] = useState<ContractStats>({
-        signed: 756,
-        pending: 67,
-        expired: 33,
-        managerLabor: 45,
-        guardLabor: 745,
-        guardService: 66,
-        avgApprovalTime: 1.8,
-        successRate: 92,
-        expiringContracts: 23
-    });
+    // Dashboard data state
+    const [dashboardData, setDashboardData] = useState<DashboardData | null>(null);
+    const [isLoading, setIsLoading] = useState(true);
+    const [error, setError] = useState<string | null>(null);
 
-    const [reportStats] = useState<ReportStats>({
-        total: 234,
-        processed: 198,
-        pending: 36,
-        security: 45,
-        patrol: 120,
-        equipment: 38,
-        performance: 31,
-        critical: 3,
-        urgent: 12
-    });
-// Use useMemo for computed values that depend on stats
-    useMemo<ChartDataItem[]>(() => [
-        { name: 'Đã ký', value: contractStats.signed, color: '#10b981' },
-        { name: 'Chờ ký', value: contractStats.pending, color: '#f59e0b' },
-        { name: 'Quá hạn', value: contractStats.expired, color: '#ef4444' }
-    ], [contractStats.signed, contractStats.pending, contractStats.expired]);
-    useMemo<ChartDataItem[]>(() => [
-        { name: 'Sự cố an ninh', value: reportStats.security, color: '#ef4444' },
-        { name: 'Tuần tra định kỳ', value: reportStats.patrol, color: '#10b981' },
-        { name: 'Thiết bị/Kỹ thuật', value: reportStats.equipment, color: '#f59e0b' },
-        { name: 'Hiệu suất nhân sự', value: reportStats.performance, color: '#3b82f6' }
-    ], [reportStats.security, reportStats.patrol, reportStats.equipment, reportStats.performance]);
-// Effects
+    // Fetch dashboard data
+    const fetchDashboardData = useCallback(async () => {
+        try {
+            setIsLoading(true);
+            setError(null);
+            const data = await dashboardService.getDashboardData();
+            setDashboardData(data);
+        } catch (err) {
+            console.error('Failed to fetch dashboard data:', err);
+            setError('Không thể tải dữ liệu dashboard. Vui lòng thử lại.');
+        } finally {
+            setIsLoading(false);
+        }
+    }, []);
+
+    // Effects
+    useEffect(() => {
+        fetchDashboardData();
+    }, [fetchDashboardData]);
+
     useEffect(() => {
         const timer = setInterval(() => setCurrentTime(new Date()), 1000);
         return () => clearInterval(timer);
@@ -153,19 +140,11 @@ const DashboardDirector = () => {
                             </Link>
                         </li>
                         <li className="dd-nav-item">
-                            <Link to="/director/analytics" className="dd-nav-link">
+                            <Link to="/director/incidents" className="dd-nav-link">
                                 <svg className="dd-nav-icon" viewBox="0 0 24 24" fill="currentColor">
-                                    <path d="M16 6l2.29 2.29-4.88 4.88-4-4L2 16.59 3.41 18l6-6 4 4 6.3-6.29L22 12V6z"/>
+                                    <path d="M12 2L1 21h22L12 2zm0 3.99L19.53 19H4.47L12 5.99zM11 16v2h2v-2h-2zm0-6v4h2v-4h-2z"/>
                                 </svg>
-                                {isMenuOpen && <span>Phân tích</span>}
-                            </Link>
-                        </li>
-                        <li className="dd-nav-item">
-                            <Link to="/director/reports" className="dd-nav-link">
-                                <svg className="dd-nav-icon" viewBox="0 0 24 24" fill="currentColor">
-                                    <path d="M19 3h-4.18C14.4 1.84 13.3 1 12 1c-1.3 0-2.4.84-2.82 2H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm-7 0c.55 0 1 .45 1 1s-.45 1-1 1-1-.45-1-1 .45-1 1-1zm2 14H7v-2h7v2zm3-4H7v-2h10v2zm0-4H7V7h10v2z"/>
-                                </svg>
-                                {isMenuOpen && <span>Báo cáo</span>}
+                                {isMenuOpen && <span>Sự cố</span>}
                             </Link>
                         </li>
                         <li className="dd-nav-item">
@@ -238,30 +217,47 @@ const DashboardDirector = () => {
                         <p className="dd-page-subtitle">Tổng quan quản lý điều hành hệ thống BASMS</p>
                     </div>
 
-                    {/* Time Filter */}
-                    <div className="dd-filter-bar">
-                        <div className="dd-filter-group">
-                            {(['today', '7days', '30days', '90days', 'year'] as const).map(filter => (
-                                <button
-                                    key={filter}
-                                    className={`dd-filter-btn ${timeFilter === filter ? 'dd-filter-active' : ''}`}
-                                    onClick={() => setTimeFilter(filter)}
-                                >
-                                    {filter === 'today' ? 'Hôm nay' : filter === '7days' ? '7 ngày' : filter === '30days' ? '30 ngày' : filter === '90days' ? '90 ngày' : 'Năm'}
-                                </button>
-                            ))}
+                    {/* Dashboard Content */}
+                    {isLoading && (
+                        <div style={{ textAlign: 'center', padding: '60px 20px', color: '#6b7280' }}>
+                            <div style={{ fontSize: '16px', fontWeight: 500 }}>Đang tải dữ liệu...</div>
                         </div>
-                        <div className="dd-filter-actions">
-                            <button className="dd-export-btn">
-                                <svg viewBox="0 0 24 24" fill="currentColor" width="16" height="16">
-                                    <path d="M19 12v7H5v-7H3v7c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2v-7h-2zm-6 .67l2.59-2.58L17 11.5l-5 5-5-5 1.41-1.41L11 12.67V3h2z"/>
-                                </svg>
-                                Export
+                    )}
+
+                    {error && (
+                        <div style={{ padding: '20px', backgroundColor: '#fee2e2', borderRadius: '8px', color: '#991b1b', marginBottom: '24px' }}>
+                            {error}
+                            <button
+                                onClick={fetchDashboardData}
+                                style={{ marginLeft: '12px', padding: '6px 12px', backgroundColor: '#ef4444', color: 'white', border: 'none', borderRadius: '6px', cursor: 'pointer' }}
+                            >
+                                Thử lại
                             </button>
                         </div>
-                    </div>
+                    )}
 
+                    {!isLoading && !error && dashboardData && (
+                        <>
+                            {/* KPI Cards */}
+                            <DashboardKPI stats={dashboardData.kpi} />
 
+                            {/* Shifts and Incidents Overview */}
+                            <div className="dd-row-split">
+                                <div className="dd-section-half">
+                                    <ShiftsOverview stats={dashboardData.shifts} />
+                                </div>
+                                <div className="dd-section-half">
+                                    <IncidentsOverview stats={dashboardData.incidents} />
+                                </div>
+                            </div>
+
+                            {/* Operational Metrics */}
+                            <OperationalMetrics metrics={dashboardData.operational} />
+
+                            {/* System Alerts */}
+                            <SystemAlerts alerts={dashboardData.alerts} />
+                        </>
+                    )}
 
                 </main>
             </div>

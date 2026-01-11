@@ -499,6 +499,55 @@
     margin-top: 6px;
 }
 
+/* Coordinates Input */
+.cust-edit-coordinates-container {
+    display: flex;
+    gap: 12px;
+    align-items: flex-end;
+}
+
+.cust-edit-coordinate-input-group {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.cust-edit-coordinate-label {
+    font-size: 13px;
+    color: #6b7280;
+    font-weight: 500;
+}
+
+.cust-edit-coordinate-input {
+    padding: 10px 12px;
+}
+
+.cust-edit-coordinate-btn {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 10px 18px;
+    background-color: #10b981;
+    color: white;
+    border: none;
+    border-radius: 8px;
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background-color 0.2s ease;
+    white-space: nowrap;
+    height: 44px;
+}
+
+.cust-edit-coordinate-btn:hover {
+    background-color: #059669;
+}
+
+.cust-edit-coordinate-btn svg {
+    flex-shrink: 0;
+}
+
 /* Search Results */
 .cust-edit-search-results {
     background-color: #f9fafb;
@@ -821,6 +870,17 @@
     .cust-edit-search-btn {
         width: 100%;
         justify-content: center;
+    }
+
+    .cust-edit-coordinates-container {
+        flex-direction: column;
+        align-items: stretch;
+    }
+
+    .cust-edit-coordinate-btn {
+        width: 100%;
+        justify-content: center;
+        height: 44px;
     }
 }
 
