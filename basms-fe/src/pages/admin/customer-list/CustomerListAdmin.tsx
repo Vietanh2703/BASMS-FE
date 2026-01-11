@@ -94,9 +94,8 @@ const CustomerListAdmin = () => {
     const [showFailureSnackbar, setShowFailureSnackbar] = useState(false);
     const [failureMessage, setFailureMessage] = useState('');
 
-    // Account activation/lock states
+    // Account activation states
     const [activatingCustomers, setActivatingCustomers] = useState<Set<string>>(new Set());
-    const [lockingCustomers, setLockingCustomers] = useState<Set<string>>(new Set());
     const [formData, setFormData] = useState({
         IdentityNumber: '',
         IdentityIssueDate: '',
@@ -626,59 +625,6 @@ const CustomerListAdmin = () => {
         }
     };
 
-    const handleLockCustomer = async (customer: Customer) => {
-        if (lockingCustomers.has(customer.id)) return;
-
-        setLockingCustomers(prev => new Set(prev).add(customer.id));
-
-        try {
-            const apiUrl = import.meta.env.VITE_API_CONTRACT_URL;
-            const token = localStorage.getItem('accessToken');
-
-            if (!token) {
-                throw new Error('Không tìm thấy token xác thực. Vui lòng đăng nhập lại.');
-            }
-
-            // Lock customer account
-            const lockResponse = await fetch(`${apiUrl}/contracts/customers/${customer.id}/lock`, {
-                method: 'POST',
-                headers: {
-                    'Authorization': `Bearer ${token}`,
-                    'Content-Type': 'application/json',
-                },
-            });
-
-            if (!lockResponse.ok) {
-                const errorText = await lockResponse.text();
-                try {
-                    const errorData = JSON.parse(errorText);
-                    throw new Error(errorData.message || 'Không thể khóa tài khoản');
-                } catch (parseError) {
-                    if (parseError instanceof Error && parseError.message.includes('Không thể')) {
-                        throw parseError;
-                    }
-                    throw new Error('Không thể khóa tài khoản');
-                }
-            }
-
-            setShowSuccessSnackbar(true);
-
-            // Reload page after showing success message
-            setTimeout(() => {
-                window.location.reload();
-            }, 2000);
-        } catch (err: any) {
-            setFailureMessage(err.message || 'Có lỗi xảy ra khi khóa tài khoản');
-            setShowFailureSnackbar(true);
-        } finally {
-            setLockingCustomers(prev => {
-                const newSet = new Set(prev);
-                newSet.delete(customer.id);
-                return newSet;
-            });
-        }
-    };
-
     return (
         <div className="admin-customers-container">
             {/* Sidebar */}
@@ -979,16 +925,6 @@ const CustomerListAdmin = () => {
                                                     disabled={activatingCustomers.has(customer.id)}
                                                 >
                                                     {activatingCustomers.has(customer.id) ? 'Đang kích hoạt...' : 'Kích hoạt tài khoản'}
-                                                </button>
-                                            )}
-
-                                            {customer.status === 'active' && (
-                                                <button
-                                                    className="admin-customers-action-btn admin-customers-btn-lock"
-                                                    onClick={() => handleLockCustomer(customer)}
-                                                    disabled={lockingCustomers.has(customer.id)}
-                                                >
-                                                    {lockingCustomers.has(customer.id) ? 'Đang khóa...' : 'Khóa tài khoản'}
                                                 </button>
                                             )}
                                         </div>

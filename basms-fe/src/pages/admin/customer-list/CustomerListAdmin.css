@@ -643,24 +643,6 @@
     transform: none;
 }
 
-.admin-customers-btn-lock {
-    background-color: #fee2e2;
-    color: #dc2626;
-    border: 1px solid #fecaca;
-}
-
-.admin-customers-btn-lock:hover {
-    background-color: #fecaca;
-    transform: translateY(-1px);
-    box-shadow: 0 2px 4px rgba(220, 38, 38, 0.2);
-}
-
-.admin-customers-btn-lock:disabled {
-    opacity: 0.6;
-    cursor: not-allowed;
-    transform: none;
-}
-
 .admin-customers-btn-view {
     background-color: #dbeafe;
     color: #1e40af;
