@@ -1,0 +1,590 @@
+import { useState, useEffect, useRef } from 'react';
+import { useNavigate, Link } from 'react-router-dom';
+import { useAuth } from '../../../hooks/useAuth';
+import './CustomerListAdmin.css';
+
+interface Customer {
+    id: string;
+    customerCode: string;
+    companyName: string;
+    contactPersonName: string;
+    contactPersonTitle: string;
+    email: string;
+    phone: string;
+    avatarUrl: string | null;
+    gender: string;
+    dateOfBirth: string;
+    address: string;
+    city: string | null;
+    district: string | null;
+    industry: string | null;
+    companySize: string | null;
+    status: string;
+    customerSince: string;
+    followsNationalHolidays: boolean;
+    createdAt: string;
+}
+
+interface CustomerResponse {
+    success: boolean;
+    errorMessage: string | null;
+    customers: Customer[];
+    totalCount: number;
+}
+
+const CustomerListAdmin = () => {
+    const navigate = useNavigate();
+    const { user, logout } = useAuth();
+    const [isMenuOpen, setIsMenuOpen] = useState(false);
+    const [currentTime, setCurrentTime] = useState(new Date());
+    const [isProfileDropdownOpen, setIsProfileDropdownOpen] = useState(false);
+    const [isLoggingOut, setIsLoggingOut] = useState(false);
+    const [showLogoutModal, setShowLogoutModal] = useState(false);
+    const profileRef = useRef<HTMLDivElement>(null);
+
+    // Search and sort states
+    const [searchTerm, setSearchTerm] = useState('');
+    const [sortBy, setSortBy] = useState<'contactPersonName' | 'customerSince'>('contactPersonName');
+    const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('asc');
+    const [statusFilter, setStatusFilter] = useState<string>('all');
+    const [currentPage, setCurrentPage] = useState(1);
+    const itemsPerPage = 10;
+
+    // API data states
+    const [allCustomers, setAllCustomers] = useState<Customer[]>([]);
+    const [isLoading, setIsLoading] = useState(true);
+    const [error, setError] = useState<string | null>(null);
+
+    const sortOptions = [
+        { value: 'contactPersonName', label: 'Tên người liên hệ (A-Z)' },
+        { value: 'customerSince', label: 'Ngày trở thành khách hàng' },
+    ];
+
+    useEffect(() => {
+        const timer = setInterval(() => {
+            setCurrentTime(new Date());
+        }, 1000);
+        return () => clearInterval(timer);
+    }, []);
+
+    useEffect(() => {
+        const handleClickOutside = (event: MouseEvent) => {
+            if (profileRef.current && !profileRef.current.contains(event.target as Node)) {
+                setIsProfileDropdownOpen(false);
+            }
+        };
+
+        if (isProfileDropdownOpen) {
+            document.addEventListener('mousedown', handleClickOutside);
+        }
+
+        return () => {
+            document.removeEventListener('mousedown', handleClickOutside);
+        };
+    }, [isProfileDropdownOpen]);
+
+    // Fetch customers from API
+    useEffect(() => {
+        const fetchCustomers = async () => {
+            setIsLoading(true);
+            setError(null);
+
+            try {
+                const apiUrl = import.meta.env.VITE_API_CONTRACT_URL;
+                const token = localStorage.getItem('accessToken');
+
+                if (!token) {
+                    console.error('No access token found');
+                    setError('Không tìm thấy token xác thực. Vui lòng đăng nhập lại.');
+                    setIsLoading(false);
+                    return;
+                }
+
+                const response = await fetch(`${apiUrl}/contracts/customers`, {
+                    method: 'GET',
+                    headers: {
+                        'Authorization': `Bearer ${token}`,
+                        'Content-Type': 'application/json',
+                    },
+                });
+
+                if (!response.ok) {
+                    throw new Error('Failed to fetch customers');
+                }
+
+                const data: CustomerResponse = await response.json();
+
+                setAllCustomers(data.customers);
+            } catch (err) {
+                console.error('Error fetching customers:', err);
+                setError('Không thể tải danh sách khách hàng. Vui lòng thử lại sau.');
+            } finally {
+                setIsLoading(false);
+            }
+        };
+
+        fetchCustomers();
+    }, [navigate]);
+
+    const toggleMenu = () => {
+        setIsMenuOpen(!isMenuOpen);
+    };
+
+    const toggleProfileDropdown = () => {
+        setIsProfileDropdownOpen(!isProfileDropdownOpen);
+    };
+
+    const handleLogout = async () => {
+        setShowLogoutModal(true);
+        setIsProfileDropdownOpen(false);
+    };
+
+    const confirmLogout = async () => {
+        setIsLoggingOut(true);
+        setShowLogoutModal(false);
+        try {
+            await logout();
+        } catch (error) {
+            console.error('Logout failed:', error);
+            setIsLoggingOut(false);
+        }
+    };
+
+    const cancelLogout = () => {
+        setShowLogoutModal(false);
+    };
+
+    const formatDateTime = (date: Date) => {
+        const days = ['Chủ nhật', 'Thứ hai', 'Thứ ba', 'Thứ tư', 'Thứ năm', 'Thứ sáu', 'Thứ bảy'];
+        const dayName = days[date.getDay()];
+        const day = date.getDate().toString().padStart(2, '0');
+        const month = (date.getMonth() + 1).toString().padStart(2, '0');
+        const year = date.getFullYear();
+        const hours = date.getHours().toString().padStart(2, '0');
+        const minutes = date.getMinutes().toString().padStart(2, '0');
+        const seconds = date.getSeconds().toString().padStart(2, '0');
+        return `${dayName}, ${day}/${month}/${year} ${hours}:${minutes}:${seconds}`;
+    };
+
+    const formatDate = (dateString: string) => {
+        if (!dateString) return 'Chưa có';
+        const date = new Date(dateString);
+        return date.toLocaleDateString('vi-VN');
+    };
+
+    const getStatusLabel = (status: string) => {
+        const statusMap: { [key: string]: string } = {
+            active: 'Đang hoạt động',
+            inactive: 'Không hoạt động',
+            'in-active': 'Chưa hoạt động',
+            assigning_manager: 'Phân công quản lý',
+            schedule_shifts: 'Phân công ca trực',
+            Cancelled: 'Đã hủy',
+            Expired: 'Hết hạn',
+        };
+        return statusMap[status] || status;
+    };
+
+    // Filter and sort customers
+    const filteredAndSortedCustomers = allCustomers
+        .filter(customer => {
+            // Only show active and in-active customers
+            if (customer.status !== 'active' && customer.status !== 'in-active') {
+                return false;
+            }
+
+            // Search filter
+            if (searchTerm) {
+                const searchLower = searchTerm.toLowerCase();
+                const matchesSearch = (
+                    customer.companyName.toLowerCase().includes(searchLower) ||
+                    customer.contactPersonName.toLowerCase().includes(searchLower) ||
+                    customer.customerCode.toLowerCase().includes(searchLower) ||
+                    customer.email.toLowerCase().includes(searchLower) ||
+                    customer.phone.includes(searchTerm)
+                );
+                if (!matchesSearch) return false;
+            }
+
+            // Status filter
+            if (statusFilter !== 'all' && customer.status !== statusFilter) {
+                return false;
+            }
+
+            return true;
+        })
+        .sort((a, b) => {
+            if (sortBy === 'contactPersonName') {
+                const comparison = a.contactPersonName.localeCompare(b.contactPersonName, 'vi');
+                return sortOrder === 'asc' ? comparison : -comparison;
+            } else if (sortBy === 'customerSince') {
+                const dateA = new Date(a.customerSince).getTime();
+                const dateB = new Date(b.customerSince).getTime();
+                return sortOrder === 'asc' ? dateA - dateB : dateB - dateA;
+            }
+            return 0;
+        });
+
+    // Pagination
+    const totalPages = Math.ceil(filteredAndSortedCustomers.length / itemsPerPage);
+    const startIndex = (currentPage - 1) * itemsPerPage;
+    const endIndex = startIndex + itemsPerPage;
+    const currentCustomers = filteredAndSortedCustomers.slice(startIndex, endIndex);
+
+    const handlePageChange = (page: number) => {
+        setCurrentPage(page);
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+    };
+
+    const handleRefresh = () => {
+        window.location.reload();
+    };
+
+    return (
+        <div className="admin-customers-container">
+            {/* Sidebar */}
+            <aside className={`admin-customers-sidebar ${isMenuOpen ? 'admin-customers-sidebar-open' : 'admin-customers-sidebar-closed'}`}>
+                <div className="admin-customers-sidebar-header">
+                    <div className="admin-customers-sidebar-logo">
+                        <div className="admin-customers-logo-icon">B</div>
+                        {isMenuOpen && <span className="admin-customers-logo-text">BASMS</span>}
+                    </div>
+                </div>
+
+                <nav className="admin-customers-sidebar-nav">
+                    <ul className="admin-customers-nav-list">
+                        <li className="admin-customers-nav-item">
+                            <Link to="/admin/dashboard" className="admin-customers-nav-link">
+                                <svg className="admin-customers-nav-icon" viewBox="0 0 24 24" fill="currentColor">
+                                    <path d="M3 13h8V3H3v10zm0 8h8v-6H3v6zm10 0h8V11h-8v10zm0-18v6h8V3h-8z"/>
+                                </svg>
+                                {isMenuOpen && <span>Tổng quan</span>}
+                            </Link>
+                        </li>
+                        <li className="admin-customers-nav-item admin-customers-nav-active">
+                            <Link to="/admin/customer-list" className="admin-customers-nav-link">
+                                <svg className="admin-customers-nav-icon" viewBox="0 0 24 24" fill="currentColor">
+                                    <path d="M16 11c1.66 0 2.99-1.34 2.99-3S17.66 5 16 5c-1.66 0-3 1.34-3 3s1.34 3 3 3zm-8 0c1.66 0 2.99-1.34 2.99-3S9.66 5 8 5C6.34 5 5 6.34 5 8s1.34 3 3 3zm0 2c-2.33 0-7 1.17-7 3.5V19h14v-2.5c0-2.33-4.67-3.5-7-3.5zm8 0c-.29 0-.62.02-.97.05 1.16.84 1.97 1.97 1.97 3.45V19h6v-2.5c0-2.33-4.67-3.5-7-3.5z"/>
+                                </svg>
+                                {isMenuOpen && <span>Khách hàng</span>}
+                            </Link>
+                        </li>
+                        <li className="admin-customers-nav-item">
+                            <a href="#" className="admin-customers-nav-link">
+                                <svg className="admin-customers-nav-icon" viewBox="0 0 24 24" fill="currentColor">
+                                    <path d="M16 4c0-1.11.89-2 2-2s2 .89 2 2-.89 2-2 2-2-.89-2-2zm4 18v-6h2.5l-2.54-7.63A3.007 3.007 0 0 0 17.12 7H16.5c-.8 0-1.5.7-1.5 1.5v6c0 .8.7 1.5 1.5 1.5H18v4h2zM12.5 11.5c.83 0 1.5-.67 1.5-1.5s-.67-1.5-1.5-1.5S11 9.17 11 10s.67 1.5 1.5 1.5zm1.5 1h-4c-1.1 0-2 .9-2 2v5.5h2V16h4v3.5h2V14.5c0-1.1-.9-2-2-2z"/>
+                                </svg>
+                                {isMenuOpen && <span>user_service_logs</span>}
+                            </a>
+                        </li>
+                        <li className="admin-customers-nav-item">
+                            <a href="#" className="admin-customers-nav-link">
+                                <svg className="admin-customers-nav-icon" viewBox="0 0 24 24" fill="currentColor">
+                                    <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/>
+                                </svg>
+                                {isMenuOpen && <span>contract_service_logs</span>}
+                            </a>
+                        </li>
+                        <li className="admin-customers-nav-item">
+                            <a href="#" className="admin-customers-nav-link">
+                                <svg className="admin-customers-nav-icon" viewBox="0 0 24 24" fill="currentColor">
+                                    <path d="M14 6V4h-4v2h4zM4 8v11h16V8H4zm16-2c1.11 0 2 .89 2 2v11c0 1.11-.89 2-2 2H4c-1.11 0-2-.89-2-2l.01-11c0-1.11.88-2 1.99-2h4V4c0-1.11.89-2 2-2h4c1.11 0 2 .89 2 2v2h4z"/>
+                                </svg>
+                                {isMenuOpen && <span>shift_service_logs</span>}
+                            </a>
+                        </li>
+                        <li className="admin-customers-nav-item">
+                            <a href="#" className="admin-customers-nav-link">
+                                <svg className="admin-customers-nav-icon" viewBox="0 0 24 24" fill="currentColor">
+                                    <path d="M9 11H7v6h2v-6zm4 0h-2v6h2v-6zm4 0h-2v6h2v-6zm2.5-9H14V1h-4v1H5.5v2h13v-2zM6 19c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2V7H6v12z"/>
+                                </svg>
+                                {isMenuOpen && <span>attendance_service_logs</span>}
+                            </a>
+                        </li>
+                        <li className="admin-customers-nav-item">
+                            <a href="#" className="admin-customers-nav-link">
+                                <svg className="admin-customers-nav-icon" viewBox="0 0 24 24" fill="currentColor">
+                                    <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-1 17.93c-3.94-.49-7-3.85-7-7.93 0-.62.08-1.21.21-1.79L9 15v1c0 1.1.9 2 2 2v1.93zm6.9-2.54c-.26-.81-1-1.39-1.9-1.39h-1v-3c0-.55-.45-1-1-1H8v-2h2c.55 0 1-.45 1-1V7h2c1.1 0 2-.9 2-2v-.41c2.93 1.19 5 4.06 5 7.41 0 2.08-.8 3.97-2.1 5.39z"/>
+                                </svg>
+                                {isMenuOpen && <span>feedback_service_logs</span>}
+                            </a>
+                        </li>
+                    </ul>
+                </nav>
+            </aside>
+
+            {/* Main Content */}
+            <div className={`admin-customers-main-content ${isMenuOpen ? 'admin-customers-content-expanded' : 'admin-customers-content-collapsed'}`}>
+                {/* Navbar */}
+                <header className="admin-customers-nav-header">
+                    <div className="admin-customers-nav-left">
+                        <button className="admin-customers-menu-toggle" onClick={toggleMenu}>
+                            <svg viewBox="0 0 24 24" fill="currentColor">
+                                <path d="M3 18h18v-2H3v2zm0-5h18v-2H3v2zm0-7v2h18V6H3z"/>
+                            </svg>
+                        </button>
+                        <div className="admin-customers-datetime-display">
+                            {formatDateTime(currentTime)}
+                        </div>
+                    </div>
+
+                    <div className="admin-customers-nav-right">
+                        <button className="admin-customers-notification-btn">
+                            <svg viewBox="0 0 24 24" fill="currentColor">
+                                <path d="M12 22c1.1 0 2-.9 2-2h-4c0 1.1.9 2 2 2zm6-6v-5c0-3.07-1.64-5.64-4.5-6.32V4c0-.83-.67-1.5-1.5-1.5s-1.5.67-1.5 1.5v.68C7.63 5.36 6 7.92 6 11v5l-2 2v1h16v-1l-2-2z"/>
+                            </svg>
+                            <span className="admin-customers-notification-badge">3</span>
+                        </button>
+
+                        <div
+                            ref={profileRef}
+                            className="admin-customers-user-profile"
+                            onClick={toggleProfileDropdown}
+                        >
+                            <div className="admin-customers-user-avatar">
+                                <span>{user?.fullName?.charAt(0).toUpperCase() || user?.email?.charAt(0).toUpperCase() || 'U'}</span>
+                            </div>
+                            <div className="admin-customers-user-info">
+                                <span className="admin-customers-user-name">
+                                    {user?.fullName || user?.email?.split('@')[0] || 'Admin User'}
+                                </span>
+                                <span className="admin-customers-user-role">Quản trị viên</span>
+                            </div>
+
+                            {isProfileDropdownOpen && (
+                                <div className="admin-customers-profile-dropdown">
+                                    <div
+                                        className={`admin-customers-dropdown-item admin-customers-logout-item ${isLoggingOut ? 'admin-customers-disabled' : ''}`}
+                                        onClick={(e) => {
+                                            e.stopPropagation();
+                                            if (!isLoggingOut) {
+                                                handleLogout();
+                                            }
+                                        }}
+                                        style={{
+                                            cursor: isLoggingOut ? 'not-allowed' : 'pointer',
+                                            opacity: isLoggingOut ? 0.5 : 1
+                                        }}
+                                    >
+                                        <svg className="admin-customers-dropdown-icon" viewBox="0 0 24 24" fill="currentColor">
+                                            <path d="M17 7l-1.41 1.41L18.17 11H8v2h10.17l-2.58 2.58L17 17l5-5zM4 5h8V3H4c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h8v-2H4V5z"/>
+                                        </svg>
+                                        {isLoggingOut ? 'Đang đăng xuất...' : 'Đăng xuất'}
+                                    </div>
+                                </div>
+                            )}
+                        </div>
+                    </div>
+                </header>
+
+                {/* Main Content Area */}
+                <main className="admin-customers-main">
+                    <div className="admin-customers-page-header">
+                        <h1 className="admin-customers-page-title">Quản lý khách hàng</h1>
+                        <div className="admin-customers-header-actions">
+                            <button className="admin-customers-refresh-btn" onClick={handleRefresh} title="Làm mới danh sách">
+                                <svg viewBox="0 0 24 24" fill="currentColor" width="20" height="20">
+                                    <path d="M17.65 6.35C16.2 4.9 14.21 4 12 4c-4.42 0-7.99 3.58-7.99 8s3.57 8 7.99 8c3.73 0 6.84-2.55 7.73-6h-2.08c-.82 2.33-3.04 4-5.65 4-3.31 0-6-2.69-6-6s2.69-6 6-6c1.66 0 3.14.69 4.22 1.78L13 11h7V4l-2.35 2.35z"/>
+                                </svg>
+                            </button>
+                        </div>
+                    </div>
+
+                    {/* Search and Sort */}
+                    <div className="admin-customers-filters-section">
+                        <div className="admin-customers-search-box">
+                            <svg className="admin-customers-search-icon" viewBox="0 0 24 24" fill="currentColor">
+                                <path d="M15.5 14h-.79l-.28-.27C15.41 12.59 16 11.11 16 9.5 16 5.91 13.09 3 9.5 3S3 5.91 3 9.5 5.91 16 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19l-4.99-5zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14z"/>
+                            </svg>
+                            <input
+                                type="text"
+                                className="admin-customers-search-input"
+                                placeholder="Tìm kiếm theo tên công ty, người liên hệ, mã khách hàng..."
+                                value={searchTerm}
+                                onChange={(e) => {
+                                    setSearchTerm(e.target.value);
+                                    setCurrentPage(1);
+                                }}
+                            />
+                        </div>
+
+                        <div className="admin-customers-status-filter">
+                            <select
+                                className="admin-customers-sort-select"
+                                value={statusFilter}
+                                onChange={(e) => {
+                                    setStatusFilter(e.target.value);
+                                    setCurrentPage(1);
+                                }}
+                            >
+                                <option value="all">Tất cả trạng thái</option>
+                                <option value="active">Đang hoạt động</option>
+                                <option value="in-active">Chưa hoạt động</option>
+                            </select>
+                        </div>
+
+                        <div className="admin-customers-sort-group">
+                            <select
+                                className="admin-customers-sort-select"
+                                value={sortBy}
+                                onChange={(e) => {
+                                    setSortBy(e.target.value as 'contactPersonName' | 'customerSince');
+                                    setCurrentPage(1);
+                                }}
+                            >
+                                {sortOptions.map(option => (
+                                    <option key={option.value} value={option.value}>{option.label}</option>
+                                ))}
+                            </select>
+
+                            <button
+                                className="admin-customers-sort-order-btn"
+                                onClick={() => setSortOrder(sortOrder === 'asc' ? 'desc' : 'asc')}
+                                title={sortOrder === 'asc' ? 'Sắp xếp tăng dần' : 'Sắp xếp giảm dần'}
+                            >
+                                <svg viewBox="0 0 24 24" fill="currentColor">
+                                    {sortOrder === 'asc' ? (
+                                        <path d="M7 14l5-5 5 5z"/>
+                                    ) : (
+                                        <path d="M7 10l5 5 5-5z"/>
+                                    )}
+                                </svg>
+                            </button>
+                        </div>
+                    </div>
+
+                    {/* Loading State */}
+                    {isLoading && (
+                        <div className="admin-customers-loading">
+                            <div className="admin-customers-loading-text">Đang tải danh sách khách hàng...</div>
+                        </div>
+                    )}
+
+                    {/* Error State */}
+                    {error && !isLoading && (
+                        <div className="admin-customers-error">
+                            <div className="admin-customers-error-text">{error}</div>
+                            <button
+                                className="admin-customers-retry-btn"
+                                onClick={() => window.location.reload()}
+                            >
+                                Thử lại
+                            </button>
+                        </div>
+                    )}
+
+                    {/* Results Info */}
+                    {!isLoading && !error && (
+                        <div className="admin-customers-results-info">
+                            Hiển thị {startIndex + 1} - {Math.min(endIndex, filteredAndSortedCustomers.length)} trong tổng số {filteredAndSortedCustomers.length} khách hàng
+                        </div>
+                    )}
+
+                    {/* Customer List */}
+                    {!isLoading && !error && (
+                        <div className="admin-customers-list">
+                            {currentCustomers.length === 0 ? (
+                                <div className="admin-customers-empty">
+                                    <div className="admin-customers-empty-text">Không tìm thấy khách hàng nào.</div>
+                                </div>
+                            ) : (
+                                currentCustomers.map(customer => (
+                                    <div key={customer.id} className="admin-customers-item">
+                                        <div className="admin-customers-item-header">
+                                            <div className="admin-customers-item-main-info">
+                                                <div className="admin-customers-item-company-name">{customer.contactPersonName}</div>
+                                                <div className="admin-customers-item-code">
+                                                    <span className="admin-customers-code-label">Mã KH:</span>
+                                                    <span className="admin-customers-code-value">{customer.customerCode}</span>
+                                                </div>
+                                            </div>
+                                            <div className={`admin-customers-item-status admin-customers-status-${customer.status}`}>
+                                                {getStatusLabel(customer.status)}
+                                            </div>
+                                        </div>
+                                        <div className="admin-customers-item-details">
+                                            <div className="admin-customers-item-detail">
+                                                <span className="admin-customers-detail-label">Chức vụ:</span>
+                                                <span className="admin-customers-detail-value">{customer.contactPersonTitle}</span>
+                                            </div>
+                                            <div className="admin-customers-item-detail">
+                                                <span className="admin-customers-detail-label">Email:</span>
+                                                <span className="admin-customers-detail-value">{customer.email}</span>
+                                            </div>
+                                            <div className="admin-customers-item-detail">
+                                                <span className="admin-customers-detail-label">Điện thoại:</span>
+                                                <span className="admin-customers-detail-value">{customer.phone}</span>
+                                            </div>
+                                            <div className="admin-customers-item-detail">
+                                                <span className="admin-customers-detail-label">Địa chỉ:</span>
+                                                <span className="admin-customers-detail-value">{customer.address}</span>
+                                            </div>
+                                            <div className="admin-customers-item-detail">
+                                                <span className="admin-customers-detail-label">Khách hàng từ:</span>
+                                                <span className="admin-customers-detail-value">{formatDate(customer.customerSince)}</span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                ))
+                            )}
+                        </div>
+                    )}
+
+                    {/* Pagination */}
+                    {!isLoading && !error && totalPages > 1 && (
+                        <div className="admin-customers-pagination">
+                            <button
+                                className="admin-customers-page-btn"
+                                onClick={() => handlePageChange(currentPage - 1)}
+                                disabled={currentPage === 1}
+                            >
+                                Trước
+                            </button>
+                            <div className="admin-customers-page-numbers">
+                                {Array.from({ length: totalPages }, (_, i) => i + 1).map(page => (
+                                    <button
+                                        key={page}
+                                        className={`admin-customers-page-number ${page === currentPage ? 'admin-customers-page-active' : ''}`}
+                                        onClick={() => handlePageChange(page)}
+                                    >
+                                        {page}
+                                    </button>
+                                ))}
+                            </div>
+                            <button
+                                className="admin-customers-page-btn"
+                                onClick={() => handlePageChange(currentPage + 1)}
+                                disabled={currentPage === totalPages}
+                            >
+                                Sau
+                            </button>
+                        </div>
+                    )}
+                </main>
+            </div>
+
+            {showLogoutModal && (
+                <div className="admin-customers-modal-overlay" onClick={cancelLogout}>
+                    <div className="admin-customers-modal-content" onClick={(e) => e.stopPropagation()}>
+                        <div className="admin-customers-modal-header">
+                            <h3>Xác nhận đăng xuất</h3>
+                        </div>
+                        <div className="admin-customers-modal-body">
+                            <p>Bạn có chắc muốn đăng xuất?</p>
+                        </div>
+                        <div className="admin-customers-modal-footer">
+                            <button className="admin-customers-btn-cancel-modal" onClick={cancelLogout}>
+                                Hủy
+                            </button>
+                            <button className="admin-customers-btn-confirm-modal" onClick={confirmLogout}>
+                                Đăng xuất
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
+        </div>
+    );
+};
+
+export default CustomerListAdmin;

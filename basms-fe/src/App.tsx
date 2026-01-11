@@ -13,6 +13,7 @@ import UpdatePassword from "./pages/update-password/updatePassword.tsx";
 import ForgotPassword from './pages/reset-password/forgotPassword';
 {/* Admin Routes */}
 import DashboardAdmin from './pages/admin/dashboard/dashboardAdmin';
+import CustomerListAdmin from './pages/admin/customer-list/CustomerListAdmin';
 {/* Director Routes */}
 import DashboardDirector from "./pages/director/dashboardDirector.tsx";
 import CustomerList from "./pages/director/CustomerList.tsx";
@@ -177,6 +178,11 @@ function App() {
                     <Route path="/admin/dashboard" element={
                         <RoleBasedRoute allowedRoles={[ROLES.ADMIN]}>
                             <DashboardAdmin/>
+                        </RoleBasedRoute>
+                    }/>
+                    <Route path="/admin/customer-list" element={
+                        <RoleBasedRoute allowedRoles={[ROLES.ADMIN]}>
+                            <CustomerListAdmin/>
                         </RoleBasedRoute>
                     }/>
 
