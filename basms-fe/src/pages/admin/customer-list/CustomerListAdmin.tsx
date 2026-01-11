@@ -870,22 +870,6 @@ const CustomerListAdmin = () => {
                                                                     </div>
                                                                 </div>
                                                             </div>
-                                                            <div className="admin-customers-contract-action">
-                                                                <button
-                                                                    className="admin-customers-action-btn admin-customers-btn-view"
-                                                                    onClick={() => handleViewContract(customer.id, contract.id)}
-                                                                >
-                                                                    {contract.status === 'draft' ? 'Xem chi tiết & phân công' : 'Xem chi tiết'}
-                                                                </button>
-                                                                {(contract.status === 'shift_generated' || contract.status === 'near_expired' || contract.status === 'expired') && (
-                                                                    <button
-                                                                        className="admin-customers-action-btn admin-customers-btn-schedule"
-                                                                        onClick={() => handleViewSchedule(contract.id)}
-                                                                    >
-                                                                        Xem ca trực
-                                                                    </button>
-                                                                )}
-                                                            </div>
                                                         </div>
                                                     ))
                                                 )}
