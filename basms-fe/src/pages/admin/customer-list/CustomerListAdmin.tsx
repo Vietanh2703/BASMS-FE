@@ -1,6 +1,8 @@
 import { useState, useEffect, useRef } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '../../../hooks/useAuth';
+import SnackbarChecked from '../../../components/snackbar/snackbarChecked';
+import SnackbarFailed from '../../../components/snackbar/snackbarFailed';
 import './CustomerListAdmin.css';
 
 interface Customer {
@@ -32,6 +34,30 @@ interface CustomerResponse {
     totalCount: number;
 }
 
+interface Contract {
+    id: string;
+    customerId: string;
+    documentId: string;
+    contractNumber: string;
+    contractTitle: string;
+    contractType: string;
+    serviceScope: string;
+    startDate: string;
+    endDate: string;
+    status: string;
+    createdAt: string;
+}
+
+interface ContractsResponse {
+    success: boolean;
+    errorMessage: string | null;
+    customerId: string;
+    customerCode: string;
+    customerName: string;
+    totalContracts: number;
+    contracts: Contract[];
+}
+
 const CustomerListAdmin = () => {
     const navigate = useNavigate();
     const { user, logout } = useAuth();
@@ -54,6 +80,40 @@ const CustomerListAdmin = () => {
     const [allCustomers, setAllCustomers] = useState<Customer[]>([]);
     const [isLoading, setIsLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
+
+    // Contracts states
+    const [expandedCustomers, setExpandedCustomers] = useState<Set<string>>(new Set());
+    const [customerContracts, setCustomerContracts] = useState<Map<string, ContractsResponse>>(new Map());
+    const [loadingContracts, setLoadingContracts] = useState<Set<string>>(new Set());
+
+    // Create customer modal states
+    const [showCreateModal, setShowCreateModal] = useState(false);
+    const [isCreating, setIsCreating] = useState(false);
+    const [createError, setCreateError] = useState<string | null>(null);
+    const [showSuccessSnackbar, setShowSuccessSnackbar] = useState(false);
+    const [showFailureSnackbar, setShowFailureSnackbar] = useState(false);
+    const [failureMessage, setFailureMessage] = useState('');
+
+    // Account activation/lock states
+    const [activatingCustomers, setActivatingCustomers] = useState<Set<string>>(new Set());
+    const [lockingCustomers, setLockingCustomers] = useState<Set<string>>(new Set());
+    const [formData, setFormData] = useState({
+        IdentityNumber: '',
+        IdentityIssueDate: '',
+        IdentityIssuePlace: '',
+        Email: '',
+        Password: '',
+        FullName: '',
+        Phone: '',
+        Gender: 'Nam',
+        Address: '',
+        BirthDay: '',
+        BirthMonth: '',
+        BirthYear: '',
+        AvatarUrl: '',
+        RoleId: 'ddbd630a-ba6e-11f0-bcac-00155dca8f48',
+        AuthProvider: 'email'
+    });
 
     const sortOptions = [
         { value: 'contactPersonName', label: 'Tên người liên hệ (A-Z)' },
@@ -185,6 +245,24 @@ const CustomerListAdmin = () => {
         return statusMap[status] || status;
     };
 
+    const getContractStatusLabel = (status: string) => {
+        const statusMap: { [key: string]: string } = {
+            'draft': 'Chưa phân công',
+            'schedule_shifts': 'Đang xếp ca trực',
+            'shift_generated': 'Đã xếp ca trực',
+        };
+        return statusMap[status] || status;
+    };
+
+    const getContractStatusColor = (status: string) => {
+        const colorMap: { [key: string]: string } = {
+            'draft': '#6b7280', // gray
+            'schedule_shifts': '#f59e0b', // amber
+            'shift_generated': '#10b981', // green
+        };
+        return colorMap[status] || '#6b7280';
+    };
+
     // Filter and sort customers
     const filteredAndSortedCustomers = allCustomers
         .filter(customer => {
@@ -238,6 +316,367 @@ const CustomerListAdmin = () => {
 
     const handleRefresh = () => {
         window.location.reload();
+    };
+
+    const handleViewContract = (customerId: string, contractId: string) => {
+        navigate(`/admin/customer/${customerId}/${contractId}`);
+    };
+
+    const handleViewSchedule = (contractId: string) => {
+        navigate(`/admin/customer/${contractId}/view-shift-schedule`);
+    };
+
+    const fetchCustomerContracts = async (customerId: string) => {
+        // If already loading, return
+        if (loadingContracts.has(customerId)) {
+            return;
+        }
+
+        // If already fetched, just toggle expand
+        if (customerContracts.has(customerId)) {
+            return;
+        }
+
+        setLoadingContracts(prev => new Set(prev).add(customerId));
+
+        try {
+            const apiUrl = import.meta.env.VITE_API_CONTRACT_URL;
+            const token = localStorage.getItem('accessToken');
+
+            if (!token) {
+                console.error('No access token found');
+                return;
+            }
+
+            const response = await fetch(`${apiUrl}/contracts/customers/${customerId}/all`, {
+                method: 'GET',
+                headers: {
+                    'Authorization': `Bearer ${token}`,
+                    'Content-Type': 'application/json',
+                },
+            });
+
+            if (!response.ok) {
+                throw new Error('Failed to fetch contracts');
+            }
+
+            const data: ContractsResponse = await response.json();
+
+            setCustomerContracts(prev => {
+                const newMap = new Map(prev);
+                newMap.set(customerId, data);
+                return newMap;
+            });
+        } catch (err) {
+            console.error('Error fetching contracts:', err);
+        } finally {
+            setLoadingContracts(prev => {
+                const newSet = new Set(prev);
+                newSet.delete(customerId);
+                return newSet;
+            });
+        }
+    };
+
+    const toggleCustomerContracts = async (customerId: string) => {
+        const isExpanded = expandedCustomers.has(customerId);
+
+        if (isExpanded) {
+            // Collapse
+            setExpandedCustomers(prev => {
+                const newSet = new Set(prev);
+                newSet.delete(customerId);
+                return newSet;
+            });
+        } else {
+            // Expand
+            setExpandedCustomers(prev => new Set(prev).add(customerId));
+
+            // Fetch contracts if not already fetched
+            if (!customerContracts.has(customerId)) {
+                await fetchCustomerContracts(customerId);
+            }
+        }
+    };
+
+    const handleCreateCustomer = () => {
+        setShowCreateModal(true);
+        setCreateError(null);
+    };
+
+    const handleCloseModal = () => {
+        setShowCreateModal(false);
+        setCreateError(null);
+        setFormData({
+            IdentityNumber: '',
+            IdentityIssueDate: '',
+            IdentityIssuePlace: '',
+            Email: '',
+            Password: '',
+            FullName: '',
+            Phone: '',
+            Gender: 'Nam',
+            Address: '',
+            BirthDay: '',
+            BirthMonth: '',
+            BirthYear: '',
+            AvatarUrl: '',
+            RoleId: 'ddbd630a-ba6e-11f0-bcac-00155dca8f48',
+            AuthProvider: 'email'
+        });
+    };
+
+    const handleFormChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
+        const { name, value } = e.target;
+        setFormData(prev => ({
+            ...prev,
+            [name]: value
+        }));
+    };
+
+    const generateRandomPassword = () => {
+        const uppercaseChars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
+        const lowercaseChars = 'abcdefghijklmnopqrstuvwxyz';
+        const numberChars = '0123456789';
+        const specialChars = '!@#$%^&*';
+
+        // Ensure at least 1 uppercase, 1 number, 1 special character
+        let password = '';
+        password += uppercaseChars[Math.floor(Math.random() * uppercaseChars.length)];
+        password += numberChars[Math.floor(Math.random() * numberChars.length)];
+        password += specialChars[Math.floor(Math.random() * specialChars.length)];
+
+        // Fill remaining 5 characters with random mix
+        const allChars = uppercaseChars + lowercaseChars + numberChars + specialChars;
+        for (let i = 0; i < 5; i++) {
+            password += allChars[Math.floor(Math.random() * allChars.length)];
+        }
+
+        // Shuffle the password to randomize position of required characters
+        password = password.split('').sort(() => Math.random() - 0.5).join('');
+
+        setFormData(prev => ({
+            ...prev,
+            Password: password
+        }));
+    };
+
+    const handleSubmitCreate = async (e: React.FormEvent) => {
+        e.preventDefault();
+        setIsCreating(true);
+        setCreateError(null);
+
+        try {
+            const apiUrl = import.meta.env.VITE_API_CONTRACT_URL;
+            const token = localStorage.getItem('accessToken');
+
+            if (!token) {
+                throw new Error('Không tìm thấy token xác thực. Vui lòng đăng nhập lại.');
+            }
+
+            // Process phone number: replace leading 0 with +84
+            let processedPhone = formData.Phone.trim();
+            if (processedPhone.startsWith('0')) {
+                processedPhone = '+84' + processedPhone.substring(1);
+            }
+
+            // Convert BirthDay, BirthMonth, BirthYear to numbers
+            const requestData = {
+                ...formData,
+                Phone: processedPhone,
+                BirthDay: parseInt(formData.BirthDay),
+                BirthMonth: parseInt(formData.BirthMonth),
+                BirthYear: parseInt(formData.BirthYear)
+            };
+
+            const response = await fetch(`${apiUrl}/users/create`, {
+                method: 'POST',
+                headers: {
+                    'Authorization': `Bearer ${token}`,
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify(requestData),
+            });
+
+            if (!response.ok) {
+                const errorData = await response.json();
+                throw new Error(errorData.errorMessage || 'Không thể tạo khách hàng');
+            }
+
+            // Success - close modal, show success message, and refresh list
+            handleCloseModal();
+            setShowSuccessSnackbar(true);
+
+            // Reload page after showing success message
+            setTimeout(() => {
+                window.location.reload();
+            }, 2000);
+        } catch (err: any) {
+            setCreateError(err.message || 'Có lỗi xảy ra khi tạo khách hàng. Vui lòng thử lại.');
+        } finally {
+            setIsCreating(false);
+        }
+    };
+
+    const handleActivateCustomer = async (customer: Customer) => {
+        if (activatingCustomers.has(customer.id)) return;
+
+        setActivatingCustomers(prev => new Set(prev).add(customer.id));
+
+        try {
+            const apiUrl = import.meta.env.VITE_API_CONTRACT_URL;
+            const token = localStorage.getItem('accessToken');
+
+            if (!token) {
+                throw new Error('Không tìm thấy token xác thực. Vui lòng đăng nhập lại.');
+            }
+
+            // Check if customer has at least 1 contract
+            let contractsData = customerContracts.get(customer.id);
+
+            // If contracts not yet fetched, fetch them first
+            if (!contractsData) {
+                const contractsResponse = await fetch(`${apiUrl}/contracts/customers/${customer.id}/all`, {
+                    method: 'GET',
+                    headers: {
+                        'Authorization': `Bearer ${token}`,
+                        'Content-Type': 'application/json',
+                    },
+                });
+
+                if (contractsResponse.ok) {
+                    contractsData = await contractsResponse.json();
+                    setCustomerContracts(prev => {
+                        const newMap = new Map(prev);
+                        newMap.set(customer.id, contractsData!);
+                        return newMap;
+                    });
+                }
+            }
+
+            // Validate contract count
+            if (!contractsData || contractsData.totalContracts === 0) {
+                setFailureMessage('Khách hàng cần có ít nhất 1 hợp đồng trước khi kích hoạt tài khoản');
+                setShowFailureSnackbar(true);
+                setActivatingCustomers(prev => {
+                    const newSet = new Set(prev);
+                    newSet.delete(customer.id);
+                    return newSet;
+                });
+                return;
+            }
+
+            // Step 1: Activate customer
+            const activateResponse = await fetch(`${apiUrl}/contracts/customers/${customer.id}/activate`, {
+                method: 'POST',
+                headers: {
+                    'Authorization': `Bearer ${token}`,
+                    'Content-Type': 'application/json',
+                },
+            });
+
+            if (!activateResponse.ok) {
+                const errorText = await activateResponse.text();
+                try {
+                    const errorData = JSON.parse(errorText);
+                    throw new Error(errorData.message || 'Không thể kích hoạt tài khoản');
+                } catch (parseError) {
+                    if (parseError instanceof Error && parseError.message.includes('Không thể')) {
+                        throw parseError;
+                    }
+                    throw new Error('Không thể kích hoạt tài khoản');
+                }
+            }
+
+            // Step 2: Send login email
+            const emailResponse = await fetch(`${apiUrl}/users/send-login-email`, {
+                method: 'POST',
+                headers: {
+                    'Authorization': `Bearer ${token}`,
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    email: customer.email,
+                    phoneNumber: customer.phone
+                }),
+            });
+
+            if (!emailResponse.ok) {
+                // Email sending failed, but activation succeeded
+                setFailureMessage('Tài khoản đã được kích hoạt nhưng không thể gửi email thông báo');
+                setShowFailureSnackbar(true);
+            } else {
+                // Both succeeded
+                setShowSuccessSnackbar(true);
+            }
+
+            // Reload page after showing message
+            setTimeout(() => {
+                window.location.reload();
+            }, 2000);
+        } catch (err: any) {
+            setFailureMessage(err.message || 'Có lỗi xảy ra khi kích hoạt tài khoản');
+            setShowFailureSnackbar(true);
+        } finally {
+            setActivatingCustomers(prev => {
+                const newSet = new Set(prev);
+                newSet.delete(customer.id);
+                return newSet;
+            });
+        }
+    };
+
+    const handleLockCustomer = async (customer: Customer) => {
+        if (lockingCustomers.has(customer.id)) return;
+
+        setLockingCustomers(prev => new Set(prev).add(customer.id));
+
+        try {
+            const apiUrl = import.meta.env.VITE_API_CONTRACT_URL;
+            const token = localStorage.getItem('accessToken');
+
+            if (!token) {
+                throw new Error('Không tìm thấy token xác thực. Vui lòng đăng nhập lại.');
+            }
+
+            // Lock customer account
+            const lockResponse = await fetch(`${apiUrl}/contracts/customers/${customer.id}/lock`, {
+                method: 'POST',
+                headers: {
+                    'Authorization': `Bearer ${token}`,
+                    'Content-Type': 'application/json',
+                },
+            });
+
+            if (!lockResponse.ok) {
+                const errorText = await lockResponse.text();
+                try {
+                    const errorData = JSON.parse(errorText);
+                    throw new Error(errorData.message || 'Không thể khóa tài khoản');
+                } catch (parseError) {
+                    if (parseError instanceof Error && parseError.message.includes('Không thể')) {
+                        throw parseError;
+                    }
+                    throw new Error('Không thể khóa tài khoản');
+                }
+            }
+
+            setShowSuccessSnackbar(true);
+
+            // Reload page after showing success message
+            setTimeout(() => {
+                window.location.reload();
+            }, 2000);
+        } catch (err: any) {
+            setFailureMessage(err.message || 'Có lỗi xảy ra khi khóa tài khoản');
+            setShowFailureSnackbar(true);
+        } finally {
+            setLockingCustomers(prev => {
+                const newSet = new Set(prev);
+                newSet.delete(customer.id);
+                return newSet;
+            });
+        }
     };
 
     return (
@@ -382,6 +821,12 @@ const CustomerListAdmin = () => {
                     <div className="admin-customers-page-header">
                         <h1 className="admin-customers-page-title">Quản lý khách hàng</h1>
                         <div className="admin-customers-header-actions">
+                            <button className="admin-customers-create-btn" onClick={handleCreateCustomer} title="Tạo khách hàng mới">
+                                <svg viewBox="0 0 24 24" fill="currentColor" width="20" height="20">
+                                    <path d="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z"/>
+                                </svg>
+                                <span>Tạo mới</span>
+                            </button>
                             <button className="admin-customers-refresh-btn" onClick={handleRefresh} title="Làm mới danh sách">
                                 <svg viewBox="0 0 24 24" fill="currentColor" width="20" height="20">
                                     <path d="M17.65 6.35C16.2 4.9 14.21 4 12 4c-4.42 0-7.99 3.58-7.99 8s3.57 8 7.99 8c3.73 0 6.84-2.55 7.73-6h-2.08c-.82 2.33-3.04 4-5.65 4-3.31 0-6-2.69-6-6s2.69-6 6-6c1.66 0 3.14.69 4.22 1.78L13 11h7V4l-2.35 2.35z"/>
@@ -524,6 +969,115 @@ const CustomerListAdmin = () => {
                                                 <span className="admin-customers-detail-value">{formatDate(customer.customerSince)}</span>
                                             </div>
                                         </div>
+
+                                        {/* Action buttons based on customer status */}
+                                        <div className="admin-customers-item-actions">
+                                            {customer.status === 'in-active' && (
+                                                <button
+                                                    className="admin-customers-action-btn admin-customers-btn-activate"
+                                                    onClick={() => handleActivateCustomer(customer)}
+                                                    disabled={activatingCustomers.has(customer.id)}
+                                                >
+                                                    {activatingCustomers.has(customer.id) ? 'Đang kích hoạt...' : 'Kích hoạt tài khoản'}
+                                                </button>
+                                            )}
+
+                                            {customer.status === 'active' && (
+                                                <button
+                                                    className="admin-customers-action-btn admin-customers-btn-lock"
+                                                    onClick={() => handleLockCustomer(customer)}
+                                                    disabled={lockingCustomers.has(customer.id)}
+                                                >
+                                                    {lockingCustomers.has(customer.id) ? 'Đang khóa...' : 'Khóa tài khoản'}
+                                                </button>
+                                            )}
+                                        </div>
+
+                                        {/* Total Contracts Toggle */}
+                                        <div className="admin-customers-contracts-toggle">
+                                            <button
+                                                className="admin-customers-toggle-btn"
+                                                onClick={() => toggleCustomerContracts(customer.id)}
+                                                disabled={loadingContracts.has(customer.id)}
+                                            >
+                                                <span className="admin-customers-toggle-text">
+                                                    {loadingContracts.has(customer.id) ? 'Đang tải...' :
+                                                     customerContracts.has(customer.id) ?
+                                                     `${customerContracts.get(customer.id)?.totalContracts || 0} Hợp đồng` :
+                                                     'Xem hợp đồng'}
+                                                </span>
+                                                <svg
+                                                    className={`admin-customers-toggle-icon ${expandedCustomers.has(customer.id) ? 'admin-customers-toggle-icon-expanded' : ''}`}
+                                                    viewBox="0 0 24 24"
+                                                    fill="currentColor"
+                                                >
+                                                    <path d="M7 10l5 5 5-5z"/>
+                                                </svg>
+                                            </button>
+                                        </div>
+
+                                        {/* Contracts List */}
+                                        {expandedCustomers.has(customer.id) && customerContracts.has(customer.id) && (
+                                            <div className="admin-customers-contracts-list">
+                                                {customerContracts.get(customer.id)!.contracts.length === 0 ? (
+                                                    <div className="admin-customers-contracts-empty">
+                                                        Không có hợp đồng nào
+                                                    </div>
+                                                ) : (
+                                                    customerContracts.get(customer.id)!.contracts.map(contract => (
+                                                        <div key={contract.id} className="admin-customers-contract-item">
+                                                            <div className="admin-customers-contract-content">
+                                                                <div className="admin-customers-contract-main">
+                                                                    <div className="admin-customers-contract-title">
+                                                                        {contract.contractTitle}
+                                                                    </div>
+                                                                    <div className="admin-customers-contract-subtitle">
+                                                                        {contract.contractNumber}
+                                                                    </div>
+                                                                </div>
+                                                                <div className="admin-customers-contract-dates">
+                                                                    <div className="admin-customers-contract-date">
+                                                                        <span className="admin-customers-contract-date-label">Bắt đầu:</span>
+                                                                        <span className="admin-customers-contract-date-value">{formatDate(contract.startDate)}</span>
+                                                                    </div>
+                                                                    <div className="admin-customers-contract-date">
+                                                                        <span className="admin-customers-contract-date-label">Kết thúc:</span>
+                                                                        <span className="admin-customers-contract-date-value">{formatDate(contract.endDate)}</span>
+                                                                        <span
+                                                                            className="admin-customers-contract-status"
+                                                                            style={{
+                                                                                color: getContractStatusColor(contract.status),
+                                                                                marginLeft: '12px',
+                                                                                fontWeight: '500',
+                                                                                fontSize: '14px'
+                                                                            }}
+                                                                        >
+                                                                            {getContractStatusLabel(contract.status)}
+                                                                        </span>
+                                                                    </div>
+                                                                </div>
+                                                            </div>
+                                                            <div className="admin-customers-contract-action">
+                                                                <button
+                                                                    className="admin-customers-action-btn admin-customers-btn-view"
+                                                                    onClick={() => handleViewContract(customer.id, contract.id)}
+                                                                >
+                                                                    {contract.status === 'draft' ? 'Xem chi tiết & phân công' : 'Xem chi tiết'}
+                                                                </button>
+                                                                {(contract.status === 'shift_generated' || contract.status === 'near_expired' || contract.status === 'expired') && (
+                                                                    <button
+                                                                        className="admin-customers-action-btn admin-customers-btn-schedule"
+                                                                        onClick={() => handleViewSchedule(contract.id)}
+                                                                    >
+                                                                        Xem ca trực
+                                                                    </button>
+                                                                )}
+                                                            </div>
+                                                        </div>
+                                                    ))
+                                                )}
+                                            </div>
+                                        )}
                                     </div>
                                 ))
                             )}
@@ -563,6 +1117,228 @@ const CustomerListAdmin = () => {
                 </main>
             </div>
 
+            {showCreateModal && (
+                <div className="custlist-create-modal-overlay" onClick={handleCloseModal}>
+                    <div className="custlist-create-modal-container" onClick={(e) => e.stopPropagation()}>
+                        <div className="custlist-create-modal-header">
+                            <h2 className="custlist-create-modal-title">Tạo khách hàng mới</h2>
+                        </div>
+
+                        {createError && (
+                            <div className="custlist-form-error">
+                                <div className="custlist-form-error-text">{createError}</div>
+                            </div>
+                        )}
+
+                        <form className="custlist-create-form" onSubmit={handleSubmitCreate}>
+                            {/* Column 1: Avatar, Email, Password */}
+                            <div className="custlist-form-column-left">
+                                <div className="custlist-avatar-preview-container">
+                                    <div className="custlist-avatar-preview">
+                                        {formData.AvatarUrl ? (
+                                            <img src={formData.AvatarUrl} alt="Avatar" />
+                                        ) : (
+                                            <span className="custlist-avatar-placeholder">?</span>
+                                        )}
+                                    </div>
+                                    <div className="custlist-form-group">
+                                        <label className="custlist-form-label">URL Avatar</label>
+                                        <input
+                                            type="text"
+                                            name="AvatarUrl"
+                                            className="custlist-form-input"
+                                            placeholder="https://..."
+                                            value={formData.AvatarUrl}
+                                            onChange={handleFormChange}
+                                        />
+                                    </div>
+                                </div>
+
+                                <div className="custlist-form-group">
+                                    <label className="custlist-form-label">Email *</label>
+                                    <input
+                                        type="email"
+                                        name="Email"
+                                        className="custlist-form-input"
+                                        value={formData.Email}
+                                        onChange={handleFormChange}
+                                        required
+                                    />
+                                </div>
+
+                                <div className="custlist-form-group">
+                                    <label className="custlist-form-label">Mật khẩu *</label>
+                                    <div className="custlist-password-input-wrapper">
+                                        <input
+                                            type="password"
+                                            name="Password"
+                                            className="custlist-form-input"
+                                            value={formData.Password}
+                                            onChange={handleFormChange}
+                                            required
+                                        />
+                                        <button
+                                            type="button"
+                                            className="custlist-generate-password-btn"
+                                            onClick={generateRandomPassword}
+                                            title="Tạo mật khẩu ngẫu nhiên"
+                                        >
+                                            Tạo
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+
+                            {/* Column 2: All other fields */}
+                            <div className="custlist-form-column-right">
+                                <div className="custlist-form-group">
+                                    <label className="custlist-form-label">Họ và tên *</label>
+                                    <input
+                                        type="text"
+                                        name="FullName"
+                                        className="custlist-form-input"
+                                        value={formData.FullName}
+                                        onChange={handleFormChange}
+                                        required
+                                    />
+                                </div>
+
+                                <div className="custlist-form-group">
+                                    <label className="custlist-form-label">Số điện thoại *</label>
+                                    <input
+                                        type="tel"
+                                        name="Phone"
+                                        className="custlist-form-input"
+                                        value={formData.Phone}
+                                        onChange={handleFormChange}
+                                        required
+                                    />
+                                </div>
+
+                                <div className="custlist-form-group">
+                                    <label className="custlist-form-label">Giới tính *</label>
+                                    <select
+                                        name="Gender"
+                                        className="custlist-form-select"
+                                        value={formData.Gender}
+                                        onChange={handleFormChange}
+                                        required
+                                    >
+                                        <option value="Nam">Nam</option>
+                                        <option value="Nữ">Nữ</option>
+                                    </select>
+                                </div>
+
+                                <div className="custlist-form-group">
+                                    <label className="custlist-form-label">Ngày sinh *</label>
+                                    <div className="custlist-form-row">
+                                        <input
+                                            type="number"
+                                            name="BirthDay"
+                                            className="custlist-form-input"
+                                            placeholder="Ngày"
+                                            min="1"
+                                            max="31"
+                                            value={formData.BirthDay}
+                                            onChange={handleFormChange}
+                                            required
+                                        />
+                                        <input
+                                            type="number"
+                                            name="BirthMonth"
+                                            className="custlist-form-input"
+                                            placeholder="Tháng"
+                                            min="1"
+                                            max="12"
+                                            value={formData.BirthMonth}
+                                            onChange={handleFormChange}
+                                            required
+                                        />
+                                        <input
+                                            type="number"
+                                            name="BirthYear"
+                                            className="custlist-form-input"
+                                            placeholder="Năm"
+                                            min="1900"
+                                            max="2100"
+                                            value={formData.BirthYear}
+                                            onChange={handleFormChange}
+                                            required
+                                        />
+                                    </div>
+                                </div>
+
+                                <div className="custlist-form-group">
+                                    <label className="custlist-form-label">Số CMND/CCCD *</label>
+                                    <input
+                                        type="text"
+                                        name="IdentityNumber"
+                                        className="custlist-form-input"
+                                        value={formData.IdentityNumber}
+                                        onChange={handleFormChange}
+                                        required
+                                    />
+                                </div>
+
+                                <div className="custlist-form-group">
+                                    <label className="custlist-form-label">Ngày cấp *</label>
+                                    <input
+                                        type="date"
+                                        name="IdentityIssueDate"
+                                        className="custlist-form-input"
+                                        value={formData.IdentityIssueDate}
+                                        onChange={handleFormChange}
+                                        required
+                                    />
+                                </div>
+
+                                <div className="custlist-form-group">
+                                    <label className="custlist-form-label">Nơi cấp *</label>
+                                    <input
+                                        type="text"
+                                        name="IdentityIssuePlace"
+                                        className="custlist-form-input"
+                                        value={formData.IdentityIssuePlace}
+                                        onChange={handleFormChange}
+                                        required
+                                    />
+                                </div>
+
+                                <div className="custlist-form-group">
+                                    <label className="custlist-form-label">Địa chỉ *</label>
+                                    <input
+                                        type="text"
+                                        name="Address"
+                                        className="custlist-form-input"
+                                        value={formData.Address}
+                                        onChange={handleFormChange}
+                                        required
+                                    />
+                                </div>
+                            </div>
+
+                            <div className="custlist-form-actions">
+                                <button
+                                    type="button"
+                                    className="custlist-btn-cancel"
+                                    onClick={handleCloseModal}
+                                    disabled={isCreating}
+                                >
+                                    Quay lại
+                                </button>
+                                <button
+                                    type="submit"
+                                    className="custlist-btn-submit"
+                                    disabled={isCreating}
+                                >
+                                    {isCreating ? 'Đang tạo...' : 'Xác nhận'}
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            )}
+
             {showLogoutModal && (
                 <div className="admin-customers-modal-overlay" onClick={cancelLogout}>
                     <div className="admin-customers-modal-content" onClick={(e) => e.stopPropagation()}>
@@ -583,6 +1359,20 @@ const CustomerListAdmin = () => {
                     </div>
                 </div>
             )}
+
+            <SnackbarChecked
+                message="Đã tạo thông tin khách hàng mới thành công"
+                isOpen={showSuccessSnackbar}
+                duration={2000}
+                onClose={() => setShowSuccessSnackbar(false)}
+            />
+
+            <SnackbarFailed
+                message={failureMessage}
+                isOpen={showFailureSnackbar}
+                duration={4000}
+                onClose={() => setShowFailureSnackbar(false)}
+            />
         </div>
     );
 };
