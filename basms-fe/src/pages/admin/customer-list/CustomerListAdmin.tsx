@@ -2,7 +2,6 @@ import { useState, useEffect, useRef } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '../../../hooks/useAuth';
 import SnackbarChecked from '../../../components/snackbar/snackbarChecked';
-import SnackbarFailed from '../../../components/snackbar/snackbarFailed';
 import './CustomerListAdmin.css';
 
 interface Customer {
@@ -91,8 +90,6 @@ const CustomerListAdmin = () => {
     const [isCreating, setIsCreating] = useState(false);
     const [createError, setCreateError] = useState<string | null>(null);
     const [showSuccessSnackbar, setShowSuccessSnackbar] = useState(false);
-    const [showFailureSnackbar, setShowFailureSnackbar] = useState(false);
-    const [failureMessage, setFailureMessage] = useState('');
 
     const [formData, setFormData] = useState({
         IdentityNumber: '',
@@ -313,14 +310,6 @@ const CustomerListAdmin = () => {
 
     const handleRefresh = () => {
         window.location.reload();
-    };
-
-    const handleViewContract = (customerId: string, contractId: string) => {
-        navigate(`/admin/customer/${customerId}/${contractId}`);
-    };
-
-    const handleViewSchedule = (contractId: string) => {
-        navigate(`/admin/customer/${contractId}/view-shift-schedule`);
     };
 
     const fetchCustomerContracts = async (customerId: string) => {
@@ -1162,13 +1151,6 @@ const CustomerListAdmin = () => {
                 isOpen={showSuccessSnackbar}
                 duration={2000}
                 onClose={() => setShowSuccessSnackbar(false)}
-            />
-
-            <SnackbarFailed
-                message={failureMessage}
-                isOpen={showFailureSnackbar}
-                duration={4000}
-                onClose={() => setShowFailureSnackbar(false)}
             />
         </div>
     );
