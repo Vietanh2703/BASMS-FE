@@ -169,7 +169,7 @@ const ManagerGuardList = () => {
             const email = user?.email;
 
             if (!email) {
-                setError('Kh�ng t�m th�y th�ng tin ng��i d�ng');
+                setError('Không tìm thấy thông tin người dùng');
                 setLoading(false);
                 return;
             }
@@ -207,7 +207,7 @@ const ManagerGuardList = () => {
             if (!managerResponse.ok) {
                 const errorText = await managerResponse.text();
                 console.error('Manager API error:', managerResponse.status, errorText);
-                throw new Error(`L�i khi t�i th�ng tin qu�n l� (${managerResponse.status})`);
+                throw new Error(`Lỗi khi tải thông tin quản lý (${managerResponse.status})`);
             }
 
             const managerText = await managerResponse.text();
@@ -413,7 +413,7 @@ const ManagerGuardList = () => {
         setSpecialization('');
         setDescription('');
         setMinMembers(1);
-        setMaxMembers(10);
+        setMaxMembers(1);
     };
 
     const handleCloseCreateTeamModal = () => {
@@ -422,7 +422,7 @@ const ManagerGuardList = () => {
         setSpecialization('');
         setDescription('');
         setMinMembers(1);
-        setMaxMembers(10);
+        setMaxMembers(1);
     };
 
     const fetchTeams = async () => {
@@ -1380,31 +1380,27 @@ const ManagerGuardList = () => {
                                 />
                             </div>
 
-                            <div className="mgr-create-team-row">
-                                <div className="mgr-create-team-field">
-                                    <label>Số thành viên tối thiểu <span style={{ color: '#dc3545' }}>*</span></label>
-                                    <input
-                                        type="number"
-                                        min="1"
-                                        value={minMembers}
-                                        onChange={(e) => setMinMembers(Math.max(1, parseInt(e.target.value) || 1))}
-                                    />
-                                </div>
-
-                                <div className="mgr-create-team-field">
-                                    <label>Số thành viên tối đa <span style={{ color: '#dc3545' }}>*</span></label>
-                                    <input
-                                        type="number"
-                                        min="1"
-                                        value={maxMembers}
-                                        onChange={(e) => setMaxMembers(Math.max(1, parseInt(e.target.value) || 1))}
-                                    />
-                                </div>
+                            <div className="mgr-create-team-field">
+                                <label>Số thành viên trong nhóm <span style={{ color: '#dc3545' }}>*</span></label>
+                                <input
+                                    type="number"
+                                    min="1"
+                                    max={guards.length}
+                                    value={maxMembers}
+                                    onChange={(e) => {
+                                        const value = Math.max(1, Math.min(guards.length, parseInt(e.target.value) || 1));
+                                        setMaxMembers(value);
+                                        setMinMembers(value);
+                                    }}
+                                />
+                                <small style={{ color: '#6c757d', fontSize: '0.85em', marginTop: '4px', display: 'block' }}>
+                                    Giá trị từ 1 đến {guards.length} (tổng số nhân viên bảo vệ)
+                                </small>
                             </div>
 
-                            {minMembers > maxMembers && (
+                            {maxMembers > guards.length && (
                                 <div className="mgr-create-team-error">
-                                    Số thành viên tối thiểu không được lớn hơn số thành viên tối đa
+                                    Số thành viên không được lớn hơn tổng số nhân viên bảo vệ ({guards.length})
                                 </div>
                             )}
 
@@ -1415,9 +1411,8 @@ const ManagerGuardList = () => {
                                     creatingTeam ||
                                     !teamName.trim() ||
                                     !specialization ||
-                                    minMembers <= 0 ||
                                     maxMembers <= 0 ||
-                                    minMembers > maxMembers
+                                    maxMembers > guards.length
                                 }
                             >
                                 {creatingTeam ? 'Đang tạo nhóm...' : 'Xác nhận tạo nhóm'}
