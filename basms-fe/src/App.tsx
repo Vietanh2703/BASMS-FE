@@ -12,7 +12,7 @@ import VerifyOtpPassword from './pages/reset-password/verifyOtpPassword';
 import UpdatePassword from "./pages/update-password/updatePassword.tsx";
 import ForgotPassword from './pages/reset-password/forgotPassword';
 {/* Admin Routes */}
-import DashboardAdmin from './pages/admin/dashboard/dashboardAdmin';
+import DashboardAdmin from './pages/admin/dashboardAdmin.tsx';
 import CustomerListAdmin from './pages/admin/customer-list/CustomerListAdmin';
 {/* Director Routes */}
 import DashboardDirector from "./pages/director/dashboardDirector.tsx";

@@ -1,7 +1,7 @@
 import {useState, useEffect, useRef} from 'react';
 import { Link } from 'react-router-dom';
-import { useAuth } from '../../../hooks/useAuth';
-import UserInfoModal from "../../../components/userInfoModal/userInfoModal.tsx";
+import { useAuth } from '../../hooks/useAuth.ts';
+import UserInfoModal from "../../components/userInfoModal/userInfoModal.tsx";
 import './dashboardAdmin.css';
 
 const DashboardAdmin = () => {
