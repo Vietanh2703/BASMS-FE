@@ -1,0 +1,491 @@
+/* src/pages/admin/systemManagement.css */
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+.sys-mgmt-container {
+    display: flex;
+    min-height: 100vh;
+    font-family: 'Inter', sans-serif;
+    background-color: #ffffff;
+    color: #1e40af;
+}
+
+/* Sidebar */
+.sys-mgmt-sidebar {
+    background-color: #ffffff;
+    border-right: 1px solid #e5e7eb;
+    transition: width 0.3s ease;
+    position: fixed;
+    left: 0;
+    top: 0;
+    height: 100vh;
+    z-index: 1000;
+    overflow: hidden;
+}
+
+.sys-mgmt-sidebar-open {
+    width: 250px;
+}
+
+.sys-mgmt-sidebar-closed {
+    width: 70px;
+}
+
+.sys-mgmt-sidebar-header {
+    padding: 20px 15px;
+    border-bottom: 1px solid #e5e7eb;
+}
+
+.sys-mgmt-sidebar-logo {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.sys-mgmt-logo-icon {
+    width: 40px;
+    height: 40px;
+    background: linear-gradient(135deg, #3b82f6, #1d4ed8);
+    color: white;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 8px;
+    font-weight: 600;
+    font-size: 18px;
+}
+
+.sys-mgmt-logo-text {
+    font-size: 20px;
+    font-weight: 700;
+    color: #1e40af;
+    white-space: nowrap;
+}
+
+/* Sidebar Navigation */
+.sys-mgmt-sidebar-nav {
+    padding: 20px 0;
+}
+
+.sys-mgmt-nav-list {
+    list-style: none;
+}
+
+.sys-mgmt-nav-item {
+    margin-bottom: 4px;
+}
+
+.sys-mgmt-nav-link {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 12px 20px;
+    color: #6b7280;
+    text-decoration: none;
+    transition: all 0.2s ease;
+    position: relative;
+}
+
+.sys-mgmt-nav-link:hover {
+    background-color: #f8fafc;
+    color: #1e40af;
+}
+
+.sys-mgmt-nav-item.sys-mgmt-active .sys-mgmt-nav-link {
+    background-color: #eff6ff;
+    color: #1e40af;
+    font-weight: 500;
+}
+
+.sys-mgmt-nav-item.sys-mgmt-active .sys-mgmt-nav-link::before {
+    content: '';
+    position: absolute;
+    left: 0;
+    top: 0;
+    bottom: 0;
+    width: 4px;
+    background-color: #3b82f6;
+}
+
+.sys-mgmt-nav-icon {
+    width: 20px;
+    height: 20px;
+    flex-shrink: 0;
+}
+
+/* Main Content */
+.sys-mgmt-main-content {
+    transition: margin-left 0.3s ease;
+    width: 100%;
+    min-height: 100vh;
+    background-color: #ffffff;
+}
+
+.sys-mgmt-main-content-expanded {
+    margin-left: 250px;
+}
+
+.sys-mgmt-main-content-collapsed {
+    margin-left: 70px;
+}
+
+/* Navbar */
+.sys-mgmt-nav-admin {
+    background-color: #ffffff;
+    border-bottom: 1px solid #e5e7eb;
+    padding: 0 24px;
+    height: 70px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    position: sticky;
+    top: 0;
+    z-index: 100;
+}
+
+.sys-mgmt-nav-admin-left {
+    display: flex;
+    align-items: center;
+    gap: 24px;
+}
+
+.sys-mgmt-menu-toggle {
+    background: none;
+    border: none;
+    color: #6b7280;
+    cursor: pointer;
+    padding: 8px;
+    border-radius: 6px;
+    transition: all 0.2s ease;
+}
+
+.sys-mgmt-menu-toggle:hover {
+    background-color: #f3f4f6;
+    color: #1e40af;
+}
+
+.sys-mgmt-menu-toggle svg {
+    width: 24px;
+    height: 24px;
+}
+
+.sys-mgmt-datetime-display {
+    font-size: 14px;
+    font-weight: 500;
+    color: #1e40af;
+    background-color: #eff6ff;
+    padding: 8px 16px;
+    border-radius: 6px;
+    border: 1px solid #dbeafe;
+}
+
+.sys-mgmt-nav-admin-right {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+}
+
+.sys-mgmt-notification-btn {
+    position: relative;
+    background: none;
+    border: none;
+    color: #6b7280;
+    cursor: pointer;
+    padding: 8px;
+    border-radius: 6px;
+    transition: all 0.2s ease;
+}
+
+.sys-mgmt-notification-btn:hover {
+    background-color: #f3f4f6;
+    color: #1e40af;
+}
+
+.sys-mgmt-notification-btn svg {
+    width: 20px;
+    height: 20px;
+}
+
+.sys-mgmt-notification-badge {
+    position: absolute;
+    top: 4px;
+    right: 4px;
+    background-color: #ef4444;
+    color: white;
+    font-size: 11px;
+    font-weight: 600;
+    padding: 2px 6px;
+    border-radius: 10px;
+    min-width: 18px;
+    height: 18px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.sys-mgmt-user-profile {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    cursor: pointer;
+    padding: 8px 12px;
+    border-radius: 8px;
+    transition: all 0.2s ease;
+    position: relative;
+}
+
+.sys-mgmt-profile-dropdown {
+    position: absolute;
+    top: calc(100% + 8px);
+    right: 0;
+    background-color: #ffffff;
+    border: 1px solid #e5e7eb;
+    border-radius: 8px;
+    box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+    min-width: 220px;
+    overflow: hidden;
+    z-index: 1000;
+}
+
+.sys-mgmt-dropdown-item {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 12px 16px;
+    color: #000000;
+    font-family: 'Inter', sans-serif;
+    font-size: 14px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    border-bottom: 1px solid #f3f4f6;
+}
+
+.sys-mgmt-dropdown-item:last-child {
+    border-bottom: none;
+}
+
+.sys-mgmt-dropdown-item:hover {
+    color: #3b82f6;
+    background-color: #eff6ff;
+}
+
+.sys-mgmt-dropdown-item.sys-mgmt-logout-item:hover {
+    color: #ef4444;
+    background-color: #fef2f2;
+}
+
+.sys-mgmt-dropdown-item.sys-mgmt-disabled {
+    pointer-events: none;
+}
+
+.sys-mgmt-dropdown-item.sys-mgmt-logout-item.sys-mgmt-disabled:hover {
+    color: #000000;
+    background-color: #ffffff;
+}
+
+
+.sys-mgmt-dropdown-icon {
+    width: 18px;
+    height: 18px;
+    flex-shrink: 0;
+}
+
+.sys-mgmt-user-profile:hover {
+    background-color: #f8fafc;
+}
+
+.sys-mgmt-user-avatar {
+    width: 36px;
+    height: 36px;
+    background: linear-gradient(135deg, #3b82f6, #1d4ed8);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    font-weight: 600;
+    font-size: 14px;
+}
+
+.sys-mgmt-user-info {
+    display: flex;
+    flex-direction: column;
+}
+
+.sys-mgmt-user-name {
+    font-size: 14px;
+    font-weight: 600;
+    color: #1f2937;
+    line-height: 1.2;
+}
+
+.sys-mgmt-user-role {
+    font-size: 12px;
+    color: #6b7280;
+    line-height: 1.2;
+}
+
+/* Dashboard Main */
+.sys-mgmt-dashboard-main {
+    padding: 32px 24px;
+}
+
+.sys-mgmt-dashboard-header {
+    margin-bottom: 32px;
+}
+
+.sys-mgmt-page-title {
+    font-size: 28px;
+    font-weight: 700;
+    color: #1e40af;
+    margin-bottom: 8px;
+}
+
+.sys-mgmt-page-subtitle {
+    font-size: 16px;
+    color: #6b7280;
+}
+
+/* Logout Modal */
+.sys-mgmt-modal-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: rgba(0, 0, 0, 0.5);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 2000;
+    animation: fadeIn 0.2s ease;
+}
+
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+    }
+    to {
+        opacity: 1;
+    }
+}
+
+.sys-mgmt-modal-content {
+    background-color: #ffffff;
+    border-radius: 12px;
+    box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+    width: 90%;
+    max-width: 400px;
+    overflow: hidden;
+    animation: slideIn 0.3s ease;
+}
+
+@keyframes slideIn {
+    from {
+        transform: translateY(-20px);
+        opacity: 0;
+    }
+    to {
+        transform: translateY(0);
+        opacity: 1;
+    }
+}
+
+.sys-mgmt-modal-header {
+    padding: 20px 24px;
+    border-bottom: 1px solid #e5e7eb;
+}
+
+.sys-mgmt-modal-header h3 {
+    font-family: 'Inter', sans-serif;
+    font-size: 18px;
+    font-weight: 600;
+    color: #1f2937;
+    margin: 0;
+}
+
+.sys-mgmt-modal-body {
+    padding: 24px;
+}
+
+.sys-mgmt-modal-body p {
+    font-family: 'Inter', sans-serif;
+    font-size: 14px;
+    color: #6b7280;
+    margin: 0;
+    line-height: 1.5;
+}
+
+.sys-mgmt-modal-footer {
+    padding: 16px 24px;
+    background-color: #f9fafb;
+    display: flex;
+    gap: 12px;
+    justify-content: flex-end;
+}
+
+.sys-mgmt-btn-cancel,
+.sys-mgmt-btn-confirm {
+    font-family: 'Inter', sans-serif;
+    font-size: 14px;
+    font-weight: 500;
+    padding: 10px 20px;
+    border-radius: 6px;
+    border: none;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.sys-mgmt-btn-cancel {
+    background-color: #ffffff;
+    color: #374151;
+    border: 1px solid #d1d5db;
+}
+
+.sys-mgmt-btn-cancel:hover {
+    background-color: #f3f4f6;
+}
+
+.sys-mgmt-btn-confirm {
+    background-color: #ef4444;
+    color: #ffffff;
+}
+
+.sys-mgmt-btn-confirm:hover {
+    background-color: #dc2626;
+}
+
+
+/* Responsive */
+@media (max-width: 768px) {
+    .sys-mgmt-main-content-expanded,
+    .sys-mgmt-main-content-collapsed {
+        margin-left: 0;
+    }
+
+    .sys-mgmt-sidebar {
+        transform: translateX(-100%);
+    }
+
+    .sys-mgmt-sidebar-open {
+        transform: translateX(0);
+    }
+
+    .sys-mgmt-datetime-display {
+        display: none;
+    }
+
+    .sys-mgmt-user-info {
+        display: none;
+    }
+
+    .sys-mgmt-dashboard-main {
+        padding: 16px;
+    }
+}
