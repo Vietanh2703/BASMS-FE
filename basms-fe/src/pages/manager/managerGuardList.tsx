@@ -79,6 +79,22 @@ interface Team {
     createdAt: string;
 }
 
+interface GuardTeamStatus {
+    guardId: string;
+    guardName: string;
+    employeeCode: string;
+    isInActiveTeam: boolean;
+    currentTeam: {
+        teamId: string;
+        teamCode: string;
+        teamName: string;
+        role: string;
+        joinedAt: string;
+        totalShiftsAssigned: number;
+        totalShiftsCompleted: number;
+    } | null;
+}
+
 const ManagerGuardList = () => {
     const [isMenuOpen, setIsMenuOpen] = useState(false);
     const [currentTime, setCurrentTime] = useState(new Date());
@@ -121,6 +137,7 @@ const ManagerGuardList = () => {
     const [selectedLeader, setSelectedLeader] = useState<Guard | null>(null);
     const [selectedMembers, setSelectedMembers] = useState<Guard[]>([]);
     const [isAssigningTeam, setIsAssigningTeam] = useState(false);
+    const [guardTeamStatuses, setGuardTeamStatuses] = useState<Record<string, GuardTeamStatus>>({});
 
     const [showDeleteTeamModal, setShowDeleteTeamModal] = useState(false);
     const [selectedTeamForDelete, setSelectedTeamForDelete] = useState<Team | null>(null);
@@ -625,7 +642,37 @@ const ManagerGuardList = () => {
         setGuardsForAssign([]);
         setSelectedLeader(null);
         setSelectedMembers([]);
+        setGuardTeamStatuses({});
         setShowTeamsModal(true);
+    };
+
+    const fetchGuardTeamStatus = async (guardId: string): Promise<GuardTeamStatus | null> => {
+        try {
+            const accessToken = localStorage.getItem('accessToken');
+
+            if (!accessToken) {
+                console.error('No access token found');
+                return null;
+            }
+
+            const url = `${import.meta.env.VITE_API_SHIFTS_URL}/shifts/guards/${guardId}/team-status`;
+            const response = await fetch(url, {
+                headers: {
+                    'Authorization': `Bearer ${accessToken}`,
+                    'Content-Type': 'application/json',
+                }
+            });
+
+            if (!response.ok) {
+                throw new Error(`Failed to fetch guard team status: ${response.status}`);
+            }
+
+            const data = await response.json();
+            return data;
+        } catch (err) {
+            console.error('Error fetching guard team status:', err);
+            return null;
+        }
     };
 
     const fetchGuardsForAssign = async () => {
@@ -653,7 +700,18 @@ const ManagerGuardList = () => {
             }
 
             const data = await response.json();
-            setGuardsForAssign(data.guards || []);
+            const guards = data.guards || [];
+            setGuardsForAssign(guards);
+
+            // Fetch team status for each guard
+            const statusesMap: Record<string, GuardTeamStatus> = {};
+            for (const guard of guards) {
+                const status = await fetchGuardTeamStatus(guard.id);
+                if (status) {
+                    statusesMap[guard.id] = status;
+                }
+            }
+            setGuardTeamStatuses(statusesMap);
         } catch (err) {
             console.error('Error fetching guards for assign:', err);
             setSnackbarMessage('Không thể tải danh sách bảo vệ');
@@ -1451,6 +1509,8 @@ const ManagerGuardList = () => {
                                         {guardsForAssign.map(guard => {
                                             const isSelected = isGuardSelected(guard.id);
                                             const isFullyAssigned = canConfirmAssignment();
+                                            const teamStatus = guardTeamStatuses[guard.id];
+                                            const isInActiveTeam = teamStatus?.isInActiveTeam && teamStatus?.currentTeam;
 
                                             return (
                                                 <div key={guard.id} className="mgr-assign-guard-available-item">
@@ -1463,8 +1523,13 @@ const ManagerGuardList = () => {
                                                             <span className="mgr-assign-guard-code">{guard.employeeCode}</span>
                                                             <span className="mgr-assign-guard-level">{getCertificationLevelLabel(guard.certificationLevel)}</span>
                                                         </div>
+                                                        {isInActiveTeam && teamStatus.currentTeam && (
+                                                            <div style={{ color: '#dc3545', fontSize: '0.85em', marginTop: '4px' }}>
+                                                                Bảo vệ đang được phân công trong {teamStatus.currentTeam.teamName}
+                                                            </div>
+                                                        )}
                                                     </div>
-                                                    {!isSelected && !isFullyAssigned && (
+                                                    {!isInActiveTeam && !isSelected && !isFullyAssigned && (
                                                         <button
                                                             className="mgr-assign-guard-select-btn"
                                                             onClick={() => {
