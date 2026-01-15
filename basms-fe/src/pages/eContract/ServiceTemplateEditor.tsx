@@ -72,8 +72,27 @@ const ServiceTemplateEditor = () => {
         setShowSnackbarWarning(false);
     }, []);
 
-    // Auto-generate contract number and sign date on mount
+    // Load saved data from localStorage first
     useEffect(() => {
+        const savedData = localStorage.getItem('serviceContractReviewData');
+        if (savedData) {
+            try {
+                const data = JSON.parse(savedData);
+                if (data.templateId === templateId && data.formData) {
+                    setFormData(data.formData);
+                }
+            } catch (error) {
+                console.error('Error loading saved data:', error);
+            }
+        }
+        setIsDataLoaded(true);
+    }, [templateId]);
+
+    // Auto-generate contract number and sign date AFTER data is loaded
+    useEffect(() => {
+        // Only run after data is loaded from localStorage
+        if (!isDataLoaded) return;
+
         // Only generate if not already set (not from saved data)
         if (!formData.ContractNumber.value) {
             // Generate 8 random digits
@@ -93,41 +112,29 @@ const ServiceTemplateEditor = () => {
                 SignYear: { ...prev.SignYear, value: year },
             }));
         }
-    }, []);
+    }, [isDataLoaded, formData.ContractNumber.value]);
 
-    // Auto-fill customer info from query params
+    // Auto-fill customer info from query params (runs after localStorage load)
     useEffect(() => {
+        // Only run after data is loaded from localStorage
+        if (!isDataLoaded) return;
+
         const email = searchParams.get('email');
         const phone = searchParams.get('phone');
         const name = searchParams.get('name');
         const identityNumber = searchParams.get('identityNumber');
 
+        // Only update if query params exist and are different from current values
         if (email || phone || name || identityNumber) {
             setFormData(prev => ({
                 ...prev,
-                ...(email && { CompanyEmail: { ...prev.CompanyEmail, value: email } }),
-                ...(phone && { Phone: { ...prev.Phone, value: phone } }),
-                ...(name && { Name: { ...prev.Name, value: name } }),
-                ...(identityNumber && { EmployeeIdentityNumber: { ...prev.EmployeeIdentityNumber, value: identityNumber } }),
+                ...(email && email !== prev.CompanyEmail.value && { CompanyEmail: { ...prev.CompanyEmail, value: email } }),
+                ...(phone && phone !== prev.Phone.value && { Phone: { ...prev.Phone, value: phone } }),
+                ...(name && name !== prev.Name.value && { Name: { ...prev.Name, value: name } }),
+                ...(identityNumber && identityNumber !== prev.EmployeeIdentityNumber.value && { EmployeeIdentityNumber: { ...prev.EmployeeIdentityNumber, value: identityNumber } }),
             }));
         }
-    }, [searchParams]);
-
-    // Load saved data from localStorage on mount
-    useEffect(() => {
-        const savedData = localStorage.getItem('serviceContractReviewData');
-        if (savedData) {
-            try {
-                const data = JSON.parse(savedData);
-                if (data.templateId === templateId && data.formData) {
-                    setFormData(data.formData);
-                }
-            } catch (error) {
-                console.error('Error loading saved data:', error);
-            }
-        }
-        setIsDataLoaded(true);
-    }, [templateId]);
+    }, [isDataLoaded, searchParams]);
 
     useEffect(() => {
         if (isDataLoaded && templateId) {
